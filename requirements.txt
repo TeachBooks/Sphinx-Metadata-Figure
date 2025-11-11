@@ -1,0 +1,19 @@
+# Sphinx Custom Figure Extension - Requirements
+# ==============================================
+
+# Core Sphinx
+sphinx>=5.0.0
+
+# MyST Parser for Markdown support
+myst-parser>=1.0.0
+
+# Optional: Better HTML themes
+# Uncomment to use:
+# sphinx-book-theme>=1.0.0
+# pydata-sphinx-theme>=0.13.0
+# furo>=2023.0.0
+
+# Optional: Additional Sphinx extensions
+# sphinx-design>=0.5.0
+# sphinx-copybutton>=0.5.0
+# sphinx-togglebutton>=0.3.0

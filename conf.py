@@ -1,0 +1,105 @@
+"""
+Sphinx Configuration File
+==========================
+
+Configuration file for Sphinx documentation builder with custom figure directive.
+"""
+
+import sys
+from pathlib import Path
+
+# -- Path setup --------------------------------------------------------------
+
+# Add custom extension directory to Python path
+sys.path.insert(0, str(Path('_ext').resolve()))
+
+# -- Project information -----------------------------------------------------
+
+project = 'Custom Figure Documentation'
+copyright = '2025, Your Name'
+author = 'Your Name'
+
+# The full version, including alpha/beta/rc tags
+release = '0.1.0'
+
+# -- General configuration ---------------------------------------------------
+
+# Add any Sphinx extension module names here, as strings
+extensions = [
+    'myst_parser',        # MyST Markdown parser
+    'custom_figure',      # Our custom figure directive
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
+]
+
+# MyST-Parser configuration
+myst_enable_extensions = [
+    "colon_fence",      # Enable ::: fences
+    "deflist",          # Definition lists
+    "tasklist",         # Task lists
+    "fieldlist",        # Field lists
+    "attrs_inline",     # Inline attributes
+    "attrs_block",      # Block attributes
+]
+
+# Add any paths that contain templates here, relative to this directory
+templates_path = ['_templates']
+
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+
+# The suffix(es) of source filenames
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
+
+# The master document
+master_doc = 'index'
+
+# -- Options for HTML output -------------------------------------------------
+
+# The theme to use for HTML and HTML Help pages
+html_theme = 'alabaster'
+
+# Add any paths that contain custom static files (such as style sheets)
+html_static_path = ['_static']
+
+# Custom CSS files
+html_css_files = [
+    'custom_figure.css',
+]
+
+# Theme options
+html_theme_options = {
+    'description': 'Documentation with enhanced figure metadata',
+    'github_user': 'your-username',
+    'github_repo': 'your-repo',
+}
+
+# -- Options for LaTeX output ------------------------------------------------
+
+latex_elements = {
+    # The paper size ('letterpaper' or 'a4paper')
+    'papersize': 'letterpaper',
+    
+    # The font size ('10pt', '11pt' or '12pt')
+    'pointsize': '10pt',
+}
+
+# -- Extension configuration -------------------------------------------------
+
+# Suppress specific warnings (optional)
+# Uncomment to suppress figure license warnings during build
+# suppress_warnings = ['custom_figure.missing_license']
+
+# Fail build on missing licenses (optional, strict mode)
+# Set to True to make the build fail if any figure is missing a license
+STRICT_LICENSE_CHECK = False
+
+if STRICT_LICENSE_CHECK:
+    # This would require additional implementation in custom_figure.py
+    # to raise exceptions instead of warnings
+    pass

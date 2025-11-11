@@ -1,0 +1,41 @@
+# Pixabay 이미지 테스트
+
+## 올바른 Pixabay 라이센스
+```{figure} _image/grill-8434113_1280.jpg
+:author: Domihattenberger
+:license: Pixabay License
+:date: 2023-12-09
+:width: 600px
+:align: center
+
+Pixabay에서 가져온 그릴 이미지
+```
+
+## 작가 정보와 출처
+
+이 이미지는 [Domihattenberger](https://pixabay.com/users/domihattenberger-30682813/)가 
+Pixabay에 업로드한 이미지입니다.
+
+- **라이센스**: Pixabay Content License (무료 사용 가능)
+- **출처**: https://pixabay.com/photos/grill-steak-meal-flesh-grilling-8434113/
+- **게시일**: 2023년 12월 9일
+
+## 다른 크기로 표시
+```{figure} _image/grill-8434113_1280.jpg
+:author: Domihattenberger
+:license: Pixabay License
+:date: 2023-12-09
+:width: 400px
+:align: left
+
+작은 크기 (400px)
+```
+```{figure} _image/grill-8434113_1280.jpg
+:author: Domihattenberger
+:license: Pixabay License
+:date: 2023-12-09
+:width: 800px
+:align: center
+
+큰 크기 (800px)
+```

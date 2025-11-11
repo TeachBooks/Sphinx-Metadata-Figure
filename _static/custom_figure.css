@@ -1,0 +1,40 @@
+/* 
+ * Custom Figure Metadata Styling
+ * ==============================
+ * 
+ * Styles for the metadata information displayed below figures
+ * (author, license, date)
+ */
+
+.figure-metadata {
+    font-size: 0.85em;
+    color: #666;
+    font-style: italic;
+    margin-top: 0.5em;
+    padding-top: 0.5em;
+    border-top: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .figure-metadata {
+        color: #aaa;
+        border-top-color: #444;
+    }
+}
+
+/* Additional spacing for figures with metadata */
+figure.align-center .figure-metadata,
+figure.align-default .figure-metadata {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Print styles */
+@media print {
+    .figure-metadata {
+        font-size: 0.8em;
+        color: #333;
+    }
+}
