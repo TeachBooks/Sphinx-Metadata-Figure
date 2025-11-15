@@ -27,7 +27,7 @@ release = '0.1.0'
 # Add any Sphinx extension module names here, as strings
 extensions = [
     'myst_parser',        # MyST Markdown parser
-    'custom_figure',      # Our custom figure directive
+    'sphinx_metadata_figure',      # Our custom figure directive
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
