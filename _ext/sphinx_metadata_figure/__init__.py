@@ -7,14 +7,20 @@ This extension extends the standard Sphinx figure directive to include:
 - license: Image license (validated against a predefined list)
 - date: Creation date (format: YYYY-MM-DD)
 
-During parsing, it validates that all images have proper license information.
+During parsing, it validates that all images have proper and recognized license information.
 """
+
+import os
 
 from docutils import nodes
 from docutils.parsers.rst import directives
 from sphinx.directives.patches import Figure
 from sphinx.util import logging
 from datetime import datetime
+
+from sphinx.locale import get_translation
+MESSAGE_CATALOG_NAME = "sphinx_metadata_figure"
+translate = get_translation(MESSAGE_CATALOG_NAME)
 
 logger = logging.getLogger(__name__)
 
@@ -35,13 +41,12 @@ VALID_LICENSES = [
     'Proprietary',
     'All Rights Reserved',
     'Pixabay License',
-    'Pixabay License',
     'Unsplash License',
     'Pexels License',
 ]
 
 
-class CustomFigure(Figure):
+class MetadataFigure(Figure):
     """
     Enhanced figure directive with metadata support.
     
@@ -73,19 +78,18 @@ class CustomFigure(Figure):
         if license_value is None:
             # Warn if license is missing
             logger.warning(
-                f'Figure "{self.arguments[0]}" at '
-                f'{self.state.document.current_source}:{self.lineno} '
-                f'is missing license information. '
-                f'Please add :license: option.',
+                f'\n- Figure "{self.arguments[0]}" '
+                f'is missing license information.\n'
+                f'- Please add the :license: option with a recognized license.\n'
+                f'- Recognized licenses: {", ".join(VALID_LICENSES)}',
                 location=(self.state.document.current_source, self.lineno)
             )
         elif license_value not in VALID_LICENSES:
             # Warn if license is invalid
             logger.warning(
-                f'Figure "{self.arguments[0]}" at '
-                f'{self.state.document.current_source}:{self.lineno} '
-                f'has invalid license "{license_value}". '
-                f'Valid licenses: {", ".join(VALID_LICENSES)}',
+                f'\n- Figure "{self.arguments[0]}" '
+                f'has an unrecognized license "{license_value}".\n'
+                f'- Recognized licenses: {", ".join(VALID_LICENSES)}',
                 location=(self.state.document.current_source, self.lineno)
             )
         
@@ -137,11 +141,11 @@ class CustomFigure(Figure):
         
         # Collect metadata parts
         if 'author' in figure_node:
-            metadata_parts.append(f"Author: {figure_node['author']}")
+            metadata_parts.append(f"{translate('Author')}: {figure_node['author']}")
         if 'license' in figure_node:
-            metadata_parts.append(f"License: {figure_node['license']}")
+            metadata_parts.append(f"{translate('License')}: {figure_node['license']}")
         if 'date' in figure_node:
-            metadata_parts.append(f"Date: {figure_node['date']}")
+            metadata_parts.append(f"{translate('Date')}: {figure_node['date']}")
         
         # Add metadata paragraph if we have any metadata
         if metadata_parts:
@@ -165,19 +169,24 @@ def check_all_figures_have_license(app, env):
         env: Sphinx build environment
     """
     missing_licenses = []
-    
+    unrecognized_licenses = []
+
     for docname in env.found_docs:
         try:
             doctree = env.get_doctree(docname)
             for node in doctree.traverse(nodes.figure):
+                # Find the image URI for better error messages
+                image_uri = 'unknown'
+                for image_node in node.traverse(nodes.image):
+                    image_uri = image_node.get('uri', 'unknown')
+                    break
                 if 'license' not in node:
-                    # Find the image URI for better error messages
-                    image_uri = 'unknown'
-                    for image_node in node.traverse(nodes.image):
-                        image_uri = image_node.get('uri', 'unknown')
-                        break
-                    
                     missing_licenses.append((docname, image_uri))
+                else:
+                    license_value = node['license']
+                    if license_value not in VALID_LICENSES:
+                        unrecognized_licenses.append((docname, image_uri))
+
         except Exception as e:
             # Skip documents that can't be loaded
             logger.debug(f'Could not check figures in {docname}: {e}')
@@ -188,6 +197,14 @@ def check_all_figures_have_license(app, env):
             f'Found {len(missing_licenses)} figure(s) without license information:'
         )
         for docname, image_uri in missing_licenses:
+            logger.warning(f'  - {docname}: {image_uri}')
+
+    # Report all unrecognized licenses
+    if unrecognized_licenses:
+        logger.warning(
+            f'Found {len(unrecognized_licenses)} figure(s) with unrecognized license information:'
+        )
+        for docname, image_uri in unrecognized_licenses:
             logger.warning(f'  - {docname}: {image_uri}')
 
 
@@ -204,13 +221,18 @@ def setup(app):
         dict: Extension metadata
     """
     # Override the default figure directive with our custom version
-    app.add_directive('figure', CustomFigure, override=True)
+    app.add_directive('figure', MetadataFigure, override=True)
     
     # Add custom CSS for metadata styling
     app.add_css_file('custom_figure.css')
     
     # Register event handler to check all figures after build
     app.connect('env-updated', check_all_figures_have_license)
+
+    # add translations
+    package_dir = os.path.abspath(os.path.dirname(__file__))
+    locale_dir = os.path.join(package_dir, "translations", "locales")
+    app.add_message_catalog(MESSAGE_CATALOG_NAME, locale_dir)
     
     return {
         'version': '0.1.0',
