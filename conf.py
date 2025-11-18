@@ -16,8 +16,8 @@ sys.path.insert(0, str(Path('_ext').resolve()))
 # -- Project information -----------------------------------------------------
 
 project = 'Custom Figure Documentation'
-copyright = '2025, Your Name'
-author = 'Your Name'
+copyright = '2025'
+author = ''
 
 # The full version, including alpha/beta/rc tags
 release = '0.1.0'
@@ -48,7 +48,17 @@ templates_path = ['_templates']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    '.venv',
+    '.venv/**',
+    'venv',
+    'venv/**',
+    '**/site-packages/**',
+    '**/*.dist-info/**',
+]
 
 # The suffix(es) of source filenames
 source_suffix = {
@@ -67,10 +77,8 @@ html_theme = 'alabaster'
 # Add any paths that contain custom static files (such as style sheets)
 html_static_path = ['_static']
 
-# Custom CSS files
-html_css_files = [
-    'custom_figure.css',
-]
+# Custom CSS files (extension already injects custom_figure.css)
+html_css_files = []
 
 # Theme options
 html_theme_options = {
@@ -90,6 +98,14 @@ latex_elements = {
 }
 
 # -- Extension configuration -------------------------------------------------
+
+# Global defaults for figure attribution (can be overridden per file or per directive)
+tb_attribution_defaults = {
+    'placement': 'caption',            # caption | admonition | margin
+    'show': 'author,license,date',     # which fields to display
+    'title': 'Attribution',            # title for the admonition block
+    'admonition_class': 'attribution', # extra CSS class on the admonition
+}
 
 # Suppress specific warnings (optional)
 # Uncomment to suppress figure license warnings during build
