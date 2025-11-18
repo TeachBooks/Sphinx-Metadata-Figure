@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Download link replacer &#8212; Custom Figure Documentation 0.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom_figure.css?v=f2f649d8" />
+    <script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="download-link-replacer">
+<h1>Download link replacer<a class="headerlink" href="#download-link-replacer" title="Link to this heading">¶</a></h1>
+<p>You can control the download option of the book in two ways:</p>
+<ul class="simple">
+<li><p>Disabling downloading using cell tags <code class="docutils literal notranslate"><span class="pre">disable-download-page</span></code></p></li>
+<li><p>Add / replace download link with custom link using sphinx-<code class="docutils literal notranslate"><span class="pre">download-link-replacer</span></code></p></li>
+</ul>
+<section id="disabling-download">
+<h2>1. Disabling download<a class="headerlink" href="#disabling-download" title="Link to this heading">¶</a></h2>
+<p>If you add <code class="docutils literal notranslate"><span class="pre">disable-download-page</span></code> as a cell tag to a cell in a python notebook, the download button () will disappear from the topright corner. The cell tag can be added to any code cell in the notebook. This function might be handy if your page includes code which you don’t want the students to see. Be aware that this also removes the option to download a PDF of the page.</p>
+</section>
+<section id="add-replace-download-link">
+<h2>2. Add/replace download link<a class="headerlink" href="#add-replace-download-link" title="Link to this heading">¶</a></h2>
+<p>The download link  –&gt;  <span class="guilabel">.ipynb</span> can be replaced by using the following code in any markdown / notebook file:</p>
+<div class="highlight-md notranslate"><div class="highlight"><pre><span></span>```{custom_download_link} &lt;link_target&gt;
+:text: &quot;Custom text&quot;
+:replace_default: &quot;True&quot;
+```
+</pre></div>
+</div>
+<p>Replace <code class="docutils literal notranslate"><span class="pre">&lt;link_target&gt;</span></code> with the download location. It can either be a remote link (<code class="docutils literal notranslate"><span class="pre">http</span></code>, <code class="docutils literal notranslate"><span class="pre">https</span></code>, or <code class="docutils literal notranslate"><span class="pre">ftp</span></code>), or a local path (relative to the location of the file containing the directive). Local files must be located within or below the source folder of the book (i.e. the folder containing <code class="docutils literal notranslate"><span class="pre">_config.yml</span></code>).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">replace_default</span></code> key is optional. When set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the default download link will be replaced with the custom one. When set to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the default download link will be kept, and the custom one will be added below it. If the key is not set, the default behavior is to add the link to the list, without changing the default one.</p>
+<p>The directive can appear multiple times in a single file.</p>
+<p>A potential application of this functionality is when creating a page in which students have to do some coding. Downloading the page allows the student to save their work and work with their local environment. However, the original source file might include code (TeachBook formatting, widgets, answers) which is not necessary for students. You can make a copy of the notebook file without these elements and replace the <span class="guilabel">.ipynb</span> link to this custom notebook file. Furthermore, you can add any additional data as an additional <span class="guilabel">.zip</span> file.</p>
+<section id="installation">
+<h3>2.1. Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h3>
+<p>To install the Download-Link-Replacer follow these steps:</p>
+<p><strong>Step 1: Install the Package</strong></p>
+<p>Install the <code class="docutils literal notranslate"><span class="pre">download-link-replacer</span></code> package using <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">download</span><span class="o">-</span><span class="n">link</span><span class="o">-</span><span class="n">replacer</span>
+</pre></div>
+</div>
+<p><strong>Step 2: Add to <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code></strong></p>
+<p>Make sure that the package is included in your project’s <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> to track the dependency:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">download</span><span class="o">-</span><span class="n">link</span><span class="o">-</span><span class="n">replacer</span>
+</pre></div>
+</div>
+<p><strong>Step 3: Enable in <code class="docutils literal notranslate"><span class="pre">_config.yml</span></code></strong></p>
+<p>In your <code class="docutils literal notranslate"><span class="pre">_config.yml</span></code> file, add the extension to the list of Sphinx extra extensions (<em>note the underscores!</em>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphinx</span><span class="p">:</span> 
+    <span class="n">extra_extensions</span><span class="p">:</span>
+        <span class="o">-</span> <span class="n">download_link_replacer</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="contribute">
+<h2>Contribute<a class="headerlink" href="#contribute" title="Link to this heading">¶</a></h2>
+<p>This tool’s repository is stored on <a class="reference external" href="https://github.com/TeachBooks/Download-Link-Replace">GitHub</a>. The <code class="docutils literal notranslate"><span class="pre">README.md</span></code> of the branch <code class="docutils literal notranslate"><span class="pre">manual_docs</span></code> is also part of the <a class="reference internal" href="#../Download-Link-Replacer/README.md"><span class="xref myst">TeachBooks manual</span></a> as a submodule. If you’d like to contribute, you can create a fork and open a pull request on the <a class="reference external" href="https://github.com/TeachBooks/Download-Link-Replacer">GitHub repository</a>. To update the <code class="docutils literal notranslate"><span class="pre">README.md</span></code> shown in the TeachBooks manual, create a fork and open a merge request for the <a class="reference external" href="https://github.com/TeachBooks/manual">GitHub repository of the manual</a>. If you intent to clone the manual including its submodules, clone using: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">--recurse-submodulesgit&#64;github.com:TeachBooks/manual.git</span></code>.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Custom Figure Documentation</a></h1>
+
+
+
+<p class="blurb">Documentation with enhanced figure metadata</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=your-username&repo=your-repo&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contact_information.html">Contactinformatie 💬</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Your Name.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/reference/README (2).md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

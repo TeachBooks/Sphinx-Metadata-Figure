@@ -6,7 +6,7 @@
  * (author, license, date)
  */
 
-.figure-metadata {
+.figure-metadata, .tb-attribution {
     font-size: 0.85em;
     color: #666;
     font-style: italic;
@@ -18,7 +18,7 @@
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-    .figure-metadata {
+    .figure-metadata, .tb-attribution {
         color: #aaa;
         border-top-color: #444;
     }
@@ -26,14 +26,16 @@
 
 /* Additional spacing for figures with metadata */
 figure.align-center .figure-metadata,
-figure.align-default .figure-metadata {
+figure.align-default .figure-metadata,
+figure.align-center .tb-attribution,
+figure.align-default .tb-attribution {
     margin-left: auto;
     margin-right: auto;
 }
 
 /* Print styles */
 @media print {
-    .figure-metadata {
+    .figure-metadata, .tb-attribution {
         font-size: 0.8em;
         color: #333;
     }
