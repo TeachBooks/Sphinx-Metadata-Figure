@@ -227,32 +227,13 @@ class MetadataFigure(Figure):
         the returned list will include a paragraph intended to be appended inside
         the figure node.
         """
-        Add metadata display to the figure.
-        
-        Creates a paragraph with formatted metadata information that appears
-        below the figure caption.
-        
-        Args:
-            figure_node: The figure node to add metadata to
-        """
-        metadata_parts = []
-        
-        # Collect metadata parts
-        if 'author' in figure_node:
-            metadata_parts.append(f"{translate('Author')}: {figure_node['author']}")
-        if 'license' in figure_node:
-            metadata_parts.append(f"{translate('License')}: {figure_node['license']}")
-        if 'date' in figure_node:
-            metadata_parts.append(f"{translate('Date')}: {figure_node['date']}")
-        
-        # Add metadata paragraph if we have any metadata
-        if metadata_parts:
-            metadata_text = ' | '.join(metadata_parts)
-            metadata_para = nodes.paragraph(
-                text=metadata_text,
-                classes=['figure-metadata']
-            )
-            figure_node.append(metadata_para)
+        parts = []
+        if 'author' in figure_node and 'author' in show:
+            parts.append(f"{translate('Author')}: {figure_node['author']}")
+        if 'license' in figure_node and 'license' in show:
+            parts.append(f"{translate('License')}: {figure_node['license']}")
+        if 'date' in figure_node and 'date' in show:
+            parts.append(f"{translate('Date')}: {figure_node['date']}")
 
         if not parts:
             return []
