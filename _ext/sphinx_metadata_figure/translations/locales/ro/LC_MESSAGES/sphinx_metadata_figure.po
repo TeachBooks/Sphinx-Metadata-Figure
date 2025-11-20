@@ -8,6 +8,9 @@ msgstr ""
 "Language: ro\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Atribuire"
+
 msgid "Author"
 msgstr "Autor"
 

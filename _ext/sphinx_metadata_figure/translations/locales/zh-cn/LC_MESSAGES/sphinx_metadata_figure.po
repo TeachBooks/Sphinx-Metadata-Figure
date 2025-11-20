@@ -8,6 +8,9 @@ msgstr ""
 "Language: zh-cn\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "归属"
+
 msgid "Author"
 msgstr "作者"
 

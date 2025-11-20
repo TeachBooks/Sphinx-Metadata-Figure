@@ -8,6 +8,9 @@ msgstr ""
 "Language: nl\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Naamsvermelding"
+
 msgid "Author"
 msgstr "Auteur"
 

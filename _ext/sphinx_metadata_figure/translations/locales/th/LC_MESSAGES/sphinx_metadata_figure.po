@@ -8,6 +8,9 @@ msgstr ""
 "Language: th\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "การระบุแหล่งที่มา"
+
 msgid "Author"
 msgstr "ผู้เขียน"
 

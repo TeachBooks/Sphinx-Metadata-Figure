@@ -8,6 +8,9 @@ msgstr ""
 "Language: bn\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "অ্যাট্রিবিউশন"
+
 msgid "Author"
 msgstr "লেখক"
 

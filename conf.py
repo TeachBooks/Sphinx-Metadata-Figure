@@ -99,23 +99,3 @@ latex_elements = {
 
 # -- Extension configuration -------------------------------------------------
 
-# Global defaults for figure attribution (can be overridden per file or per directive)
-tb_attribution_defaults = {
-    'placement': 'caption',            # caption | admonition | margin
-    'show': 'author,license,date',     # which fields to display
-    'title': 'Attribution',            # title for the admonition block
-    'admonition_class': 'attribution', # extra CSS class on the admonition
-}
-
-# Suppress specific warnings (optional)
-# Uncomment to suppress figure license warnings during build
-# suppress_warnings = ['custom_figure.missing_license']
-
-# Fail build on missing licenses (optional, strict mode)
-# Set to True to make the build fail if any figure is missing a license
-STRICT_LICENSE_CHECK = False
-
-if STRICT_LICENSE_CHECK:
-    # This would require additional implementation in custom_figure.py
-    # to raise exceptions instead of warnings
-    pass

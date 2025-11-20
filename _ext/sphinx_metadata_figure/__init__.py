@@ -24,6 +24,14 @@ translate = get_translation(MESSAGE_CATALOG_NAME)
 
 logger = logging.getLogger(__name__)
 
+# Global defaults for figure attribution (can be overridden per file or per directive)
+TB_ATTRIBUTION_DEFAULTS = {
+    'placement': 'caption',            # caption | admonition | margin
+    'show': 'author,license,date',     # which fields to display
+    'title': 'Attribution',            # title for the admonition block
+    'admonition_class': 'attribution', # extra CSS class on the admonition
+}
+
 # List of valid licenses
 VALID_LICENSES = [
     'CC0',
@@ -95,25 +103,42 @@ class MetadataFigure(Figure):
         Returns:
             list: List of docutils nodes to be inserted into the document
         """
+
+        # Access environment/config for defaults and per-file metadata
+        env = getattr(self.state.document.settings, 'env', None)
+        config = getattr(env.app, 'config', None) if env else None
+
         # Validate license
         license_value = self.options.get('license', None)
         
         if license_value is None:
-            # Warn if license is missing
-            logger.warning(
+            # Warn or raise error if license is missing
+            message_missing = (
                 f'\n- Figure "{self.arguments[0]}" '
                 f'is missing license information.\n'
                 f'- Please add the :license: option with a recognized license.\n'
-                f'- Recognized licenses: {", ".join(VALID_LICENSES)}',
-                location=(self.state.document.current_source, self.lineno)
+                f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
             )
+            if config and getattr(config, 'tb_attribution_strict_license_check', False):
+                raise ValueError(message_missing)
+            elif getattr(config, 'tb_attribution_individual', True):
+                logger.warning(
+                    message_missing,
+                    location=(self.state.document.current_source, self.lineno)
+                )
         elif license_value not in VALID_LICENSES:
-            # Warn if license is invalid
-            logger.warning(
+            # Warn or raise error if license is invalid
+            message_incorrect = (
                 f'\n- Figure "{self.arguments[0]}" '
-                f'has an unrecognized license "{license_value}".\n'
-                f'- Recognized licenses: {", ".join(VALID_LICENSES)}',
-                location=(self.state.document.current_source, self.lineno)
+                    f'has an unrecognized license "{license_value}".\n'
+                    f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
+            )
+            if config and getattr(config, 'tb_attribution_strict_license_check', False):
+                raise ValueError(message_incorrect)
+            elif getattr(config, 'tb_attribution_individual', True):
+                logger.warning(
+                    message_incorrect,
+                    location=(self.state.document.current_source, self.lineno)
             )
         
         # Validate date format (optional)
@@ -132,10 +157,6 @@ class MetadataFigure(Figure):
         
         # Generate the base figure nodes using parent class
         figure_nodes = super().run()
-
-        # Access environment/config for defaults and per-file metadata
-        env = getattr(self.state.document.settings, 'env', None)
-        config = getattr(env.app, 'config', None) if env else None
 
         # Resolve effective values (option -> doc meta -> global defaults)
         doc_meta = {}
@@ -163,7 +184,8 @@ class MetadataFigure(Figure):
                 'admonition_class': _coerce(_m('admonition_class')),
             }
 
-        defaults = getattr(config, 'tb_attribution_defaults', {}) if config else {}
+        settings = getattr(config, 'tb_attribution_settings', {}) if config else {}
+        defaults = TB_ATTRIBUTION_DEFAULTS | settings
 
         def _resolve(name, opt_key=None):
             key = opt_key or name
@@ -192,7 +214,7 @@ class MetadataFigure(Figure):
             placement = (_resolve('placement') or 'caption').strip().lower()
             show_raw = _resolve('show') or 'author,license,date'
             show = [s.strip().lower() for s in str(show_raw).split(',') if s.strip()]
-            title = _resolve('title') or 'Attribution'
+            title = _resolve('title') or translate('Attribution')
             admon_class = _resolve('admonition_class') or 'attribution'
 
             display_nodes = self._build_attribution_display(
@@ -201,8 +223,7 @@ class MetadataFigure(Figure):
                 show=show,
                 title=title,
                 admonition_class=admon_class,
-                link_license=getattr(config, 'tb_attribution_link_license', True) if config else True,
-                license_urls=getattr(config, 'tb_attribution_license_urls', LICENSE_URLS) if config else LICENSE_URLS,
+                link_license=getattr(config, 'tb_attribution_link_license', True) if config else True
             )
 
             # Attach display according to placement
@@ -220,7 +241,7 @@ class MetadataFigure(Figure):
         return figure_nodes
     
     def _build_attribution_display(self, figure_node, placement, show, title,
-                                   admonition_class, link_license, license_urls):
+                                   admonition_class, link_license):
         """Create nodes to display attribution based on placement.
 
         Returns a list of nodes to append to the document. For placement='caption',
@@ -229,19 +250,29 @@ class MetadataFigure(Figure):
         """
         parts = []
         if 'author' in figure_node and 'author' in show:
-            parts.append(f"{translate('Author')}: {figure_node['author']}")
+            parts.append((f"{translate('Author')}: {figure_node['author']}", None))
         if 'license' in figure_node and 'license' in show:
-            parts.append(f"{translate('License')}: {figure_node['license']}")
+            if link_license and figure_node['license'] in LICENSE_URLS:
+                license_url = LICENSE_URLS[figure_node['license']]
+                parts.append((f"{translate('License')}: ", (figure_node['license'], license_url)))
+            else:
+                parts.append((f"{translate('License')}: {figure_node['license']}", None))
         if 'date' in figure_node and 'date' in show:
-            parts.append(f"{translate('Date')}: {figure_node['date']}")
+            parts.append((f"{translate('Date')}: {figure_node['date']}", None))
 
         if not parts:
             return []
 
-        text = ' | '.join(parts)
-
         if placement == 'caption':
-            para = nodes.paragraph(text=text, classes=['figure-metadata', 'tb-attribution'])
+            para = nodes.paragraph(classes=['figure-metadata', 'tb-attribution'])
+            for i, (text_part, link_info) in enumerate(parts):
+                if i > 0:
+                    para += nodes.Text(' | ')
+                para += nodes.Text(text_part)
+                if link_info:
+                    link_text, link_url = link_info
+                    ref = nodes.reference('', link_text, refuri=link_url, internal=False)
+                    para += ref
             return [para]
 
         # Build an admonition-like block for other placements
@@ -249,7 +280,15 @@ class MetadataFigure(Figure):
         # Title
         admon += nodes.title(text=title)
         # Body paragraph
-        body_para = nodes.paragraph(text=text)
+        body_para = nodes.paragraph(classes=['figure-metadata'])
+        for i, (text_part, link_info) in enumerate(parts):
+            if i > 0:
+                body_para += nodes.Text(' | ')
+            body_para += nodes.Text(text_part)
+            if link_info:
+                link_text, link_url = link_info
+                ref = nodes.reference('', link_text, refuri=link_url, internal=False)
+                body_para += ref
         admon += body_para
 
         if placement == 'margin':
@@ -271,6 +310,11 @@ def check_all_figures_have_license(app, env):
         app: Sphinx application instance
         env: Sphinx build environment
     """
+
+    # Only report if requested
+    if env.config.tb_attribution_summaries is False:
+        return
+    
     missing_licenses = []
     unrecognized_licenses = []
 
@@ -323,10 +367,12 @@ def setup(app):
     Returns:
         dict: Extension metadata
     """
-    # Register config values for global defaults and linking behavior
-    app.add_config_value('tb_attribution_defaults', {}, 'env')
-    app.add_config_value('tb_attribution_license_urls', LICENSE_URLS, 'env')
+    # Register configuration values    
+    app.add_config_value('tb_attribution_settings', {}, 'env')
     app.add_config_value('tb_attribution_link_license', True, 'env')
+    app.add_config_value('tb_attribution_strict_license_check', False, 'env')
+    app.add_config_value('tb_attribution_summaries', True, 'env')
+    app.add_config_value('tb_attribution_individual', True, 'env')
 
     # Override the default figure directive with our custom version
     app.add_directive('figure', MetadataFigure, override=True)
