@@ -99,6 +99,27 @@ latex_elements = {
 
 # -- Extension configuration -------------------------------------------------
 
-metadata_figure_substitute_missing_author = True
-metadata_figure_substitute_missing_date = True
-metadata_figure_substitute_missing_license = True
+# metadata_figure_settings = dict({
+    # 'style': {
+        # 'placement': 'caption',  # caption | admonition | margin
+        # 'show': 'author,license,date',     # which fields to display
+        # 'admonition_title': 'Attribution',            # title for the admonition block
+        # 'admonition_class': 'attribution', # extra CSS class on the admonition
+    # },
+    # 'license': {
+        # 'link_license'       : False,
+        # 'strict_check'       : True,
+        # 'summaries'          : False,
+        # 'individual'         : False,
+        # 'substitute_missing' : True,
+        # 'default_license'    : 'CC-BY-SA'
+    # },
+    # 'author': {
+    #     'substitute_missing' : True,
+        # 'default_author'     : 'That is me'  # use 'config' to pull from Sphinx config author
+    # },
+    # 'date': {
+    #     'substitute_missing' : True,
+    #     'default_date'       : '2031-10-21'   # use 'today' for current date
+    # },
+# })

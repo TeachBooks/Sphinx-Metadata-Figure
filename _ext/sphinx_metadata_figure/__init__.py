@@ -25,11 +25,33 @@ translate = get_translation(MESSAGE_CATALOG_NAME)
 logger = logging.getLogger(__name__)
 
 # Global defaults for figure attribution (can be overridden per file or per directive)
-METADATA_FIGURE_DEFAULTS = {
-    'placement': 'caption',            # caption | admonition | margin
+METADATA_FIGURE_DEFAULTS_STYLE = {
+    'placement': 'caption',  # caption | admonition | margin
     'show': 'author,license,date',     # which fields to display
-    'title': 'Attribution',            # title for the admonition block
+    'admonition_title': 'Attribution',            # title for the admonition block
     'admonition_class': 'attribution', # extra CSS class on the admonition
+}
+METADATA_FIGURE_DEFAULTS_LICENSE = {
+    'link_license'       : True,
+    'strict_check'       : False,
+    'summaries'          : True,
+    'individual'         : True,
+    'substitute_missing' : False,
+    'default_license'    : 'CC-BY'
+}
+METADATA_FIGURE_DEFAULTS_AUTHOR = {
+    'substitute_missing' : False,
+    'default_author'     : 'config'  # use 'config' to pull from Sphinx config author
+}
+METADATA_FIGURE_DEFAULTS_DATE = {
+    'substitute_missing' : False,
+    'default_date'       : 'today'   # use 'today' for current date
+}
+METADATA_FIGURE_DEFAULTS = {
+    'style': METADATA_FIGURE_DEFAULTS_STYLE,
+    'license': METADATA_FIGURE_DEFAULTS_LICENSE,
+    'author': METADATA_FIGURE_DEFAULTS_AUTHOR,
+    'date': METADATA_FIGURE_DEFAULTS_DATE,
 }
 
 # List of valid licenses
@@ -92,7 +114,7 @@ class MetadataFigure(Figure):
         # New options for display/behavior
         'placement': directives.unchanged,          # caption | admonition | margin
         'show': directives.unchanged,               # comma-separated: author,license,date
-        'title': directives.unchanged,              # admonition title (default: Attribution)
+        'admonition_title': directives.unchanged,              # admonition title (default: Attribution)
         'admonition_class': directives.unchanged,   # extra classes for admonition
     })
 
@@ -110,6 +132,8 @@ class MetadataFigure(Figure):
 
         # Validate license
         license_value = self.options.get('license', None)
+        settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
+        license_settings = settings.get('license', {}) if settings else {}
         
         if license_value is None:
             # Warn or raise error if license is missing
@@ -119,9 +143,10 @@ class MetadataFigure(Figure):
                 f'- Please add the :license: option with a recognized license.\n'
                 f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
             )
-            if config and getattr(config, 'metadata_figure_strict_license_check', False):
+            strict_check = 1
+            if license_settings.get('strict_check', False):
                 raise ValueError(message_missing)
-            elif getattr(config, 'metadata_figure_individual', True):
+            elif license_settings.get('individual', True):
                 logger.warning(
                     message_missing,
                     location=(self.state.document.current_source, self.lineno)
@@ -133,9 +158,9 @@ class MetadataFigure(Figure):
                     f'has an unrecognized license "{license_value}".\n'
                     f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
             )
-            if config and getattr(config, 'metadata_figure_strict_license_check', False):
+            if license_settings.get('strict_check', False):
                 raise ValueError(message_incorrect)
-            elif getattr(config, 'metadata_figure_individual', True):
+            elif license_settings.get('individual', True):
                 logger.warning(
                     message_incorrect,
                     location=(self.state.document.current_source, self.lineno)
@@ -158,63 +183,67 @@ class MetadataFigure(Figure):
         # Generate the base figure nodes using parent class
         figure_nodes = super().run()
 
-        # Resolve effective values (option -> doc meta -> global defaults)
-        doc_meta = {}
-        if env:
-            meta = env.metadata.get(env.docname, {})
-            # Support both metadata_figure_* and attribution_* keys
-            def _m(key):
-                return (
-                    meta.get(f'metadata_figure_{key}')
-                    or meta.get(f'attribution_{key}')
-                    or meta.get(key)
-                )
-            # Values may be list-like; coerce to scalar if needed
-            def _coerce(v):
-                if isinstance(v, (list, tuple)):
-                    return v[0] if v else None
-                return v
-            doc_meta = {
-                'author': _coerce(_m('author')),
-                'license': _coerce(_m('license')),
-                'date': _coerce(_m('date')),
-                'placement': _coerce(_m('placement')),
-                'show': _coerce(_m('show')),
-                'title': _coerce(_m('title')),
-                'admonition_class': _coerce(_m('admonition_class')),
-            }
+        # # Resolve effective values (option -> doc meta -> global defaults)
+        # doc_meta = {}
+        # if env:
+        #     meta = env.metadata.get(env.docname, {})
+        #     # Support both metadata_figure_* and attribution_* keys
+        #     def _m(key):
+        #         return (
+        #             meta.get(f'metadata_figure_{key}')
+        #             or meta.get(f'attribution_{key}')
+        #             or meta.get(key)
+        #         )
+        #     # Values may be list-like; coerce to scalar if needed
+        #     def _coerce(v):
+        #         if isinstance(v, (list, tuple)):
+        #             return v[0] if v else None
+        #         return v
+        #     doc_meta = {
+        #         'author': _coerce(_m('author')),
+        #         'license': _coerce(_m('license')),
+        #         'date': _coerce(_m('date')),
+        #         'placement': _coerce(_m('placement')),
+        #         'show': _coerce(_m('show')),
+        #         'title': _coerce(_m('title')),
+        #         'admonition_class': _coerce(_m('admonition_class')),
+        #     }
 
-        settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
         defaults = METADATA_FIGURE_DEFAULTS | settings
 
-        def _resolve(name, opt_key=None):
-            key = opt_key or name
-            return (
-                self.options.get(key)
-                or doc_meta.get(name)
-                or defaults.get(name)
-            )
+        # def _resolve(name, opt_key=None):
+        #     key = opt_key or name
+        #     return (
+        #         self.options.get(key)
+        #         or doc_meta.get(name)
+        #         or defaults.get(name)
+        #     )
 
         # Effective metadata values
-        author_value = _resolve('author')
-        license_value = _resolve('license')
-        date_value = _resolve('date')
-
-        # Substitute missing information if requested
-        if config and getattr(config, 'metadata_figure_substitute_missing_author', False):
-            if not author_value:
-                default_author = getattr(config, 'metadata_figure_default_author', 'config')
+        # author_value = _resolve('author')
+        # license_value = _resolve('license')
+        # date_value = _resolve('date')
+        
+        author_value = self.options.get('author',None)
+        if not author_value:
+            author_settings = settings.get('author', {}) if settings else {}
+            if author_settings.get('substitute_missing', False):
+                default_author = author_settings.get('default_author', 'config')
                 if default_author == 'config':
                     author_value = getattr(config, 'author', None)
                 else:
                     author_value = default_author
-        if config and getattr(config, 'metadata_figure_substitute_missing_license', False):
-            if not license_value:
-                default_license = getattr(config, 'metadata_figure_default_license', 'CC-BY')
+        license_value = self.options.get('license',None)
+        if not license_value:
+            license_settings = settings.get('license', {}) if settings else {}
+            if license_settings.get('substitute_missing', False):
+                default_license = license_settings.get('default_license', 'CC-BY')
                 license_value = default_license
-        if config and getattr(config, 'metadata_figure_substitute_missing_date', False):
-            if not date_value:
-                default_date = getattr(config, 'metadata_figure_default_date', 'today')
+        date_value = self.options.get('date',None)
+        if not date_value:
+             date_settings = settings.get('date', {}) if settings else {}
+             if date_settings.get('substitute_missing', False):
+                default_date = date_settings.get('default_date', 'today')
                 if default_date == 'today':
                     date_value = datetime.today().strftime('%Y-%m-%d')
                 else:
@@ -231,19 +260,29 @@ class MetadataFigure(Figure):
                 figure_node['date'] = date_value
 
             # Determine rendering controls
-            placement = _resolve('placement').strip().lower()
-            show_raw = _resolve('show')
+            style_settings = settings.get('style', {}) if settings else {}
+            placement = self.options.get('placement', None)
+            if not placement:
+                placement = style_settings.get('placement', 'caption')
+            placement = placement.strip().lower()
+            show_raw = self.options.get('show', None)
+            if not show_raw:
+                show_raw = style_settings.get('show', 'author,license,date')
             show = [s.strip().lower() for s in str(show_raw).split(',') if s.strip()]
-            title = translate(_resolve('title'))
-            admon_class = _resolve('admonition_class')
-
+            title = self.options.get('admonition_title', None)
+            if not title:
+                title = style_settings.get('admonition_title', translate('Attribution'))
+            admon_class = self.options.get('admonition_class', None)
+            if not admon_class:
+                admon_class = style_settings.get('admonition_class', 'attribution')
+            
             display_nodes = self._build_attribution_display(
                 figure_node=figure_node,
                 placement=placement,
                 show=show,
                 title=title,
                 admonition_class=admon_class,
-                link_license=getattr(config, 'metadata_figure_link_license', True) if config else True
+                link_license=license_settings.get('link_license', True) if config else True
             )
 
             # Attach display according to placement
@@ -332,7 +371,9 @@ def check_all_figures_have_license(app, env):
     """
 
     # Only report if requested
-    if env.config.metadata_figure_summaries is False:
+    settings = getattr(app.config, 'metadata_figure_settings', {}) if app else {}
+    license_settings = settings.get('license', {})
+    if not license_settings.get('summaries', True):
         return
     
     missing_licenses = []
@@ -389,19 +430,6 @@ def setup(app):
     """
     # Register configuration values    
     app.add_config_value('metadata_figure_settings', {}, 'env')
-    app.add_config_value('metadata_figure_link_license', True, 'env')
-    app.add_config_value('metadata_figure_strict_license_check', False, 'env')
-    app.add_config_value('metadata_figure_summaries', True, 'env')
-    app.add_config_value('metadata_figure_individual', True, 'env')
-
-    app.add_config_value('metadata_figure_substitute_missing_author', False, 'env')
-    app.add_config_value('metadata_figure_default_author', 'config', 'env')
-    
-    app.add_config_value('metadata_figure_substitute_missing_date', False, 'env')
-    app.add_config_value('metadata_figure_default_date', 'today', 'env')
-    
-    app.add_config_value('metadata_figure_substitute_missing_license', False, 'env')
-    app.add_config_value('metadata_figure_default_license', 'CC-BY', 'env')
 
     # Override the default figure directive with our custom version
     app.add_directive('figure', MetadataFigure, override=True)
