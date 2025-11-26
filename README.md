@@ -146,140 +146,31 @@ The figure directive is extended with the following options to add metadata:
 - `date`:
   - Optionally specify the creation date of the image in `YYYY-MM-DD` format.
 - `copyright`:
-  - Optionally specify the copyright holder of the image.
+  - Optionally specify a text with copyright information for the image.
 - `source`:
   - Optionally specify the source of the image.
+  - This value can be:
+    - a URL (starting with "http" or "https")
+    - a textual source description
+    - a MarkDown link
 - `placement`:
-  - Optionally override the global `placement` setting for this figure only. Options are `caption`, `admonition`, or `margin`.
+  - Optionally override the global `placement` setting for this figure only.
+  - Options are `caption`, `admonition`, or `margin`.
 - `show`:
-  - Optionally override the global `show` setting for this figure only. Comma-separated list of which metadata fields to show. Options are `author`, `license`, `date`, `copyright`, `source`.
+  - Optionally override the global `show` setting for this figure only.
+  - Comma-separated list of which metadata fields to show.
+  - Options are any combination of `author`, `license`, `date`, `copyright` and `source`.
 - `admonition_title`:
-  - Optionally override the global `admonition_title` setting for this figure only. Only relevant if `placement` is `admonition` or `margin`.
+  - Optionally override the global `admonition_title` setting for this figure only.
+  - Only relevant if `placement` is `admonition` or `margin`.
 - `admonition_class`:
-  - Optionally override the global `admonition_class` setting for this figure only. Only relevant if `placement` is `admonition` or `margin`.
-  
-## Example Usage
+  - Optionally override the global `admonition_class` setting for this figure only.
+  - Only relevant if `placement` is `admonition` or `margin`.
 
-### Example 1: Complete Metadata
+## Documentation
 
-```{figure} https://via.placeholder.com/600x400/4A90E2/ffffff?text=Sample+Image+1
-:author: John Doe
-:license: CC-BY-SA
-:date: 2025-01-15
-:alt: Sample image with complete metadata
-:width: 500px
-:align: center
-:source: https://www.google.com/search?q=COPYRIGHT&rlz=1C1GCHA_enNL1151NL1151&oq=COPYRIGHT&gs_lcrp=EgZjaHJvbWUyBggAEEUYOdIBBzYyMmowajeoAgCwAgA&sourceid=chrome&ie=UTF-8
+Further documentation for this extension is available in the [TeachBooks manual](https://teachbooks.io/manual).
 
-This is a figure with complete metadata including author, license, and date.
-```
+## Contribute
 
-### Example 2: Minimal Metadata
-
-```{figure} https://via.placeholder.com/600x400/7ED321/ffffff?text=Sample+Image+2
-:license: MIT
-:alt: Sample image with minimal metadata
-:width: 400px
-:source: [pretty source](https://www.google.com/search?q=COPYRIGHT&rlz=1C1GCHA_enNL1151NL1151&oq=COPYRIGHT&gs_lcrp=EgZjaHJvbWUyBggAEEUYOdIBBzYyMmowajeoAgCwAgA&sourceid=chrome&ie=UTF-8)
-
-This figure has only a license specified.
-```
-
-### Example 3: Without License (Warning)
-
-```{figure} https://via.placeholder.com/600x400/F5A623/ffffff?text=Sample+Image+3
-:author: Jane Smith
-:alt: Sample image without license
-:width: 400px
-:source: Ergens vandaan
-
-This figure is missing a license and will generate a warning during build.
-```
-
-### Example 4: Invalid License (Warning)
-
-```{figure} https://via.placeholder.com/600x400/BD10E0/ffffff?text=Sample+Image+4
-:author: Bob Johnson
-:license: invalid-license
-:date: 2025-01-20
-:alt: Sample image with invalid license
-:width: 400px
-
-This figure has an invalid license type and will generate a warning.
-```
-
-### Example 5: Public Domain Image
-
-```{figure} https://via.placeholder.com/600x400/50E3C2/ffffff?text=Public+Domain
-:author: Unknown
-:license: Public Domain
-:date: 2020-05-10
-:alt: Public domain image
-:width: 450px
-:align: center
-
-This image is in the public domain.
-```
-
-## Additional Features
-
-### Caption and Alt Text
-
-All figures should include:
-- A descriptive caption (the text below the directive)
-- Alt text for accessibility (`:alt:` option)
-
-### Alignment Options
-
-You can align figures using the `:align:` option:
-- `left`: Align to the left
-- `center`: Center the figure
-- `right`: Align to the right
-
-### Width and Scale
-
-Control figure size with:
-- `:width:` - Set absolute width (e.g., `500px`, `80%`)
-- `:scale:` - Scale percentage (e.g., `50`)
-
-## Validation
-
-During the build process, the extension will:
-1. Check if all figures have license information
-2. Validate license types against the allowed list
-3. Validate date formats (YYYY-MM-DD)
-4. Generate warnings for missing or invalid metadata
-
-## Building the Documentation
-
-To build this documentation:
-
-```bash
-# Install dependencies
-pip install sphinx myst-parser
-
-# Build HTML
-sphinx-build -b html . _build/html
-
-# View warnings
-# Check the console output for any license-related warnings
-```
-
-## Configuration
-
-See `conf.py` for configuration options:
-- Enable/disable strict license checking
-- Customize valid license list
-- Suppress specific warnings
-
----
-
-*This documentation was generated with the Custom Figure Sphinx extension.*
-
-## Contents
-
-```{toctree}
-:maxdepth: 1
-
-reference/contact_information
-```
+This tool's repository is stored on [GitHub](https://github.com/TeachBooks/Sphinx-Metadata-Figure). If you'd like to contribute, you can create a fork and open a pull request on the [GitHub repository](https://github.com/TeachBooks/Sphinx-Metadata-Figure).
