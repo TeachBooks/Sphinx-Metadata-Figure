@@ -322,8 +322,8 @@ class MetadataFigure(Figure):
         if not parts:
             return []
 
-        if placement == 'caption':
-            para = nodes.paragraph(classes=['figure-metadata', 'tb-attribution'])
+        if placement == 'caption': # CSS figure-metadata class styles it appropriately
+            para = nodes.paragraph(classes=['figure-metadata'])
             for i, (text_part, link_info) in enumerate(parts):
                 if i > 0:
                     para += nodes.Text(' | ')
@@ -335,11 +335,12 @@ class MetadataFigure(Figure):
             return [para]
 
         # Build an admonition-like block for other placements
-        admon = nodes.admonition(classes=['tb-attribution', admonition_class])
+        # admonition classes define the style
+        admon = nodes.admonition(classes=[admonition_class])
         # Title
         admon += nodes.title(text=title)
         # Body paragraph
-        body_para = nodes.paragraph(classes=['figure-metadata'])
+        body_para = nodes.paragraph()
         for i, (text_part, link_info) in enumerate(parts):
             if i > 0:
                 body_para += nodes.Text(' | ')
@@ -353,7 +354,6 @@ class MetadataFigure(Figure):
         if placement == 'margin':
             # Add margin class to allow themes to style it in the margin
             admon['classes'].append('margin')
-            admon['classes'].append('tb-margin')
 
         return [admon]
 
