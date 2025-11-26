@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path('_ext').resolve()))
 
 project = 'Custom Figure Documentation'
 copyright = '2025'
-author = ''
+author = 'Dummy Author'
 
 # The full version, including alpha/beta/rc tags
 release = '0.1.0'
@@ -99,3 +99,6 @@ latex_elements = {
 
 # -- Extension configuration -------------------------------------------------
 
+metadata_figure_substitute_missing_author = True
+metadata_figure_substitute_missing_date = True
+metadata_figure_substitute_missing_license = True

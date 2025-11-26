@@ -200,6 +200,26 @@ class MetadataFigure(Figure):
         license_value = _resolve('license')
         date_value = _resolve('date')
 
+        # Substitute missing information if requested
+        if config and getattr(config, 'metadata_figure_substitute_missing_author', False):
+            if not author_value:
+                default_author = getattr(config, 'metadata_figure_default_author', 'config')
+                if default_author == 'config':
+                    author_value = getattr(config, 'author', None)
+                else:
+                    author_value = default_author
+        if config and getattr(config, 'metadata_figure_substitute_missing_license', False):
+            if not license_value:
+                default_license = getattr(config, 'metadata_figure_default_license', 'CC-BY')
+                license_value = default_license
+        if config and getattr(config, 'metadata_figure_substitute_missing_date', False):
+            if not date_value:
+                default_date = getattr(config, 'metadata_figure_default_date', 'today')
+                if default_date == 'today':
+                    date_value = datetime.today().strftime('%Y-%m-%d')
+                else:
+                    date_value = default_date
+
         # Store metadata on the figure node, so builders can access it
         if figure_nodes:
             figure_node = figure_nodes[0]
@@ -373,7 +393,15 @@ def setup(app):
     app.add_config_value('metadata_figure_strict_license_check', False, 'env')
     app.add_config_value('metadata_figure_summaries', True, 'env')
     app.add_config_value('metadata_figure_individual', True, 'env')
-    app.add_config_value('metadata_figure_from_config', False, 'env')
+
+    app.add_config_value('metadata_figure_substitute_missing_author', False, 'env')
+    app.add_config_value('metadata_figure_default_author', 'config', 'env')
+    
+    app.add_config_value('metadata_figure_substitute_missing_date', False, 'env')
+    app.add_config_value('metadata_figure_default_date', 'today', 'env')
+    
+    app.add_config_value('metadata_figure_substitute_missing_license', False, 'env')
+    app.add_config_value('metadata_figure_default_license', 'CC-BY', 'env')
 
     # Override the default figure directive with our custom version
     app.add_directive('figure', MetadataFigure, override=True)
