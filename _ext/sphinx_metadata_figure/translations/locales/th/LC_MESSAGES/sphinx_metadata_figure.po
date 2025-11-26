@@ -14,6 +14,9 @@ msgstr "การระบุแหล่งที่มา"
 msgid "Author"
 msgstr "ผู้เขียน"
 
+msgid "Copyright"
+msgstr "ลิขสิทธิ์"
+
 msgid "Date"
 msgstr "วันที่"
 

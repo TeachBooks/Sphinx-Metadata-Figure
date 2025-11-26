@@ -14,6 +14,9 @@ msgstr "অ্যাট্রিবিউশন"
 msgid "Author"
 msgstr "লেখক"
 
+msgid "Copyright"
+msgstr "কপিরাইট"
+
 msgid "Date"
 msgstr "তারিখ"
 

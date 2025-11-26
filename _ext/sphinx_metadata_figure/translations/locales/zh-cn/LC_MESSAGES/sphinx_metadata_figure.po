@@ -14,6 +14,9 @@ msgstr "归属"
 msgid "Author"
 msgstr "作者"
 
+msgid "Copyright"
+msgstr "版权"
+
 msgid "Date"
 msgstr "日期"
 

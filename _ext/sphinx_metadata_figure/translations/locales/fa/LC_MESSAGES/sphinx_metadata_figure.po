@@ -14,6 +14,9 @@ msgstr "انتساب"
 msgid "Author"
 msgstr "نویسنده"
 
+msgid "Copyright"
+msgstr "کپی‌رایت"
+
 msgid "Date"
 msgstr "تاریخ"
 

@@ -14,6 +14,9 @@ msgstr "Tulajdonítás"
 msgid "Author"
 msgstr "Szerző"
 
+msgid "Copyright"
+msgstr "Szerzői jog"
+
 msgid "Date"
 msgstr "Dátum"
 

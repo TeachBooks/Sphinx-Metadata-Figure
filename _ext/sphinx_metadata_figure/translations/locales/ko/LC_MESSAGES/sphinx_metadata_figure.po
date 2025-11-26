@@ -14,6 +14,9 @@ msgstr "귀속"
 msgid "Author"
 msgstr "저자"
 
+msgid "Copyright"
+msgstr "저작권"
+
 msgid "Date"
 msgstr "날짜"
 

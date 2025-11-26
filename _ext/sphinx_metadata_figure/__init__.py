@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # Global defaults for figure attribution (can be overridden per file or per directive)
 METADATA_FIGURE_DEFAULTS_STYLE = {
     'placement': 'caption',  # caption | admonition | margin
-    'show': 'author,license,date',     # which fields to display
+    'show': 'author,license,date,copyright',     # which fields to display
     'admonition_title': 'Attribution',            # title for the admonition block
     'admonition_class': 'attribution', # extra CSS class on the admonition
 }
@@ -47,11 +47,16 @@ METADATA_FIGURE_DEFAULTS_DATE = {
     'substitute_missing' : False,
     'default_date'       : 'today'   # use 'today' for current date
 }
+METADATA_FIGURE_DEFAULTS_COPYRIGHT = {
+    'substitute_missing' : False,
+    'default_copyright'    : 'authoryear'  # 'authoryear' | 'config' | 'authoryear-config' | 'config-authoryear' | 'anything else'
+}
 METADATA_FIGURE_DEFAULTS = {
     'style': METADATA_FIGURE_DEFAULTS_STYLE,
     'license': METADATA_FIGURE_DEFAULTS_LICENSE,
     'author': METADATA_FIGURE_DEFAULTS_AUTHOR,
-    'date': METADATA_FIGURE_DEFAULTS_DATE,
+    'date': METADATA_FIGURE_DEFAULTS_DATE,''
+    'copyright': METADATA_FIGURE_DEFAULTS_COPYRIGHT
 }
 
 # List of valid licenses
@@ -111,6 +116,7 @@ class MetadataFigure(Figure):
         'author': directives.unchanged,
         'license': directives.unchanged,
         'date': directives.unchanged,
+        'copyright': directives.unchanged,
         # New options for display/behavior
         'placement': directives.unchanged,          # caption | admonition | margin
         'show': directives.unchanged,               # comma-separated: author,license,date
@@ -129,10 +135,16 @@ class MetadataFigure(Figure):
         # Access environment/config for defaults and per-file metadata
         env = getattr(self.state.document.settings, 'env', None)
         config = getattr(env.app, 'config', None) if env else None
+        settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
 
         # Validate license
         license_value = self.options.get('license', None)
-        settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
+        if not license_value:
+            license_settings = settings.get('license', {}) if settings else {}
+            if license_settings.get('substitute_missing', False):
+                default_license = license_settings.get('default_license', 'CC-BY')
+                license_value = default_license
+
         license_settings = settings.get('license', {}) if settings else {}
         
         if license_value is None:
@@ -143,7 +155,6 @@ class MetadataFigure(Figure):
                 f'- Please add the :license: option with a recognized license.\n'
                 f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
             )
-            strict_check = 1
             if license_settings.get('strict_check', False):
                 raise ValueError(message_missing)
             elif license_settings.get('individual', True):
@@ -167,7 +178,15 @@ class MetadataFigure(Figure):
             )
         
         # Validate date format (optional)
-        date_value = self.options.get('date', None)
+        date_value = self.options.get('date',None)
+        if not date_value:
+             date_settings = settings.get('date', {}) if settings else {}
+             if date_settings.get('substitute_missing', False):
+                default_date = date_settings.get('default_date', 'today')
+                if default_date == 'today':
+                    date_value = datetime.today().strftime('%Y-%m-%d')
+                else:
+                    date_value = default_date
         if date_value:
             try:
                 datetime.strptime(date_value, '%Y-%m-%d')
@@ -179,51 +198,7 @@ class MetadataFigure(Figure):
                     f'Expected format: YYYY-MM-DD (e.g., 2025-01-15)',
                     location=(self.state.document.current_source, self.lineno)
                 )
-        
-        # Generate the base figure nodes using parent class
-        figure_nodes = super().run()
 
-        # # Resolve effective values (option -> doc meta -> global defaults)
-        # doc_meta = {}
-        # if env:
-        #     meta = env.metadata.get(env.docname, {})
-        #     # Support both metadata_figure_* and attribution_* keys
-        #     def _m(key):
-        #         return (
-        #             meta.get(f'metadata_figure_{key}')
-        #             or meta.get(f'attribution_{key}')
-        #             or meta.get(key)
-        #         )
-        #     # Values may be list-like; coerce to scalar if needed
-        #     def _coerce(v):
-        #         if isinstance(v, (list, tuple)):
-        #             return v[0] if v else None
-        #         return v
-        #     doc_meta = {
-        #         'author': _coerce(_m('author')),
-        #         'license': _coerce(_m('license')),
-        #         'date': _coerce(_m('date')),
-        #         'placement': _coerce(_m('placement')),
-        #         'show': _coerce(_m('show')),
-        #         'title': _coerce(_m('title')),
-        #         'admonition_class': _coerce(_m('admonition_class')),
-        #     }
-
-        defaults = METADATA_FIGURE_DEFAULTS | settings
-
-        # def _resolve(name, opt_key=None):
-        #     key = opt_key or name
-        #     return (
-        #         self.options.get(key)
-        #         or doc_meta.get(name)
-        #         or defaults.get(name)
-        #     )
-
-        # Effective metadata values
-        # author_value = _resolve('author')
-        # license_value = _resolve('license')
-        # date_value = _resolve('date')
-        
         author_value = self.options.get('author',None)
         if not author_value:
             author_settings = settings.get('author', {}) if settings else {}
@@ -233,21 +208,52 @@ class MetadataFigure(Figure):
                     author_value = getattr(config, 'author', None)
                 else:
                     author_value = default_author
-        license_value = self.options.get('license',None)
-        if not license_value:
-            license_settings = settings.get('license', {}) if settings else {}
-            if license_settings.get('substitute_missing', False):
-                default_license = license_settings.get('default_license', 'CC-BY')
-                license_value = default_license
-        date_value = self.options.get('date',None)
-        if not date_value:
-             date_settings = settings.get('date', {}) if settings else {}
-             if date_settings.get('substitute_missing', False):
-                default_date = date_settings.get('default_date', 'today')
-                if default_date == 'today':
-                    date_value = datetime.today().strftime('%Y-%m-%d')
+
+        copyright_value = self.options.get('copyright', None)
+        if not copyright_value:
+            copyright_settings = settings.get('copyright', {}) if settings else {}
+            if copyright_settings.get('substitute_missing', False):
+                default_copyright = copyright_settings.get('default_copyright', 'authoryear')
+                if default_copyright == 'authoryear':
+                    if author_value and date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year} {author_value}'
+                    elif author_value:
+                        copyright_value = f'© {author_value}'
+                    elif date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year}'
+                elif default_copyright == 'config':
+                    if getattr(config, 'copyright', None):
+                        copyright_value = getattr(config, 'copyright', None)
+                elif default_copyright == 'authoryear-config':
+                    if author_value and date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year} {author_value}'
+                    elif author_value:
+                        copyright_value = f'© {author_value}'
+                    elif date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year}'
+                    else:
+                        if getattr(config, 'copyright', None):
+                            copyright_value = getattr(config, 'copyright', None)
+                elif default_copyright == 'config-authoryear':
+                    if getattr(config, 'copyright', None):
+                        copyright_value = getattr(config, 'copyright', None)
+                    elif author_value and date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year} {author_value}'
+                    elif author_value:
+                        copyright_value = f'© {author_value}'
+                    elif date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year}'
                 else:
-                    date_value = default_date
+                    copyright_value = default_copyright
+        
+        # Generate the base figure nodes using parent class
+        figure_nodes = super().run()
 
         # Store metadata on the figure node, so builders can access it
         if figure_nodes:
@@ -258,6 +264,8 @@ class MetadataFigure(Figure):
                 figure_node['license'] = license_value
             if date_value:
                 figure_node['date'] = date_value
+            if copyright_value:
+                figure_node['copyright'] = copyright_value
 
             # Determine rendering controls
             style_settings = settings.get('style', {}) if settings else {}
@@ -267,7 +275,7 @@ class MetadataFigure(Figure):
             placement = placement.strip().lower()
             show_raw = self.options.get('show', None)
             if not show_raw:
-                show_raw = style_settings.get('show', 'author,license,date')
+                show_raw = style_settings.get('show', 'author,license,date,copyright')
             show = [s.strip().lower() for s in str(show_raw).split(',') if s.strip()]
             title = self.options.get('admonition_title', None)
             if not title:
@@ -318,6 +326,8 @@ class MetadataFigure(Figure):
                 parts.append((f"{translate('License')}: {figure_node['license']}", None))
         if 'date' in figure_node and 'date' in show:
             parts.append((f"{translate('Date')}: {figure_node['date']}", None))
+        if 'copyright' in figure_node and 'copyright' in show:
+            parts.append((f"{translate('Copyright')}: {figure_node['copyright']}", None))
 
         if not parts:
             return []
@@ -446,7 +456,6 @@ def setup(app):
     app.add_message_catalog(MESSAGE_CATALOG_NAME, locale_dir)
     
     return {
-        'version': '0.1.0',
         'parallel_read_safe': True,
         'parallel_write_safe': True,
     }

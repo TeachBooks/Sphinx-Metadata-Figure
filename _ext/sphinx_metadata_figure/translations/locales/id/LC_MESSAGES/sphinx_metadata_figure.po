@@ -14,6 +14,9 @@ msgstr "Atribusi"
 msgid "Author"
 msgstr "Penulis"
 
+msgid "Copyright"
+msgstr "Hak Cipta"
+
 msgid "Date"
 msgstr "Tanggal"
 

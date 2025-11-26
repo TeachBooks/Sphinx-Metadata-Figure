@@ -14,6 +14,9 @@ msgstr "Utambuzi"
 msgid "Author"
 msgstr "Mwandishi"
 
+msgid "Copyright"
+msgstr "Haki miliki"
+
 msgid "Date"
 msgstr "Tarehe"
 

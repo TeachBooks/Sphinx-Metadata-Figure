@@ -14,6 +14,9 @@ msgstr "Ghi công"
 msgid "Author"
 msgstr "Tác giả"
 
+msgid "Copyright"
+msgstr "Bản quyền"
+
 msgid "Date"
 msgstr "Ngày"
 

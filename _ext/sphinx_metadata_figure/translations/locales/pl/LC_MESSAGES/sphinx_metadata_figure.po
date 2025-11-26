@@ -14,6 +14,9 @@ msgstr "Atrybucja"
 msgid "Author"
 msgstr "Autor"
 
+msgid "Copyright"
+msgstr "Prawa autorskie"
+
 msgid "Date"
 msgstr "Data"
 

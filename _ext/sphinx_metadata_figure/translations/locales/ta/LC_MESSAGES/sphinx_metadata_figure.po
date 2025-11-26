@@ -14,6 +14,9 @@ msgstr "பண்புக்கூறல்"
 msgid "Author"
 msgstr "ஆசிரியர்"
 
+msgid "Copyright"
+msgstr "பதிப்புரிமை"
+
 msgid "Date"
 msgstr "தேதி"
 
