@@ -10,7 +10,7 @@ This section is useful for user type 3-5.
    :end-before: ## Documentation
 ```
 
-## Examples
+## Examples using default settings
 
 ### Example 1: Complete Metadata
 
