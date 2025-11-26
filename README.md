@@ -35,10 +35,62 @@ sphinx:
         - sphinx_metadata_figure
 ```
 
+## Configuration
 
+This extension can be configured via the `_config.yml` file in your JupyterBook project (or similarly in `conf.py` for standard Sphinx projects).
 
+The _default_ configuration options are as follows:
 
+```yaml
+sphinx:
+  config:
+    metadata_figure_settings:
+      style: 
+        placement: caption
+        show: author,license,date,copyright,source
+        admonition_title: Attribution
+        admonition_class: attribution
+      license:
+        link_license: true
+        strict_check: false
+        summaries: true
+        individual: true
+        substitute_missing: false
+        default_license: CC-BY
+      author:
+        substitute_missing: false
+        default_author: config
+      date:
+        substitute_missing: false
+        default_date: today
+      copyright:
+        substitute_missing: false
+        default_copyright: authoryear
+      source:
+        warn_missing: false
+```
 
+Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of key-value pairs. Each level 1 ley will be discussed next, including the options.
+
+### Style
+
+The `style` key contains options for how the metadata is displayed.
+- `placement`: Where to place the metadata. Options are
+ - `caption`: as text below the figure caption.
+ - `admonition`: in an admonition box below the figure caption.
+ - `margin`: in an admonition in the margin next to the figure.
+- `show`: A comma-separated list of which metadata fields to show. Options that can be included are
+  - `author`
+  - `license`
+  - `date`
+  - `copyright`
+  - `source`
+- `admonition_title`: (English) title of the admonition box (if `placement` is `admonition` or `margin`). Will be translated if translations are available.
+- `admonition_class`: CSS class to apply to the admonition box.
+
+The last two options are only relevant if `placement` is set to `admonition` or `margin`.
+
+### License
 
 
 
@@ -207,39 +259,4 @@ See `conf.py` for configuration options:
 :maxdepth: 1
 
 reference/contact_information
-```
-
-## Configuration
-
-This extension can be configured via the `_config.yml` file in your JupyterBook project (or similarly in `conf.py` for standard Sphinx projects).
-
-The _default_ configuration options are as follows:
-
-```yaml
-sphinx:
-  config:
-    metadata_figure_settings:
-      style: 
-        placement: caption
-        show: author,license,date,copyright,source
-        admonition_title: Attribution
-        admonition_class: attribution
-      license:
-        link_license: true
-        strict_check: false
-        summaries: true
-        individual: true
-        substitute_missing: false
-        default_license: CC-BY
-      author:
-        substitute_missing: false
-        default_author: config
-      date:
-        substitute_missing: false
-        default_date: today
-      copyright:
-        substitute_missing: false
-        default_copyright: authoryear
-      source:
-        warn_missing: false
 ```
