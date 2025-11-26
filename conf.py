@@ -16,8 +16,8 @@ sys.path.insert(0, str(Path('_ext').resolve()))
 # -- Project information -----------------------------------------------------
 
 project = 'Custom Figure Documentation'
-copyright = '2025, Your Name'
-author = 'Your Name'
+copyright = '2025 TU Delft'
+author = 'Dummy Author'
 
 # The full version, including alpha/beta/rc tags
 release = '0.1.0'
@@ -48,7 +48,17 @@ templates_path = ['_templates']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    '.venv',
+    '.venv/**',
+    'venv',
+    'venv/**',
+    '**/site-packages/**',
+    '**/*.dist-info/**',
+]
 
 # The suffix(es) of source filenames
 source_suffix = {
@@ -67,10 +77,8 @@ html_theme = 'alabaster'
 # Add any paths that contain custom static files (such as style sheets)
 html_static_path = ['_static']
 
-# Custom CSS files
-html_css_files = [
-    'custom_figure.css',
-]
+# Custom CSS files (extension already injects custom_figure.css)
+html_css_files = []
 
 # Theme options
 html_theme_options = {
@@ -91,15 +99,34 @@ latex_elements = {
 
 # -- Extension configuration -------------------------------------------------
 
-# Suppress specific warnings (optional)
-# Uncomment to suppress figure license warnings during build
-# suppress_warnings = ['custom_figure.missing_license']
-
-# Fail build on missing licenses (optional, strict mode)
-# Set to True to make the build fail if any figure is missing a license
-STRICT_LICENSE_CHECK = False
-
-if STRICT_LICENSE_CHECK:
-    # This would require additional implementation in custom_figure.py
-    # to raise exceptions instead of warnings
-    pass
+metadata_figure_settings = dict({
+    # 'style': {
+        # 'placement': 'caption',  # caption | admonition | margin
+        # 'show': 'author,license,date',     # which fields to display
+        # 'admonition_title': 'Attribution',            # title for the admonition block
+        # 'admonition_class': 'attribution', # extra CSS class on the admonition
+    # },
+    # 'license': {
+        # 'link_license'       : False,
+        # 'strict_check'       : True,
+        # 'summaries'          : False,
+        # 'individual'         : False,
+        # 'substitute_missing' : True,
+        # 'default_license'    : 'CC-BY-SA'
+    # },
+    # 'author': {
+    #     'substitute_missing' : True,
+        # 'default_author'     : 'That is me'  # use 'config' to pull from Sphinx config author
+    # },
+    # 'date': {
+    #     'substitute_missing' : True,
+    #     'default_date'       : '2031-10-21'   # use 'today' for current date
+    # },
+    # 'copyright': {
+    #     'substitute_missing': True,
+    #     'default_copyright': 'config-authoryear'  # 'authoryear' | 'config' | 'authoryear-config' | 'config-authoryear' | 'anything else'
+    # }
+    'source': {
+        'warn_missing' : True
+    }
+})

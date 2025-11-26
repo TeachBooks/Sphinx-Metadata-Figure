@@ -8,11 +8,20 @@ msgstr ""
 "Language: hu\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Tulajdonítás"
+
 msgid "Author"
 msgstr "Szerző"
+
+msgid "Copyright"
+msgstr "Szerzői jog"
 
 msgid "Date"
 msgstr "Dátum"
 
 msgid "License"
 msgstr "Licenc"
+
+msgid "Source"
+msgstr "Forrás"

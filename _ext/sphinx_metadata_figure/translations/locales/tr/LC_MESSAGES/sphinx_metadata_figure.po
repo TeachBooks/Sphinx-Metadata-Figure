@@ -8,11 +8,20 @@ msgstr ""
 "Language: tr\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Atıf"
+
 msgid "Author"
 msgstr "Yazar"
+
+msgid "Copyright"
+msgstr "Telif hakkı"
 
 msgid "Date"
 msgstr "Tarih"
 
 msgid "License"
 msgstr "Lisans"
+
+msgid "Source"
+msgstr "Kaynak"

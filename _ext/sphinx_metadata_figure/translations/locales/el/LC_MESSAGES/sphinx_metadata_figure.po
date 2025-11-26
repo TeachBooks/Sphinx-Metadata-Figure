@@ -8,11 +8,20 @@ msgstr ""
 "Language: el\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Απόδοση"
+
 msgid "Author"
 msgstr "Συγγραφέας"
+
+msgid "Copyright"
+msgstr "Πνευματικά δικαιώματα"
 
 msgid "Date"
 msgstr "Ημερομηνία"
 
 msgid "License"
 msgstr "Άδεια"
+
+msgid "Source"
+msgstr "Πηγή"

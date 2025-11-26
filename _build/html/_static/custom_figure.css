@@ -7,34 +7,18 @@
  */
 
 .figure-metadata {
-    font-size: 0.85em;
-    color: #666;
-    font-style: italic;
+    font-size: 0.85em;  /* slightly smaller relative to parent element */
+    color: var(--pst-color-muted-highlight); /* use a muted color from the theme */
+    font-style: italic; /* make it slanted to differentiate from main caption */
     margin-top: 0.5em;
     padding-top: 0.5em;
-    border-top: 1px solid #e0e0e0;
-    text-align: left;
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: var(--pst-color-border); /* subtle top border */
 }
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    .figure-metadata {
-        color: #aaa;
-        border-top-color: #444;
-    }
-}
-
 /* Additional spacing for figures with metadata */
-figure.align-center .figure-metadata,
-figure.align-default .figure-metadata {
-    margin-left: auto;
-    margin-right: auto;
-}
-
-/* Print styles */
-@media print {
-    .figure-metadata {
-        font-size: 0.8em;
-        color: #333;
-    }
-}
+/* figure.align-center .figure-metadata, */
+/* figure.align-default .figure-metadata { */
+    /* margin-left: auto; */
+    /* margin-right: auto; */
+/* } */

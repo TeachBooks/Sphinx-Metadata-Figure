@@ -8,11 +8,20 @@ msgstr ""
 "Language: cs\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Uvedení autora"
+
 msgid "Author"
 msgstr "Autor"
+
+msgid "Copyright"
+msgstr "Autorské právo"
 
 msgid "Date"
 msgstr "Datum"
 
 msgid "License"
 msgstr "Licence"
+
+msgid "Source"
+msgstr "Zdroj"

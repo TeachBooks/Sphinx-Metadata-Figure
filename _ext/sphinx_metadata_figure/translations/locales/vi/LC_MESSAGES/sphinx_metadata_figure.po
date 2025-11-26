@@ -8,11 +8,20 @@ msgstr ""
 "Language: vi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Ghi công"
+
 msgid "Author"
 msgstr "Tác giả"
+
+msgid "Copyright"
+msgstr "Bản quyền"
 
 msgid "Date"
 msgstr "Ngày"
 
 msgid "License"
 msgstr "Giấy phép"
+
+msgid "Source"
+msgstr "Nguồn"

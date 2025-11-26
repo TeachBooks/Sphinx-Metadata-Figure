@@ -8,11 +8,20 @@ msgstr ""
 "Language: ar\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "الإسناد"
+
 msgid "Author"
 msgstr "مؤلف"
+
+msgid "Copyright"
+msgstr "حقوق النشر"
 
 msgid "Date"
 msgstr "تاريخ"
 
 msgid "License"
 msgstr "رخصة"
+
+msgid "Source"
+msgstr "المصدر"

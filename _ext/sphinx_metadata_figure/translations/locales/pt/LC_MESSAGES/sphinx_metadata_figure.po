@@ -8,11 +8,20 @@ msgstr ""
 "Language: pt\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Atribuição"
+
 msgid "Author"
 msgstr "Autor"
+
+msgid "Copyright"
+msgstr "Direitos autorais"
 
 msgid "Date"
 msgstr "Data"
 
 msgid "License"
 msgstr "Licença"
+
+msgid "Source"
+msgstr "Fonte"

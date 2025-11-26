@@ -24,6 +24,45 @@ translate = get_translation(MESSAGE_CATALOG_NAME)
 
 logger = logging.getLogger(__name__)
 
+# Global defaults for figure attribution (can be overridden per file or per directive)
+METADATA_FIGURE_DEFAULTS_STYLE = {
+    'placement': 'caption',  # caption | admonition | margin
+    'show': 'author,license,date,copyright,source',     # which fields to display
+    'admonition_title': 'Attribution',            # title for the admonition block
+    'admonition_class': 'attribution', # extra CSS class on the admonition
+}
+METADATA_FIGURE_DEFAULTS_LICENSE = {
+    'link_license'       : True,
+    'strict_check'       : False,
+    'summaries'          : True,
+    'individual'         : True,
+    'substitute_missing' : False,
+    'default_license'    : 'CC-BY'
+}
+METADATA_FIGURE_DEFAULTS_AUTHOR = {
+    'substitute_missing' : False,
+    'default_author'     : 'config'  # use 'config' to pull from Sphinx config author
+}
+METADATA_FIGURE_DEFAULTS_DATE = {
+    'substitute_missing' : False,
+    'default_date'       : 'today'   # use 'today' for current date
+}
+METADATA_FIGURE_DEFAULTS_COPYRIGHT = {
+    'substitute_missing' : False,
+    'default_copyright'    : 'authoryear'  # 'authoryear' | 'config' | 'authoryear-config' | 'config-authoryear' | 'anything else'
+}
+METADATA_FIGURE_DEFAULTS_SOURCE = {
+    'warn_missing' : False
+}
+METADATA_FIGURE_DEFAULTS = {
+    'style': METADATA_FIGURE_DEFAULTS_STYLE,
+    'license': METADATA_FIGURE_DEFAULTS_LICENSE,
+    'author': METADATA_FIGURE_DEFAULTS_AUTHOR,
+    'date': METADATA_FIGURE_DEFAULTS_DATE,
+    'copyright': METADATA_FIGURE_DEFAULTS_COPYRIGHT,
+    'source': METADATA_FIGURE_DEFAULTS_SOURCE
+}
+
 # List of valid licenses
 VALID_LICENSES = [
     'CC0',
@@ -45,6 +84,24 @@ VALID_LICENSES = [
     'Pexels License',
 ]
 
+# Map known license tokens to canonical URLs (used when linking licenses)
+LICENSE_URLS = {
+    'CC0': 'https://creativecommons.org/publicdomain/zero/1.0/',
+    'CC-BY': 'https://creativecommons.org/licenses/by/4.0/',
+    'CC-BY-SA': 'https://creativecommons.org/licenses/by-sa/4.0/',
+    'CC-BY-NC': 'https://creativecommons.org/licenses/by-nc/4.0/',
+    'CC-BY-NC-SA': 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+    'CC-BY-ND': 'https://creativecommons.org/licenses/by-nd/4.0/',
+    'CC-BY-NC-ND': 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
+    'Public Domain': 'https://creativecommons.org/publicdomain/mark/1.0/',
+    'MIT': 'https://opensource.org/licenses/MIT',
+    'Apache-2.0': 'https://www.apache.org/licenses/LICENSE-2.0',
+    'GPL-3.0': 'https://www.gnu.org/licenses/gpl-3.0.en.html',
+    'BSD-3-Clause': 'https://opensource.org/licenses/BSD-3-Clause',
+    'Pixabay License': 'https://pixabay.com/service/terms/#license',
+    'Unsplash License': 'https://unsplash.com/license',
+    'Pexels License': 'https://www.pexels.com/license/',
+}
 
 class MetadataFigure(Figure):
     """
@@ -63,6 +120,13 @@ class MetadataFigure(Figure):
         'author': directives.unchanged,
         'license': directives.unchanged,
         'date': directives.unchanged,
+        'copyright': directives.unchanged,
+        'source': directives.unchanged,
+        # New options for display/behavior
+        'placement': directives.unchanged,          # caption | admonition | margin
+        'show': directives.unchanged,               # comma-separated: author,license,date
+        'admonition_title': directives.unchanged,              # admonition title (default: Attribution)
+        'admonition_class': directives.unchanged,   # extra classes for admonition
     })
 
     def run(self):
@@ -72,29 +136,62 @@ class MetadataFigure(Figure):
         Returns:
             list: List of docutils nodes to be inserted into the document
         """
+
+        # Access environment/config for defaults and per-file metadata
+        env = getattr(self.state.document.settings, 'env', None)
+        config = getattr(env.app, 'config', None) if env else None
+        settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
+
         # Validate license
         license_value = self.options.get('license', None)
+        if not license_value:
+            license_settings = settings.get('license', {}) if settings else {}
+            if license_settings.get('substitute_missing', False):
+                default_license = license_settings.get('default_license', 'CC-BY')
+                license_value = default_license
+
+        license_settings = settings.get('license', {}) if settings else {}
         
         if license_value is None:
-            # Warn if license is missing
-            logger.warning(
+            # Warn or raise error if license is missing
+            message_missing = (
                 f'\n- Figure "{self.arguments[0]}" '
                 f'is missing license information.\n'
                 f'- Please add the :license: option with a recognized license.\n'
-                f'- Recognized licenses: {", ".join(VALID_LICENSES)}',
-                location=(self.state.document.current_source, self.lineno)
+                f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
             )
+            if license_settings.get('strict_check', False):
+                raise ValueError(message_missing)
+            elif license_settings.get('individual', True):
+                logger.warning(
+                    message_missing,
+                    location=(self.state.document.current_source, self.lineno)
+                )
         elif license_value not in VALID_LICENSES:
-            # Warn if license is invalid
-            logger.warning(
+            # Warn or raise error if license is invalid
+            message_incorrect = (
                 f'\n- Figure "{self.arguments[0]}" '
-                f'has an unrecognized license "{license_value}".\n'
-                f'- Recognized licenses: {", ".join(VALID_LICENSES)}',
-                location=(self.state.document.current_source, self.lineno)
+                    f'has an unrecognized license "{license_value}".\n'
+                    f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
+            )
+            if license_settings.get('strict_check', False):
+                raise ValueError(message_incorrect)
+            elif license_settings.get('individual', True):
+                logger.warning(
+                    message_incorrect,
+                    location=(self.state.document.current_source, self.lineno)
             )
         
         # Validate date format (optional)
-        date_value = self.options.get('date', None)
+        date_value = self.options.get('date',None)
+        if not date_value:
+             date_settings = settings.get('date', {}) if settings else {}
+             if date_settings.get('substitute_missing', False):
+                default_date = date_settings.get('default_date', 'today')
+                if default_date == 'today':
+                    date_value = datetime.today().strftime('%Y-%m-%d')
+                else:
+                    date_value = default_date
         if date_value:
             try:
                 datetime.strptime(date_value, '%Y-%m-%d')
@@ -106,55 +203,203 @@ class MetadataFigure(Figure):
                     f'Expected format: YYYY-MM-DD (e.g., 2025-01-15)',
                     location=(self.state.document.current_source, self.lineno)
                 )
+
+        author_value = self.options.get('author',None)
+        if not author_value:
+            author_settings = settings.get('author', {}) if settings else {}
+            if author_settings.get('substitute_missing', False):
+                default_author = author_settings.get('default_author', 'config')
+                if default_author == 'config':
+                    author_value = getattr(config, 'author', None)
+                else:
+                    author_value = default_author
+
+        copyright_value = self.options.get('copyright', None)
+        if not copyright_value:
+            copyright_settings = settings.get('copyright', {}) if settings else {}
+            if copyright_settings.get('substitute_missing', False):
+                default_copyright = copyright_settings.get('default_copyright', 'authoryear')
+                if default_copyright == 'authoryear':
+                    if author_value and date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year} {author_value}'
+                    elif author_value:
+                        copyright_value = f'© {author_value}'
+                    elif date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year}'
+                elif default_copyright == 'config':
+                    if getattr(config, 'copyright', None):
+                        copyright_value = getattr(config, 'copyright', None)
+                elif default_copyright == 'authoryear-config':
+                    if author_value and date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year} {author_value}'
+                    elif author_value:
+                        copyright_value = f'© {author_value}'
+                    elif date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year}'
+                    else:
+                        if getattr(config, 'copyright', None):
+                            copyright_value = getattr(config, 'copyright', None)
+                elif default_copyright == 'config-authoryear':
+                    if getattr(config, 'copyright', None):
+                        copyright_value = getattr(config, 'copyright', None)
+                    elif author_value and date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year} {author_value}'
+                    elif author_value:
+                        copyright_value = f'© {author_value}'
+                    elif date_value:
+                        year =  datetime.strptime(date_value, "%Y-%m-%d").year
+                        copyright_value = f'© {year}'
+                else:
+                    copyright_value = default_copyright
+        
+        source_value = self.options.get('source', None)
+        logger.info(f"source_value: {source_value}",color='green')
+        source_settings = settings.get('source', {}) if settings else {}
+        if source_value is None:
+            if source_settings.get('warn_missing', False):
+                # Warn if source is missing (if requested)
+                message_missing = (
+                    f'\n- Figure "{self.arguments[0]}" '
+                    f'is missing source information.\n'
+                    f'- Please add the :source: option with a source.'
+                    f'- Either a URL (starting with "http" or "https"), a textual source description, or a MarkDown link.'
+                )
+                logger.warning(
+                    message_missing,
+                    location=(self.state.document.current_source, self.lineno)
+                )
         
         # Generate the base figure nodes using parent class
         figure_nodes = super().run()
-        
-        # Add metadata to the figure node
+
+        # Store metadata on the figure node, so builders can access it
         if figure_nodes:
             figure_node = figure_nodes[0]
+            if author_value:
+                figure_node['author'] = author_value
+            if license_value:
+                figure_node['license'] = license_value
+            if date_value:
+                figure_node['date'] = date_value
+            if copyright_value:
+                figure_node['copyright'] = copyright_value
+            if source_value:
+                figure_node['source'] = source_value
+
+            # Determine rendering controls
+            style_settings = settings.get('style', {}) if settings else {}
+            placement = self.options.get('placement', None)
+            if not placement:
+                placement = style_settings.get('placement', 'caption')
+            placement = placement.strip().lower()
+            show_raw = self.options.get('show', None)
+            if not show_raw:
+                show_raw = style_settings.get('show', 'author,license,date,copyright,source')
+            show = [s.strip().lower() for s in str(show_raw).split(',') if s.strip()]
+            title = self.options.get('admonition_title', None)
+            if not title:
+                title = style_settings.get('admonition_title', translate('Attribution'))
+            admon_class = self.options.get('admonition_class', None)
+            if not admon_class:
+                admon_class = style_settings.get('admonition_class', 'attribution')
             
-            # Store metadata as node attributes
-            if 'author' in self.options:
-                figure_node['author'] = self.options['author']
-            if 'license' in self.options:
-                figure_node['license'] = self.options['license']
-            if 'date' in self.options:
-                figure_node['date'] = self.options['date']
-            
-            # Optionally display metadata below the figure
-            self._add_metadata_display(figure_node)
-        
+            display_nodes = self._build_attribution_display(
+                figure_node=figure_node,
+                placement=placement,
+                show=show,
+                title=title,
+                admonition_class=admon_class,
+                link_license=license_settings.get('link_license', True) if config else True
+            )
+
+            # Attach display according to placement
+            if display_nodes:
+                if placement == 'caption':
+                    # paragraph node already targeted to append into figure
+                    for n in display_nodes:
+                        if isinstance(n, nodes.paragraph):
+                            figure_node.append(n)
+                        else:
+                            figure_nodes.append(n)
+                else:
+                    figure_nodes.extend(display_nodes)
+
         return figure_nodes
     
-    def _add_metadata_display(self, figure_node):
+    def _build_attribution_display(self, figure_node, placement, show, title,
+                                   admonition_class, link_license):
+        """Create nodes to display attribution based on placement.
+
+        Returns a list of nodes to append to the document. For placement='caption',
+        the returned list will include a paragraph intended to be appended inside
+        the figure node.
         """
-        Add metadata display to the figure.
-        
-        Creates a paragraph with formatted metadata information that appears
-        below the figure caption.
-        
-        Args:
-            figure_node: The figure node to add metadata to
-        """
-        metadata_parts = []
-        
-        # Collect metadata parts
-        if 'author' in figure_node:
-            metadata_parts.append(f"{translate('Author')}: {figure_node['author']}")
-        if 'license' in figure_node:
-            metadata_parts.append(f"{translate('License')}: {figure_node['license']}")
-        if 'date' in figure_node:
-            metadata_parts.append(f"{translate('Date')}: {figure_node['date']}")
-        
-        # Add metadata paragraph if we have any metadata
-        if metadata_parts:
-            metadata_text = ' | '.join(metadata_parts)
-            metadata_para = nodes.paragraph(
-                text=metadata_text,
-                classes=['figure-metadata']
-            )
-            figure_node.append(metadata_para)
+        parts = []
+        if 'author' in figure_node and 'author' in show:
+            parts.append((f"{translate('Author')}: {figure_node['author']}", None))
+        if 'license' in figure_node and 'license' in show:
+            if link_license and figure_node['license'] in LICENSE_URLS:
+                license_url = LICENSE_URLS[figure_node['license']]
+                parts.append((f"{translate('License')}: ", (figure_node['license'], license_url)))
+            else:
+                parts.append((f"{translate('License')}: {figure_node['license']}", None))
+        if 'date' in figure_node and 'date' in show:
+            parts.append((f"{translate('Date')}: {figure_node['date']}", None))
+        if 'copyright' in figure_node and 'copyright' in show:
+            parts.append((f"{translate('Copyright')}: {figure_node['copyright']}", None))
+        if 'source' in figure_node and 'source' in show:
+            if figure_node['source'].startswith('http'):
+                parts.append((f"{translate('Source')}: ", (figure_node['source'], figure_node['source'])))
+            elif len(figure_node['source'].split(']('))==2:
+                # markdown link format: [text](url)
+                text_part = figure_node['source'].split('](')[0].lstrip('[')
+                url_part = figure_node['source'].split('](')[1].rstrip(')')
+                parts.append((f"{translate('Source')}: ", (text_part, url_part)))
+            else:
+                parts.append((f"{translate('Source')}: {figure_node['source']}", None))
+
+        if not parts:
+            return []
+
+        if placement == 'caption': # CSS figure-metadata class styles it appropriately
+            para = nodes.paragraph(classes=['figure-metadata'])
+            for i, (text_part, link_info) in enumerate(parts):
+                if i > 0:
+                    para += nodes.Text(' | ')
+                para += nodes.Text(text_part)
+                if link_info:
+                    link_text, link_url = link_info
+                    ref = nodes.reference('', link_text, refuri=link_url, internal=False)
+                    para += ref
+            return [para]
+
+        # Build an admonition-like block for other placements
+        # admonition classes define the style
+        admon = nodes.admonition(classes=[admonition_class])
+        # Title
+        admon += nodes.title(text=title)
+        # Body paragraph
+        body_para = nodes.paragraph()
+        for i, (text_part, link_info) in enumerate(parts):
+            if i > 0:
+                body_para += nodes.Text(' | ')
+            body_para += nodes.Text(text_part)
+            if link_info:
+                link_text, link_url = link_info
+                ref = nodes.reference('', link_text, refuri=link_url, internal=False)
+                body_para += ref
+        admon += body_para
+
+        if placement == 'margin':
+            # Add margin class to allow themes to style it in the margin
+            admon['classes'].append('margin')
+
+        return [admon]
 
 
 def check_all_figures_have_license(app, env):
@@ -168,6 +413,13 @@ def check_all_figures_have_license(app, env):
         app: Sphinx application instance
         env: Sphinx build environment
     """
+
+    # Only report if requested
+    settings = getattr(app.config, 'metadata_figure_settings', {}) if app else {}
+    license_settings = settings.get('license', {})
+    if not license_settings.get('summaries', True):
+        return
+    
     missing_licenses = []
     unrecognized_licenses = []
 
@@ -220,6 +472,9 @@ def setup(app):
     Returns:
         dict: Extension metadata
     """
+    # Register configuration values    
+    app.add_config_value('metadata_figure_settings', {}, 'env')
+
     # Override the default figure directive with our custom version
     app.add_directive('figure', MetadataFigure, override=True)
     
@@ -235,7 +490,6 @@ def setup(app):
     app.add_message_catalog(MESSAGE_CATALOG_NAME, locale_dir)
     
     return {
-        'version': '0.1.0',
         'parallel_read_safe': True,
         'parallel_write_safe': True,
     }

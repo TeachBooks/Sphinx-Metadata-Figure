@@ -8,11 +8,20 @@ msgstr ""
 "Language: sw\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Utambuzi"
+
 msgid "Author"
 msgstr "Mwandishi"
+
+msgid "Copyright"
+msgstr "Haki miliki"
 
 msgid "Date"
 msgstr "Tarehe"
 
 msgid "License"
 msgstr "Leseni"
+
+msgid "Source"
+msgstr "Chanzo"

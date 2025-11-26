@@ -8,11 +8,20 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "귀속"
+
 msgid "Author"
 msgstr "저자"
+
+msgid "Copyright"
+msgstr "저작권"
 
 msgid "Date"
 msgstr "날짜"
 
 msgid "License"
 msgstr "라이선스"
+
+msgid "Source"
+msgstr "출처"

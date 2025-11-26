@@ -8,11 +8,20 @@ msgstr ""
 "Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "श्रेय"
+
 msgid "Author"
 msgstr "लेखक"
+
+msgid "Copyright"
+msgstr "कॉपीराइट"
 
 msgid "Date"
 msgstr "तारीख"
 
 msgid "License"
 msgstr "लाइसेंस"
+
+msgid "Source"
+msgstr "स्रोत"

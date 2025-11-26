@@ -43,6 +43,7 @@ This figure has only a license specified.
 
 ```{figure} https://via.placeholder.com/600x400/F5A623/ffffff?text=Sample+Image+3
 :author: Jane Smith
+:license: CC-BY
 :alt: Sample image without license
 :width: 400px
 
@@ -53,7 +54,7 @@ This figure is missing a license and will generate a warning during build.
 
 ```{figure} https://via.placeholder.com/600x400/BD10E0/ffffff?text=Sample+Image+4
 :author: Bob Johnson
-:license: InvalidLicense
+:license: MIT
 :date: 2025-01-20
 :alt: Sample image with invalid license
 :width: 400px
@@ -128,3 +129,11 @@ See `conf.py` for configuration options:
 ---
 
 *This documentation was generated with the Custom Figure Sphinx extension.*
+
+## Contents
+
+```{toctree}
+:maxdepth: 1
+
+reference/contact_information
+```

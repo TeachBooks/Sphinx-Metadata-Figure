@@ -8,11 +8,20 @@ msgstr ""
 "Language: ro\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Atribuire"
+
 msgid "Author"
 msgstr "Autor"
+
+msgid "Copyright"
+msgstr "Drepturi de autor"
 
 msgid "Date"
 msgstr "Dată"
 
 msgid "License"
 msgstr "Licență"
+
+msgid "Source"
+msgstr "Sursa"

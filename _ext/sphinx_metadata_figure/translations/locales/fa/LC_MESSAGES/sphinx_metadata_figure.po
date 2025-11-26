@@ -8,11 +8,20 @@ msgstr ""
 "Language: fa\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "انتساب"
+
 msgid "Author"
 msgstr "نویسنده"
+
+msgid "Copyright"
+msgstr "کپی‌رایت"
 
 msgid "Date"
 msgstr "تاریخ"
 
 msgid "License"
 msgstr "مجوز"
+
+msgid "Source"
+msgstr "منبع"

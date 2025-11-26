@@ -8,11 +8,20 @@ msgstr ""
 "Language: th\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "การระบุแหล่งที่มา"
+
 msgid "Author"
 msgstr "ผู้เขียน"
+
+msgid "Copyright"
+msgstr "ลิขสิทธิ์"
 
 msgid "Date"
 msgstr "วันที่"
 
 msgid "License"
 msgstr "ใบอนุญาต"
+
+msgid "Source"
+msgstr "แหล่งที่มา"

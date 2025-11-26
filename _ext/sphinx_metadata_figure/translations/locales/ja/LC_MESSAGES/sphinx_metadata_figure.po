@@ -8,11 +8,20 @@ msgstr ""
 "Language: ja\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "帰属"
+
 msgid "Author"
 msgstr "著者"
+
+msgid "Copyright"
+msgstr "著作権"
 
 msgid "Date"
 msgstr "日付"
 
 msgid "License"
 msgstr "ライセンス"
+
+msgid "Source"
+msgstr "出典"

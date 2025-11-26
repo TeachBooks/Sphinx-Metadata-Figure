@@ -8,11 +8,20 @@ msgstr ""
 "Language: ms\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "Atribusi"
+
 msgid "Author"
 msgstr "Pengarang"
+
+msgid "Copyright"
+msgstr "Hak cipta"
 
 msgid "Date"
 msgstr "Tarikh"
 
 msgid "License"
 msgstr "Lesen"
+
+msgid "Source"
+msgstr "Sumber"

@@ -8,11 +8,20 @@ msgstr ""
 "Language: ta\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Attribution"
+msgstr "பண்புக்கூறல்"
+
 msgid "Author"
 msgstr "ஆசிரியர்"
+
+msgid "Copyright"
+msgstr "பதிப்புரிமை"
 
 msgid "Date"
 msgstr "தேதி"
 
 msgid "License"
 msgstr "உரிமம்"
+
+msgid "Source"
+msgstr "மூலம்"
