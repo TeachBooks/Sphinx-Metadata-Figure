@@ -1,11 +1,80 @@
-# Custom Figure Documentation
+# Figure Metadata Extension
 
-Welcome to the Custom Figure extension documentation!
+A Sphinx extension that provides an interface to add metadata to figures and display the metadata.
 
 This extension enhances Sphinx's figure directive with metadata support for:
 - **Author**: Image creator/author
 - **License**: Image license (validated)
 - **Date**: Creation date (YYYY-MM-DD format)
+- **Copyright**: Copyright holder
+- **Source**: Image source
+
+## Installation
+To install the Sphinx-Metadata-Figure extension, follow these steps:
+
+**Step 1: Install the Package**
+
+Install the `Sphinx-Metadata-Figure` package using `pip`:
+```
+pip install sphinx-metadata-figure
+```
+
+**Step 2: Add to `requirements.txt`**
+
+Make sure that the package is included in your project's `requirements.txt` to track the dependency:
+```
+sphinx-metadata-figure
+```
+
+**Step 3: Enable in `_config.yml`**
+
+In your `_config.yml` file, add the extension to the list of Sphinx extra extensions:
+```
+sphinx: 
+    extra_extensions:
+        - sphinx_metadata_figure
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Valid License Types
 
@@ -138,4 +207,39 @@ See `conf.py` for configuration options:
 :maxdepth: 1
 
 reference/contact_information
+```
+
+## Configuration
+
+This extension can be configured via the `_config.yml` file in your JupyterBook project (or similarly in `conf.py` for standard Sphinx projects).
+
+The _default_ configuration options are as follows:
+
+```yaml
+sphinx:
+  config:
+    metadata_figure_settings:
+      style: 
+        placement: caption
+        show: author,license,date,copyright,source
+        admonition_title: Attribution
+        admonition_class: attribution
+      license:
+        link_license: true
+        strict_check: false
+        summaries: true
+        individual: true
+        substitute_missing: false
+        default_license: CC-BY
+      author:
+        substitute_missing: false
+        default_author: config
+      date:
+        substitute_missing: false
+        default_date: today
+      copyright:
+        substitute_missing: false
+        default_copyright: authoryear
+      source:
+        warn_missing: false
 ```
