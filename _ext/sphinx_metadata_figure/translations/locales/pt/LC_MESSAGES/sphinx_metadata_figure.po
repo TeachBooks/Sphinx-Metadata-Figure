@@ -22,3 +22,6 @@ msgstr "Data"
 
 msgid "License"
 msgstr "Licença"
+
+msgid "Source"
+msgstr "Fonte"

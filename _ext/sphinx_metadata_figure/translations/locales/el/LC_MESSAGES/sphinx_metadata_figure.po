@@ -22,3 +22,6 @@ msgstr "Ημερομηνία"
 
 msgid "License"
 msgstr "Άδεια"
+
+msgid "Source"
+msgstr "Πηγή"

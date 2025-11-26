@@ -22,3 +22,6 @@ msgstr "Dată"
 
 msgid "License"
 msgstr "Licență"
+
+msgid "Source"
+msgstr "Sursa"

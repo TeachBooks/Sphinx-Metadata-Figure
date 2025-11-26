@@ -22,3 +22,6 @@ msgstr "Tanggal"
 
 msgid "License"
 msgstr "Lisensi"
+
+msgid "Source"
+msgstr "Sumber"

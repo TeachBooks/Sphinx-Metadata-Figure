@@ -106,14 +106,14 @@ metadata_figure_settings = dict({
         # 'admonition_title': 'Attribution',            # title for the admonition block
         # 'admonition_class': 'attribution', # extra CSS class on the admonition
     # },
-    'license': {
+    # 'license': {
         # 'link_license'       : False,
         # 'strict_check'       : True,
         # 'summaries'          : False,
         # 'individual'         : False,
         # 'substitute_missing' : True,
         # 'default_license'    : 'CC-BY-SA'
-    },
+    # },
     # 'author': {
     #     'substitute_missing' : True,
         # 'default_author'     : 'That is me'  # use 'config' to pull from Sphinx config author
@@ -126,4 +126,7 @@ metadata_figure_settings = dict({
     #     'substitute_missing': True,
     #     'default_copyright': 'config-authoryear'  # 'authoryear' | 'config' | 'authoryear-config' | 'config-authoryear' | 'anything else'
     # }
+    'source': {
+        'warn_missing' : True
+    }
 })

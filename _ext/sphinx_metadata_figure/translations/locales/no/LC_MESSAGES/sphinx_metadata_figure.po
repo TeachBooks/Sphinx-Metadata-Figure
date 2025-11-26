@@ -22,3 +22,6 @@ msgstr "Dato"
 
 msgid "License"
 msgstr "Lisens"
+
+msgid "Source"
+msgstr "Kilde"

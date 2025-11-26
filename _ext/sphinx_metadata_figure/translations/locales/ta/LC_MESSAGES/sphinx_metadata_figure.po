@@ -22,3 +22,6 @@ msgstr "தேதி"
 
 msgid "License"
 msgstr "உரிமம்"
+
+msgid "Source"
+msgstr "மூலம்"

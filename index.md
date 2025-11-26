@@ -25,6 +25,7 @@ The following licenses are recognized by the extension:
 :alt: Sample image with complete metadata
 :width: 500px
 :align: center
+:source: https://www.google.com/search?q=COPYRIGHT&rlz=1C1GCHA_enNL1151NL1151&oq=COPYRIGHT&gs_lcrp=EgZjaHJvbWUyBggAEEUYOdIBBzYyMmowajeoAgCwAgA&sourceid=chrome&ie=UTF-8
 
 This is a figure with complete metadata including author, license, and date.
 ```
@@ -35,6 +36,7 @@ This is a figure with complete metadata including author, license, and date.
 :license: MIT
 :alt: Sample image with minimal metadata
 :width: 400px
+:source: [pretty source](https://www.google.com/search?q=COPYRIGHT&rlz=1C1GCHA_enNL1151NL1151&oq=COPYRIGHT&gs_lcrp=EgZjaHJvbWUyBggAEEUYOdIBBzYyMmowajeoAgCwAgA&sourceid=chrome&ie=UTF-8)
 
 This figure has only a license specified.
 ```
@@ -45,6 +47,7 @@ This figure has only a license specified.
 :author: Jane Smith
 :alt: Sample image without license
 :width: 400px
+:source: Ergens vandaan
 
 This figure is missing a license and will generate a warning during build.
 ```

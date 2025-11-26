@@ -22,3 +22,6 @@ msgstr "Fecha"
 
 msgid "License"
 msgstr "Licencia"
+
+msgid "Source"
+msgstr "Fuente"

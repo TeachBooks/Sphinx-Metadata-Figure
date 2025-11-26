@@ -22,3 +22,6 @@ msgstr "Tarih"
 
 msgid "License"
 msgstr "Lisans"
+
+msgid "Source"
+msgstr "Kaynak"

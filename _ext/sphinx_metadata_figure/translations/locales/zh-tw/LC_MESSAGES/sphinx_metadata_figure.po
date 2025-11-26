@@ -22,3 +22,6 @@ msgstr "日期"
 
 msgid "License"
 msgstr "許可證"
+
+msgid "Source"
+msgstr "來源"

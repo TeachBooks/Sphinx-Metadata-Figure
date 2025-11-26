@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # Global defaults for figure attribution (can be overridden per file or per directive)
 METADATA_FIGURE_DEFAULTS_STYLE = {
     'placement': 'caption',  # caption | admonition | margin
-    'show': 'author,license,date,copyright',     # which fields to display
+    'show': 'author,license,date,copyright,source',     # which fields to display
     'admonition_title': 'Attribution',            # title for the admonition block
     'admonition_class': 'attribution', # extra CSS class on the admonition
 }
@@ -51,12 +51,16 @@ METADATA_FIGURE_DEFAULTS_COPYRIGHT = {
     'substitute_missing' : False,
     'default_copyright'    : 'authoryear'  # 'authoryear' | 'config' | 'authoryear-config' | 'config-authoryear' | 'anything else'
 }
+METADATA_FIGURE_DEFAULTS_SOURCE = {
+    'warn_missing' : False
+}
 METADATA_FIGURE_DEFAULTS = {
     'style': METADATA_FIGURE_DEFAULTS_STYLE,
     'license': METADATA_FIGURE_DEFAULTS_LICENSE,
     'author': METADATA_FIGURE_DEFAULTS_AUTHOR,
-    'date': METADATA_FIGURE_DEFAULTS_DATE,''
-    'copyright': METADATA_FIGURE_DEFAULTS_COPYRIGHT
+    'date': METADATA_FIGURE_DEFAULTS_DATE,
+    'copyright': METADATA_FIGURE_DEFAULTS_COPYRIGHT,
+    'source': METADATA_FIGURE_DEFAULTS_SOURCE
 }
 
 # List of valid licenses
@@ -117,6 +121,7 @@ class MetadataFigure(Figure):
         'license': directives.unchanged,
         'date': directives.unchanged,
         'copyright': directives.unchanged,
+        'source': directives.unchanged,
         # New options for display/behavior
         'placement': directives.unchanged,          # caption | admonition | margin
         'show': directives.unchanged,               # comma-separated: author,license,date
@@ -252,6 +257,23 @@ class MetadataFigure(Figure):
                 else:
                     copyright_value = default_copyright
         
+        source_value = self.options.get('source', None)
+        logger.info(f"source_value: {source_value}",color='green')
+        source_settings = settings.get('source', {}) if settings else {}
+        if source_value is None:
+            if source_settings.get('warn_missing', False):
+                # Warn if source is missing (if requested)
+                message_missing = (
+                    f'\n- Figure "{self.arguments[0]}" '
+                    f'is missing source information.\n'
+                    f'- Please add the :source: option with a source.'
+                    f'- Either a URL (starting with "http" or "https"), a textual source description, or a MarkDown link.'
+                )
+                logger.warning(
+                    message_missing,
+                    location=(self.state.document.current_source, self.lineno)
+                )
+        
         # Generate the base figure nodes using parent class
         figure_nodes = super().run()
 
@@ -266,6 +288,8 @@ class MetadataFigure(Figure):
                 figure_node['date'] = date_value
             if copyright_value:
                 figure_node['copyright'] = copyright_value
+            if source_value:
+                figure_node['source'] = source_value
 
             # Determine rendering controls
             style_settings = settings.get('style', {}) if settings else {}
@@ -275,7 +299,7 @@ class MetadataFigure(Figure):
             placement = placement.strip().lower()
             show_raw = self.options.get('show', None)
             if not show_raw:
-                show_raw = style_settings.get('show', 'author,license,date,copyright')
+                show_raw = style_settings.get('show', 'author,license,date,copyright,source')
             show = [s.strip().lower() for s in str(show_raw).split(',') if s.strip()]
             title = self.options.get('admonition_title', None)
             if not title:
@@ -328,6 +352,16 @@ class MetadataFigure(Figure):
             parts.append((f"{translate('Date')}: {figure_node['date']}", None))
         if 'copyright' in figure_node and 'copyright' in show:
             parts.append((f"{translate('Copyright')}: {figure_node['copyright']}", None))
+        if 'source' in figure_node and 'source' in show:
+            if figure_node['source'].startswith('http'):
+                parts.append((f"{translate('Source')}: ", (figure_node['source'], figure_node['source'])))
+            elif len(figure_node['source'].split(']('))==2:
+                # markdown link format: [text](url)
+                text_part = figure_node['source'].split('](')[0].lstrip('[')
+                url_part = figure_node['source'].split('](')[1].rstrip(')')
+                parts.append((f"{translate('Source')}: ", (text_part, url_part)))
+            else:
+                parts.append((f"{translate('Source')}: {figure_node['source']}", None))
 
         if not parts:
             return []

@@ -22,3 +22,6 @@ msgstr "তারিখ"
 
 msgid "License"
 msgstr "লাইসেন্স"
+
+msgid "Source"
+msgstr "উৎস"

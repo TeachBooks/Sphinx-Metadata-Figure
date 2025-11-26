@@ -22,3 +22,6 @@ msgstr "Ngày"
 
 msgid "License"
 msgstr "Giấy phép"
+
+msgid "Source"
+msgstr "Nguồn"

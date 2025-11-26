@@ -22,3 +22,6 @@ msgstr "Tarehe"
 
 msgid "License"
 msgstr "Leseni"
+
+msgid "Source"
+msgstr "Chanzo"
