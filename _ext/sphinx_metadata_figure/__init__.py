@@ -25,7 +25,7 @@ translate = get_translation(MESSAGE_CATALOG_NAME)
 logger = logging.getLogger(__name__)
 
 # Global defaults for figure attribution (can be overridden per file or per directive)
-TB_ATTRIBUTION_DEFAULTS = {
+METADATA_FIGURE_DEFAULTS = {
     'placement': 'caption',            # caption | admonition | margin
     'show': 'author,license,date',     # which fields to display
     'title': 'Attribution',            # title for the admonition block
@@ -119,9 +119,9 @@ class MetadataFigure(Figure):
                 f'- Please add the :license: option with a recognized license.\n'
                 f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
             )
-            if config and getattr(config, 'tb_attribution_strict_license_check', False):
+            if config and getattr(config, 'metadata_figure_strict_license_check', False):
                 raise ValueError(message_missing)
-            elif getattr(config, 'tb_attribution_individual', True):
+            elif getattr(config, 'metadata_figure_individual', True):
                 logger.warning(
                     message_missing,
                     location=(self.state.document.current_source, self.lineno)
@@ -133,9 +133,9 @@ class MetadataFigure(Figure):
                     f'has an unrecognized license "{license_value}".\n'
                     f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
             )
-            if config and getattr(config, 'tb_attribution_strict_license_check', False):
+            if config and getattr(config, 'metadata_figure_strict_license_check', False):
                 raise ValueError(message_incorrect)
-            elif getattr(config, 'tb_attribution_individual', True):
+            elif getattr(config, 'metadata_figure_individual', True):
                 logger.warning(
                     message_incorrect,
                     location=(self.state.document.current_source, self.lineno)
@@ -162,10 +162,10 @@ class MetadataFigure(Figure):
         doc_meta = {}
         if env:
             meta = env.metadata.get(env.docname, {})
-            # Support both tb_attribution_* and attribution_* keys
+            # Support both metadata_figure_* and attribution_* keys
             def _m(key):
                 return (
-                    meta.get(f'tb_attribution_{key}')
+                    meta.get(f'metadata_figure_{key}')
                     or meta.get(f'attribution_{key}')
                     or meta.get(key)
                 )
@@ -184,8 +184,8 @@ class MetadataFigure(Figure):
                 'admonition_class': _coerce(_m('admonition_class')),
             }
 
-        settings = getattr(config, 'tb_attribution_settings', {}) if config else {}
-        defaults = TB_ATTRIBUTION_DEFAULTS | settings
+        settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
+        defaults = METADATA_FIGURE_DEFAULTS | settings
 
         def _resolve(name, opt_key=None):
             key = opt_key or name
@@ -211,11 +211,11 @@ class MetadataFigure(Figure):
                 figure_node['date'] = date_value
 
             # Determine rendering controls
-            placement = (_resolve('placement') or 'caption').strip().lower()
-            show_raw = _resolve('show') or 'author,license,date'
+            placement = _resolve('placement').strip().lower()
+            show_raw = _resolve('show')
             show = [s.strip().lower() for s in str(show_raw).split(',') if s.strip()]
-            title = _resolve('title') or translate('Attribution')
-            admon_class = _resolve('admonition_class') or 'attribution'
+            title = translate(_resolve('title'))
+            admon_class = _resolve('admonition_class')
 
             display_nodes = self._build_attribution_display(
                 figure_node=figure_node,
@@ -223,7 +223,7 @@ class MetadataFigure(Figure):
                 show=show,
                 title=title,
                 admonition_class=admon_class,
-                link_license=getattr(config, 'tb_attribution_link_license', True) if config else True
+                link_license=getattr(config, 'metadata_figure_link_license', True) if config else True
             )
 
             # Attach display according to placement
@@ -312,7 +312,7 @@ def check_all_figures_have_license(app, env):
     """
 
     # Only report if requested
-    if env.config.tb_attribution_summaries is False:
+    if env.config.metadata_figure_summaries is False:
         return
     
     missing_licenses = []
@@ -368,11 +368,12 @@ def setup(app):
         dict: Extension metadata
     """
     # Register configuration values    
-    app.add_config_value('tb_attribution_settings', {}, 'env')
-    app.add_config_value('tb_attribution_link_license', True, 'env')
-    app.add_config_value('tb_attribution_strict_license_check', False, 'env')
-    app.add_config_value('tb_attribution_summaries', True, 'env')
-    app.add_config_value('tb_attribution_individual', True, 'env')
+    app.add_config_value('metadata_figure_settings', {}, 'env')
+    app.add_config_value('metadata_figure_link_license', True, 'env')
+    app.add_config_value('metadata_figure_strict_license_check', False, 'env')
+    app.add_config_value('metadata_figure_summaries', True, 'env')
+    app.add_config_value('metadata_figure_individual', True, 'env')
+    app.add_config_value('metadata_figure_from_config', False, 'env')
 
     # Override the default figure directive with our custom version
     app.add_directive('figure', MetadataFigure, override=True)
