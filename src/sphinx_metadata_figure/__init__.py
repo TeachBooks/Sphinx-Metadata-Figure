@@ -17,6 +17,10 @@ from docutils.parsers.rst import directives
 from sphinx.directives.patches import Figure
 from sphinx.util import logging
 from datetime import datetime
+from sphinx.util.fileutil import copy_asset
+from pathlib import Path
+from sphinx.application import Sphinx
+from typing import Union
 
 from sphinx.locale import get_translation
 MESSAGE_CATALOG_NAME = "sphinx_metadata_figure"
@@ -142,6 +146,8 @@ class MetadataFigure(Figure):
         config = getattr(env.app, 'config', None) if env else None
         settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
 
+        settings = METADATA_FIGURE_DEFAULTS | settings # merge with global defaults, overriding defaults if provided by user config
+
         # Validate license
         license_value = self.options.get('license', None)
         if not license_value:
@@ -151,6 +157,8 @@ class MetadataFigure(Figure):
                 license_value = default_license
 
         license_settings = settings.get('license', {}) if settings else {}
+        logger.info(f'License settings: {license_settings}',color='blue')
+
         
         if license_value is None:
             # Warn or raise error if license is missing
@@ -162,7 +170,7 @@ class MetadataFigure(Figure):
             )
             if license_settings.get('strict_check', False):
                 raise ValueError(message_missing)
-            elif license_settings.get('individual', True):
+            elif license_settings.get('individual', False):
                 logger.warning(
                     message_missing,
                     location=(self.state.document.current_source, self.lineno)
@@ -176,7 +184,7 @@ class MetadataFigure(Figure):
             )
             if license_settings.get('strict_check', False):
                 raise ValueError(message_incorrect)
-            elif license_settings.get('individual', True):
+            elif license_settings.get('individual', False):
                 logger.warning(
                     message_incorrect,
                     location=(self.state.document.current_source, self.lineno)
@@ -482,7 +490,8 @@ def setup(app):
     app.add_directive('figure', MetadataFigure, override=True)
     
     # Add custom CSS for metadata styling
-    app.add_css_file('custom_figure.css')
+    app.add_css_file('metadata_figure.css')
+    app.connect("build-finished", copy_asset_files)
     
     # Register event handler to check all figures after build
     app.connect('env-updated', check_all_figures_have_license)
@@ -496,3 +505,14 @@ def setup(app):
         'parallel_read_safe': True,
         'parallel_write_safe': True,
     }
+
+def copy_asset_files(app: Sphinx, exc: Union[bool, Exception]):
+    """Copies required assets for formatting in HTML"""
+    static_path = (
+        Path(__file__).parent.joinpath("assets", "metadata_figure.css").absolute()
+    )
+    asset_files = [str(static_path)]
+
+    if exc is None:
+        for path in asset_files:
+            copy_asset(path, str(Path(app.outdir).joinpath("_static").absolute()))

@@ -59,7 +59,7 @@ The logo of TeachBooks.
 
 ````md
 ```{figure} /images/TeachBooks_logo.svg
-:name: tb_logo_metadata1
+:name: tb_logo_metadata3
 :author: Veronica Comin
 :date: 2024-11-13
 :source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
@@ -70,7 +70,7 @@ The logo of TeachBooks.
 ````
 
 ```{figure} /images/TeachBooks_logo.svg
-:name: tb_logo_metadata1
+:name: tb_logo_metadata3
 :author: Veronica Comin
 :date: 2024-11-13
 :source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
@@ -83,7 +83,7 @@ The logo of TeachBooks.
 
 ````md
 ```{figure} /images/TeachBooks_logo.svg
-:name: tb_logo_metadata1
+:name: tb_logo_metadata4
 :author: Veronica Comin
 :date: 2024-11-13
 :license: Unknown
@@ -95,7 +95,7 @@ The logo of TeachBooks.
 ````
 
 ```{figure} /images/TeachBooks_logo.svg
-:name: tb_logo_metadata1
+:name: tb_logo_metadata4
 :author: Veronica Comin
 :date: 2024-11-13
 :license: Unknown
@@ -109,7 +109,7 @@ The logo of TeachBooks.
 
 ````md
 ```{figure} /images/TeachBooks_logo.svg
-:name: tb_logo_metadata1
+:name: tb_logo_metadata5
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
@@ -122,7 +122,7 @@ The logo of TeachBooks.
 ````
 
 ```{figure} /images/TeachBooks_logo.svg
-:name: tb_logo_metadata1
+:name: tb_logo_metadata5
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
@@ -137,7 +137,7 @@ The logo of TeachBooks.
 
 ````md
 ```{figure} /images/TeachBooks_logo.svg
-:name: tb_logo_metadata1
+:name: tb_logo_metadata6
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
@@ -150,7 +150,7 @@ The logo of TeachBooks.
 ````
 
 ```{figure} /images/TeachBooks_logo.svg
-:name: tb_logo_metadata1
+:name: tb_logo_metadata6
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY

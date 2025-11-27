@@ -1,0 +1,34 @@
+/* 
+ * Figure Metadata Styling
+ * ==============================
+ * 
+ * Styles for the metadata information displayed below/besides figures
+ * (author, license, date)
+ */
+
+/* placement==caption */
+.figure-metadata {
+    font-size: 0.85em;  /* slightly smaller relative to parent element */
+    color: var(--pst-color-muted-highlight); /* use a muted color from the theme */
+    font-style: italic; /* make it slanted to differentiate from main caption */
+    margin-top: 0.5em;
+    padding-top: 0.5em;
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: var(--pst-color-border); /* subtle top border */
+}
+
+/* placement==attribution or margin */
+div.attribution  {
+    border-color: rgb(150,150,150);
+    background-color: rgb(150,150,150,0.05);
+  }
+   div.attribution  > .admonition-title {
+    background-color: rgb(150,150,150,0.2);
+  }
+   div.attribution  > .admonition-title::after {
+    color: rgb(150,150,150);
+  }
+  div.attribution > .admonition-title::after {
+  content: "\f10d";
+}
