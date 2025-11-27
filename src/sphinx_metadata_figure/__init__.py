@@ -425,6 +425,7 @@ def check_all_figures_have_license(app, env):
 
     # Only report if requested
     settings = getattr(app.config, 'metadata_figure_settings', {}) if app else {}
+    settings = METADATA_FIGURE_DEFAULTS | settings # merge with global defaults, overriding defaults if provided by user config
     license_settings = settings.get('license', {})
     if not license_settings.get('summaries', True):
         return
