@@ -157,8 +157,6 @@ class MetadataFigure(Figure):
                 license_value = default_license
 
         license_settings = settings.get('license', {}) if settings else {}
-        logger.info(f'License settings: {license_settings}',color='blue')
-
         
         if license_value is None:
             # Warn or raise error if license is missing
