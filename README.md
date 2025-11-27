@@ -53,8 +53,8 @@ sphinx:
       license:
         link_license: true
         strict_check: false
-        summaries: false
-        individual: true
+        summaries: true
+        individual: false
         substitute_missing: false
         default_license: CC-BY
       author:
