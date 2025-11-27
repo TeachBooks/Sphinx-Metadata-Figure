@@ -6,7 +6,7 @@ This section is useful for user type 3-5.
 ````
 
 ::::{include} README.md
-:end-before: ## Documentation
+:end-before: "## Documentation"
 ::::
 
 ## Examples using default settings
