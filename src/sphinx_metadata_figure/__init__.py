@@ -258,7 +258,6 @@ class MetadataFigure(Figure):
                     copyright_value = default_copyright
         
         source_value = self.options.get('source', None)
-        logger.info(f"source_value: {source_value}",color='green')
         source_settings = settings.get('source', {}) if settings else {}
         if source_value is None:
             if source_settings.get('warn_missing', False):
