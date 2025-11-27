@@ -26,7 +26,7 @@ The logo of TeachBooks.
 ```
 ````
 
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
@@ -40,7 +40,7 @@ The logo of TeachBooks.
 ### Example 2: Minimal Metadata (only a license)
 
 ````md
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata2
 :license: CC-BY
 
@@ -48,7 +48,7 @@ The logo of TeachBooks.
 ```
 ````
 
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata2
 :license: CC-BY
 
@@ -58,7 +58,7 @@ The logo of TeachBooks.
 ### Example 3: Without License (generates a warning)
 
 ````md
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
@@ -69,7 +69,7 @@ The logo of TeachBooks.
 ```
 ````
 
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
@@ -82,7 +82,7 @@ The logo of TeachBooks.
 ### Example 4: Invalid License (generates a warning)
 
 ````md
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
@@ -94,7 +94,7 @@ The logo of TeachBooks.
 ```
 ````
 
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
@@ -108,7 +108,7 @@ The logo of TeachBooks.
 ### Example 5: Placement as an admonition below the caption
 
 ````md
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
@@ -121,7 +121,7 @@ The logo of TeachBooks.
 ```
 ````
 
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
@@ -136,7 +136,7 @@ The logo of TeachBooks.
 ### Example 6: Placement as an admonition in the margin
 
 ````md
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
@@ -149,7 +149,7 @@ The logo of TeachBooks.
 ```
 ````
 
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
