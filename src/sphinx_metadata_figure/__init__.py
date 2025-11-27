@@ -35,7 +35,7 @@ METADATA_FIGURE_DEFAULTS_LICENSE = {
     'link_license'       : True,
     'strict_check'       : False,
     'summaries'          : True,
-    'individual'         : True,
+    'individual'         : False,
     'substitute_missing' : False,
     'default_license'    : 'CC-BY'
 }

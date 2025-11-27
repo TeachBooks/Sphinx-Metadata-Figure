@@ -54,7 +54,7 @@ sphinx:
         link_license: true
         strict_check: false
         summaries: true
-        individual: true
+        individual: false
         substitute_missing: false
         default_license: CC-BY
       author:
