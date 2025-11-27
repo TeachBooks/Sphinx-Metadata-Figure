@@ -5,10 +5,9 @@ This section is useful for user type 3-5.
 ```
 ````
 
-```{eval-rst}
-.. literalinclude:: README.md
-   :end-before: ## Documentation
-```
+::::{literalinclude} README.md
+:end-before: ## Documentation
+::::
 
 ## Examples using default settings
 
