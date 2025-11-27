@@ -14,32 +14,150 @@ This section is useful for user type 3-5.
 
 ### Example 1: Complete Metadata
 
-```md
-<Insert code here>
-```
+````md
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata1
+:author: Veronica Comin
+:date: 2024-11-13
+:license: CC-BY
+:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:copyright: © TeachBooks 2024
 
-<Insert same code here>
+The logo of TeachBooks.
+```
+````
+
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata1
+:author: Veronica Comin
+:date: 2024-11-13
+:license: CC-BY
+:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:copyright: © TeachBooks 2024
+
+The logo of TeachBooks.
+```
 
 ### Example 2: Minimal Metadata (only a license)
 
-```md
-<Insert code here>
-```
+````md
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata2
+:license: CC-BY
 
-<Insert same code here>
+The logo of TeachBooks.
+```
+````
+
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata2
+:license: CC-BY
+
+The logo of TeachBooks.
+```
 
 ### Example 3: Without License (generates a warning)
 
-```md
-<Insert code here>
-```
+````md
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata1
+:author: Veronica Comin
+:date: 2024-11-13
+:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:copyright: © TeachBooks 2024
 
-<Insert same code here>
+The logo of TeachBooks.
+```
+````
+
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata1
+:author: Veronica Comin
+:date: 2024-11-13
+:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:copyright: © TeachBooks 2024
+
+The logo of TeachBooks.
+```
 
 ### Example 4: Invalid License (generates a warning)
 
-```md
-<Insert code here>
+````md
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata1
+:author: Veronica Comin
+:date: 2024-11-13
+:license: Unknown
+:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:copyright: © TeachBooks 2024
+
+The logo of TeachBooks.
+```
+````
+
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata1
+:author: Veronica Comin
+:date: 2024-11-13
+:license: Unknown
+:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:copyright: © TeachBooks 2024
+
+The logo of TeachBooks.
 ```
 
-<Insert same code here>
+### Example 5: Placement as an admonition below the caption
+
+````md
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata1
+:author: Veronica Comin
+:date: 2024-11-13
+:license: CC-BY
+:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:copyright: © TeachBooks 2024
+:placement: admonition
+
+The logo of TeachBooks.
+```
+````
+
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata1
+:author: Veronica Comin
+:date: 2024-11-13
+:license: CC-BY
+:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:copyright: © TeachBooks 2024
+:placement: admonition
+
+The logo of TeachBooks.
+```
+
+### Example 6: Placement as an admonition in the margin
+
+````md
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata1
+:author: Veronica Comin
+:date: 2024-11-13
+:license: CC-BY
+:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:copyright: © TeachBooks 2024
+:placement: margin
+
+The logo of TeachBooks.
+```
+````
+
+```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+:name: tb_logo_metadata1
+:author: Veronica Comin
+:date: 2024-11-13
+:license: CC-BY
+:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:copyright: © TeachBooks 2024
+:placement: margin
+
+The logo of TeachBooks.
+```
