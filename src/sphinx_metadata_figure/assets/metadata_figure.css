@@ -20,7 +20,7 @@
 
 /* placement==attribution or margin */
 div.attribution  {
-    border-color: rgb(150,150,150);
+    border-color: rgb(150,150,0);
     background-color: rgb(150,150,150,0.05);
   }
    div.attribution  > .admonition-title {
