@@ -5,7 +5,7 @@ This section is useful for user type 3-5.
 ```
 ````
 
-::::{literalinclude} README.md
+::::{include} README.md
 :end-before: ## Documentation
 ::::
 
