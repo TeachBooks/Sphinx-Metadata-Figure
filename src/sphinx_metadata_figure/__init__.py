@@ -376,16 +376,20 @@ class MetadataFigure(Figure):
             return []
 
         if placement == 'caption': # CSS figure-metadata class styles it appropriately
-            para = nodes.paragraph(classes=['figure-metadata'])
+            # Use a line block to ensure the attribution starts on a new line
+            line_block = nodes.line_block()
+            line = nodes.line()
             for i, (text_part, link_info) in enumerate(parts):
                 if i > 0:
-                    para += nodes.Text(' | ')
-                para += nodes.Text(text_part)
+                    line += nodes.Text(' | ')
+                line += nodes.Text(text_part)
                 if link_info:
                     link_text, link_url = link_info
                     ref = nodes.reference('', link_text, refuri=link_url, internal=False)
-                    para += ref
-            return [para]
+                    line += ref
+            line['classes'].append('figure-metadata')
+            line_block += line
+            return [line_block]
 
         # Build an admonition-like block for other placements
         # admonition classes define the style

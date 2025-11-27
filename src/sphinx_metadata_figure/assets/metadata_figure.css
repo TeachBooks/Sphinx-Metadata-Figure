@@ -16,11 +16,12 @@
     border-top-width: 1px;
     border-top-style: solid;
     border-top-color: rgb(150,150,150); /* subtle top border */
+    text-align: center;
 }
 
 /* placement==attribution or margin */
 div.attribution  {
-    border-color: rgb(150,150,0);
+    border-color: rgb(150,150,150);
     background-color: rgb(150,150,150,0.05);
   }
    div.attribution  > .admonition-title {
