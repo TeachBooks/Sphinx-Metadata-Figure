@@ -14,12 +14,12 @@ This section is useful for user type 3-5.
 ### Example 1: Complete Metadata
 
 ````md
-```{figure} https://github.com/TeachBooks/logos_and_visualisations/blob/main/TB_logo/SVG/TeachBooks_logo.svg
+```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
-:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
 
 The logo of TeachBooks.
@@ -31,7 +31,7 @@ The logo of TeachBooks.
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
-:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
 
 The logo of TeachBooks.
@@ -62,7 +62,7 @@ The logo of TeachBooks.
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
-:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
 
 The logo of TeachBooks.
@@ -73,7 +73,7 @@ The logo of TeachBooks.
 :name: tb_logo_metadata1
 :author: Veronica Comin
 :date: 2024-11-13
-:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
 
 The logo of TeachBooks.
@@ -87,7 +87,7 @@ The logo of TeachBooks.
 :author: Veronica Comin
 :date: 2024-11-13
 :license: Unknown
-:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
 
 The logo of TeachBooks.
@@ -99,7 +99,7 @@ The logo of TeachBooks.
 :author: Veronica Comin
 :date: 2024-11-13
 :license: Unknown
-:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
 
 The logo of TeachBooks.
@@ -113,7 +113,7 @@ The logo of TeachBooks.
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
-:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
 :placement: admonition
 
@@ -126,7 +126,7 @@ The logo of TeachBooks.
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
-:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
 :placement: admonition
 
@@ -141,7 +141,7 @@ The logo of TeachBooks.
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
-:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
 :placement: margin
 
@@ -154,7 +154,7 @@ The logo of TeachBooks.
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
-:source: [TeachBooks Logo](https://github.com/TeachBooks/logos_and_visualisations/blame/main/TB_logo/SVG/TeachBooks_logo.svg)
+:source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
 :placement: margin
 
