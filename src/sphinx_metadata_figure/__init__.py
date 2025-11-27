@@ -326,7 +326,11 @@ class MetadataFigure(Figure):
                             figure_node.append(n)
                         else:
                             figure_nodes.append(n)
+                elif placement == 'margin':
+                    # Insert margin admonition before the figure so it appears next to it
+                    figure_nodes = display_nodes + figure_nodes
                 else:
+                    # For 'admonition' placement, append after the figure
                     figure_nodes.extend(display_nodes)
 
         return figure_nodes
