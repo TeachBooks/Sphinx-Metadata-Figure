@@ -16,6 +16,7 @@ This section is useful for user type 3-5.
 ````md
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
+:width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
@@ -28,6 +29,7 @@ The logo of TeachBooks.
 
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata1
+:width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
@@ -42,6 +44,7 @@ The logo of TeachBooks.
 ````md
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata2
+:width: 50%
 :license: CC-BY
 
 The logo of TeachBooks.
@@ -50,6 +53,7 @@ The logo of TeachBooks.
 
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata2
+:width: 50%
 :license: CC-BY
 
 The logo of TeachBooks.
@@ -60,6 +64,7 @@ The logo of TeachBooks.
 ````md
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata3
+:width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
@@ -71,6 +76,7 @@ The logo of TeachBooks.
 
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata3
+:width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
@@ -84,6 +90,7 @@ The logo of TeachBooks.
 ````md
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata4
+:width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :license: Unknown
@@ -96,6 +103,7 @@ The logo of TeachBooks.
 
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata4
+:width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :license: Unknown
@@ -110,6 +118,7 @@ The logo of TeachBooks.
 ````md
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata5
+:width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
@@ -123,6 +132,7 @@ The logo of TeachBooks.
 
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata5
+:width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
@@ -138,6 +148,7 @@ The logo of TeachBooks.
 ````md
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata6
+:width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
@@ -151,6 +162,7 @@ The logo of TeachBooks.
 
 ```{figure} /images/TeachBooks_logo.svg
 :name: tb_logo_metadata6
+:width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
