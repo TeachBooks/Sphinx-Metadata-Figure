@@ -148,19 +148,19 @@ class MetadataFigure(Figure):
         # Access environment/config for defaults and per-file metadata
         env = getattr(self.state.document.settings, 'env', None)
         config = getattr(env.app, 'config', None) if env else None
-        settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
+        user_settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
 
-        settings = METADATA_FIGURE_DEFAULTS | settings # merge with global defaults, overriding defaults if provided by user config
+        # Deep merge: merge each category separately to preserve unspecified defaults
+        settings = {}
+        for key in METADATA_FIGURE_DEFAULTS:
+            settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(key, {})
 
         # Validate license
         license_value = self.options.get('license', None)
+        license_settings = settings['license']
         if not license_value:
-            license_settings = settings.get('license', {}) if settings else {}
-            if license_settings.get('substitute_missing', False):
-                default_license = license_settings.get('default_license', 'CC-BY')
-                license_value = default_license
-
-        license_settings = settings.get('license', {}) if settings else {}
+            if license_settings['substitute_missing']:
+                license_value = license_settings['default_license']
         
         if license_value is None:
             # Warn or raise error if license is missing
@@ -170,9 +170,9 @@ class MetadataFigure(Figure):
                 f'- Please add the :license: option with a recognized license.\n'
                 f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
             )
-            if license_settings.get('strict_check', False):
+            if license_settings['strict_check']:
                 raise ValueError(message_missing)
-            elif license_settings.get('individual', False):
+            elif license_settings['individual']:
                 logger.warning(
                     message_missing,
                     location=(self.state.document.current_source, self.lineno)
@@ -184,9 +184,9 @@ class MetadataFigure(Figure):
                     f'has an unrecognized license "{license_value}".\n'
                     f'- Recognized licenses: {", ".join(VALID_LICENSES)}'
             )
-            if license_settings.get('strict_check', False):
+            if license_settings['strict_check']:
                 raise ValueError(message_incorrect)
-            elif license_settings.get('individual', False):
+            elif license_settings['individual']:
                 logger.warning(
                     message_incorrect,
                     location=(self.state.document.current_source, self.lineno)
@@ -195,9 +195,9 @@ class MetadataFigure(Figure):
         # Validate date format (optional)
         date_value = self.options.get('date',None)
         if not date_value:
-             date_settings = settings.get('date', {}) if settings else {}
-             if date_settings.get('substitute_missing', False):
-                default_date = date_settings.get('default_date', 'today')
+             date_settings = settings['date']
+             if date_settings['substitute_missing']:
+                default_date = date_settings['default_date']
                 if default_date == 'today':
                     date_value = datetime.today().strftime('%Y-%m-%d')
                 else:
@@ -216,9 +216,9 @@ class MetadataFigure(Figure):
 
         author_value = self.options.get('author',None)
         if not author_value:
-            author_settings = settings.get('author', {}) if settings else {}
-            if author_settings.get('substitute_missing', False):
-                default_author = author_settings.get('default_author', 'config')
+            author_settings = settings['author']
+            if author_settings['substitute_missing']:
+                default_author = author_settings['default_author']
                 if default_author == 'config':
                     author_value = getattr(config, 'author', None)
                 else:
@@ -226,9 +226,9 @@ class MetadataFigure(Figure):
 
         copyright_value = self.options.get('copyright', None)
         if not copyright_value:
-            copyright_settings = settings.get('copyright', {}) if settings else {}
-            if copyright_settings.get('substitute_missing', False):
-                default_copyright = copyright_settings.get('default_copyright', 'authoryear')
+            copyright_settings = settings['copyright']
+            if copyright_settings['substitute_missing']:
+                default_copyright = copyright_settings['default_copyright']
                 if default_copyright == 'authoryear':
                     if author_value and date_value:
                         year =  datetime.strptime(date_value, "%Y-%m-%d").year
@@ -268,9 +268,9 @@ class MetadataFigure(Figure):
                     copyright_value = default_copyright
         
         source_value = self.options.get('source', None)
-        source_settings = settings.get('source', {}) if settings else {}
+        source_settings = settings['source']
         if source_value is None:
-            if source_settings.get('warn_missing', False):
+            if source_settings['warn_missing']:
                 # Warn if source is missing (if requested)
                 message_missing = (
                     f'\n- Figure "{self.arguments[0]}" '
@@ -301,21 +301,13 @@ class MetadataFigure(Figure):
                 figure_node['source'] = source_value
 
             # Determine rendering controls
-            style_settings = settings.get('style', {}) if settings else {}
-            placement = self.options.get('placement', None)
-            if not placement:
-                placement = style_settings.get('placement', 'caption')
+            style_settings = settings['style']
+            placement = self.options.get('placement') or style_settings['placement']
             placement = placement.strip().lower()
-            show_raw = self.options.get('show', None)
-            if not show_raw:
-                show_raw = style_settings.get('show', 'author,license,date,copyright,source')
+            show_raw = self.options.get('show') or style_settings['show']
             show = [s.strip().lower() for s in str(show_raw).split(',') if s.strip()]
-            title = self.options.get('admonition_title', None)
-            if not title:
-                title = style_settings.get('admonition_title', translate('Attribution'))
-            admon_class = self.options.get('admonition_class', None)
-            if not admon_class:
-                admon_class = style_settings.get('admonition_class', 'attribution')
+            title = self.options.get('admonition_title') or translate(style_settings['admonition_title'])
+            admon_class = self.options.get('admonition_class') or style_settings['admonition_class']
             
             display_nodes = _build_attribution_display(
                 figure_node=figure_node,
@@ -425,10 +417,15 @@ def check_all_figures_have_license(app, env):
     """
 
     # Only report if requested
-    settings = getattr(app.config, 'metadata_figure_settings', {}) if app else {}
-    settings = METADATA_FIGURE_DEFAULTS | settings # merge with global defaults, overriding defaults if provided by user config
-    license_settings = settings.get('license', {})
-    if not license_settings.get('summaries', True):
+    user_settings = getattr(app.config, 'metadata_figure_settings', {}) if app else {}
+    
+    # Deep merge: merge each category separately to preserve unspecified defaults
+    settings = {}
+    for key in METADATA_FIGURE_DEFAULTS:
+        settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(key, {})
+    
+    license_settings = settings['license']
+    if not license_settings['summaries']:
         return
     
     missing_licenses = []
