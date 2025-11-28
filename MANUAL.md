@@ -11,6 +11,8 @@ This section is useful for user type 3-5.
 
 ## Examples using default settings
 
+These examples assume that the config only has the default options.
+
 ### Example 1: Complete Metadata
 
 ````md
@@ -35,6 +37,7 @@ The logo of TeachBooks.
 :license: CC-BY
 :source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
+:placement: caption
 
 The logo of TeachBooks.
 ```
@@ -55,6 +58,7 @@ The logo of TeachBooks.
 :name: tb_logo_metadata2
 :width: 50%
 :license: CC-BY
+:placement: caption
 
 The logo of TeachBooks.
 ```
@@ -81,6 +85,7 @@ The logo of TeachBooks.
 :date: 2024-11-13
 :source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
+:placement: caption
 
 The logo of TeachBooks.
 ```
@@ -109,6 +114,7 @@ The logo of TeachBooks.
 :license: Unknown
 :source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
 :copyright: © TeachBooks 2024
+:placement: caption
 
 The logo of TeachBooks.
 ```
