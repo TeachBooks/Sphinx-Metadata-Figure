@@ -154,6 +154,10 @@ class MetadataFigure(Figure):
         settings = {}
         for key in METADATA_FIGURE_DEFAULTS:
             settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(key, {})
+        
+        # Debug logging
+        logger.info(f"User settings: {user_settings}", color='blue')
+        logger.info(f"Merged style settings: {settings.get('style', {})}", color='blue')
 
         # Validate license
         license_value = self.options.get('license', None)
@@ -304,10 +308,10 @@ class MetadataFigure(Figure):
                 figure_node['source'] = source_value
 
             # Determine rendering controls
-            style_settings = settings.get('style', {}) if settings else {}
+            style_settings = settings.get('style', {})
             placement = self.options.get('placement', None)
             if not placement:
-                placement = style_settings.get('placement', 'caption')
+                placement = style_settings.get('placement', 'hide')  # Should always exist after merge
             placement = placement.strip().lower()
             show_raw = self.options.get('show', None)
             if not show_raw:
