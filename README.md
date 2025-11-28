@@ -76,10 +76,10 @@ Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of k
 
 The `style` key contains options for how the metadata is displayed.
 - `placement`: Where to place the metadata. Options are
- - `caption`: as text on a new line in the figure caption.
- - `admonition`: in an admonition box below the figure caption.
- - `margin`: in an admonition in the margin next to the figure.
- - `hide`: The metadata is not added to the output, but is verified.
+  - `caption`: as text on a new line in the figure caption.
+  - `admonition`: in an admonition box below the figure caption.
+  - `margin`: in an admonition in the margin next to the figure.
+  - `hide`: The metadata is not added to the output, but is verified.
 - `show`: A comma-separated list of which metadata fields to show. Options that can be included are
   - `author`
   - `license`
