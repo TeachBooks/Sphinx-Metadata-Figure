@@ -284,7 +284,7 @@ class MetadataFigure(Figure):
                 )
         
         # Generate the base figure nodes using parent class
-        figure_nodes = super().run()
+        figure_nodes = Figure.run(self)
                     
         # Store metadata on the figure node, so builders can access it
         if figure_nodes:
@@ -317,7 +317,7 @@ class MetadataFigure(Figure):
             if not admon_class:
                 admon_class = style_settings.get('admonition_class', 'attribution')
             
-            display_nodes = self._build_attribution_display(
+            display_nodes = _build_attribution_display(
                 figure_node=figure_node,
                 placement=placement,
                 show=show,
@@ -339,92 +339,77 @@ class MetadataFigure(Figure):
 
         return figure_nodes
     
-    def _build_attribution_display(self, figure_node, placement, show, title,
-                                   admonition_class, link_license):
-        """Create nodes to display attribution based on placement.
+def _build_attribution_display(figure_node, placement, show, title,
+                                admonition_class, link_license):
+    """Create nodes to display attribution based on placement.
 
-        Returns a list of nodes to append to the document. For placement='caption',
-        the returned list will include a paragraph intended to be appended inside
-        the figure node.
-        """
-        parts = []
-        if placement == 'hide':
-            return []
-        if 'author' in figure_node and 'author' in show:
-            parts.append((f"{translate('Author')}: {figure_node['author']}", None))
-        if 'license' in figure_node and 'license' in show:
-            if link_license and figure_node['license'] in LICENSE_URLS:
-                license_url = LICENSE_URLS[figure_node['license']]
-                parts.append((f"{translate('License')}: ", (figure_node['license'], license_url)))
-            else:
-                parts.append((f"{translate('License')}: {figure_node['license']}", None))
-        if 'date' in figure_node and 'date' in show:
-            parts.append((f"{translate('Date')}: {figure_node['date']}", None))
-        if 'copyright' in figure_node and 'copyright' in show:
-            parts.append((f"{translate('Copyright')}: {figure_node['copyright']}", None))
-        if 'source' in figure_node and 'source' in show:
-            if figure_node['source'].startswith('http'):
-                parts.append((f"{translate('Source')}: ", (figure_node['source'], figure_node['source'])))
-            elif len(figure_node['source'].split(']('))==2:
-                # markdown link format: [text](url)
-                text_part = figure_node['source'].split('](')[0].lstrip('[')
-                url_part = figure_node['source'].split('](')[1].rstrip(')')
-                parts.append((f"{translate('Source')}: ", (text_part, url_part)))
-            else:
-                parts.append((f"{translate('Source')}: {figure_node['source']}", None))
+    Returns a list of nodes to append to the document. For placement='caption',
+    the returned list will include a paragraph intended to be appended inside
+    the figure node.
+    """
+    parts = []
+    if placement == 'hide':
+        return []
+    if 'author' in figure_node and 'author' in show:
+        parts.append((f"{translate('Author')}: {figure_node['author']}", None))
+    if 'license' in figure_node and 'license' in show:
+        if link_license and figure_node['license'] in LICENSE_URLS:
+            license_url = LICENSE_URLS[figure_node['license']]
+            parts.append((f"{translate('License')}: ", (figure_node['license'], license_url)))
+        else:
+            parts.append((f"{translate('License')}: {figure_node['license']}", None))
+    if 'date' in figure_node and 'date' in show:
+        parts.append((f"{translate('Date')}: {figure_node['date']}", None))
+    if 'copyright' in figure_node and 'copyright' in show:
+        parts.append((f"{translate('Copyright')}: {figure_node['copyright']}", None))
+    if 'source' in figure_node and 'source' in show:
+        if figure_node['source'].startswith('http'):
+            parts.append((f"{translate('Source')}: ", (figure_node['source'], figure_node['source'])))
+        elif len(figure_node['source'].split(']('))==2:
+            # markdown link format: [text](url)
+            text_part = figure_node['source'].split('](')[0].lstrip('[')
+            url_part = figure_node['source'].split('](')[1].rstrip(')')
+            parts.append((f"{translate('Source')}: ", (text_part, url_part)))
+        else:
+            parts.append((f"{translate('Source')}: {figure_node['source']}", None))
 
-        if not parts:
-            return []
+    if not parts:
+        return []
 
-        if placement == 'caption': # CSS figure-metadata class styles it appropriately
-            license_html = "<span class=\"figure-metadata\">"
-            for i, (text_part, link_info) in enumerate(parts):
-                if i > 0:
-                    license_html += ' | '
-                license_html += text_part
-                if link_info:
-                    link_text, link_url = link_info
-                    license_html += f'<a href="{link_url}" target="_blank" rel="noopener">{link_text}</a>'
-            license_html += "</span>"
-            return license_html
-
-            # # Use a line block to ensure the attribution starts on a new line
-            # line_block = nodes.line_block()
-            # line = nodes.line()
-            # for i, (text_part, link_info) in enumerate(parts):
-            #     if i > 0:
-            #         line += nodes.Text(' | ')
-            #     line += nodes.Text(text_part)
-            #     if link_info:
-            #         link_text, link_url = link_info
-            #         ref = nodes.reference('', link_text, refuri=link_url, internal=False)
-            #         line += ref
-            # line['classes'].append('figure-metadata')
-            # line_block += line
-            # return [line_block]
-
-        # Build an admonition-like block for other placements
-        # admonition classes define the style
-        admon = nodes.admonition(classes=[admonition_class])
-        # Title
-        admon += nodes.title(text=title)
-        # Body paragraph
-        body_para = nodes.paragraph()
+    if placement == 'caption': # CSS figure-metadata class styles it appropriately
+        license_html = "<span class=\"figure-metadata\">"
         for i, (text_part, link_info) in enumerate(parts):
             if i > 0:
-                body_para += nodes.Text(' | ')
-            body_para += nodes.Text(text_part)
+                license_html += ' | '
+            license_html += text_part
             if link_info:
                 link_text, link_url = link_info
-                ref = nodes.reference('', link_text, refuri=link_url, internal=False)
-                body_para += ref
-        admon += body_para
+                license_html += f'<a href="{link_url}" target="_blank" rel="noopener">{link_text}</a>'
+        license_html += "</span>"
+        return license_html
 
-        if placement == 'margin':
-            # Add margin class to allow themes to style it in the margin
-            admon['classes'].append('margin')
+    # Build an admonition-like block for other placements
+    # admonition classes define the style
+    admon = nodes.admonition(classes=[admonition_class])
+    # Title
+    admon += nodes.title(text=title)
+    # Body paragraph
+    body_para = nodes.paragraph()
+    for i, (text_part, link_info) in enumerate(parts):
+        if i > 0:
+            body_para += nodes.Text(' | ')
+        body_para += nodes.Text(text_part)
+        if link_info:
+            link_text, link_url = link_info
+            ref = nodes.reference('', link_text, refuri=link_url, internal=False)
+            body_para += ref
+    admon += body_para
 
-        return [admon]
+    if placement == 'margin':
+        # Add margin class to allow themes to style it in the margin
+        admon['classes'].append('margin')
+
+    return [admon]
 
 
 def check_all_figures_have_license(app, env):
