@@ -156,7 +156,7 @@ The figure directive is extended with the following options to add metadata:
     - a MarkDown link
 - `placement`:
   - Optionally override the global `placement` setting for this figure only.
-  - Options are `caption`, `admonition`, or `margin`.
+  - Options are `caption`, `admonition`, `margin` or `hide`.
 - `show`:
   - Optionally override the global `show` setting for this figure only.
   - Comma-separated list of which metadata fields to show.
