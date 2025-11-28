@@ -11,7 +11,18 @@ This section is useful for user type 3-5.
 
 ## Examples using default settings
 
-These examples assume that the config only has the default options.
+These examples assume that the config only has the default options except for the `placement`, `summaries`, and `individual` options which are set as follows:
+
+```yaml
+sphinx:
+  config:
+    metadata_figure_settings:
+      style: 
+        placement: caption
+      license:
+        summaries: true
+        individual: true
+```
 
 ### Example 1: Complete Metadata
 

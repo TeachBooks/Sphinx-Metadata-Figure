@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 # Global defaults for figure attribution (can be overridden per file or per directive)
 METADATA_FIGURE_DEFAULTS_STYLE = {
-    'placement': 'caption',  # caption | admonition | margin | hide
+    'placement': 'hide',  # caption | admonition | margin | hide
     'show': 'author,license,date,copyright,source',     # which fields to display
     'admonition_title': 'Attribution',            # title for the admonition block
     'admonition_class': 'attribution', # extra CSS class on the admonition
@@ -42,7 +42,7 @@ METADATA_FIGURE_DEFAULTS_STYLE = {
 METADATA_FIGURE_DEFAULTS_LICENSE = {
     'link_license'       : True,
     'strict_check'       : False,
-    'summaries'          : True,
+    'summaries'          : False,
     'individual'         : False,
     'substitute_missing' : False,
     'default_license'    : 'CC-BY'

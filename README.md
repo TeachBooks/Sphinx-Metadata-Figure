@@ -46,14 +46,14 @@ sphinx:
   config:
     metadata_figure_settings:
       style: 
-        placement: caption
+        placement: hide
         show: author,license,date,copyright,source
         admonition_title: Attribution
         admonition_class: attribution
       license:
         link_license: true
         strict_check: false
-        summaries: true
+        summaries: false
         individual: false
         substitute_missing: false
         default_license: CC-BY
