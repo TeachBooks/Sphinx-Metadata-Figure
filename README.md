@@ -170,8 +170,9 @@ The figure directive is extended with the following options to add metadata:
 
 ## Documentation
 
-Further documentation for this extension is available in the [TeachBooks manual](https://teachbooks.io/manual).
+Further documentation for this extension is available in the [TeachBooks manual](https://teachbooks.io/manual/metadata-figure/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html).
 
+<!-- Start contribute -->
 ## Contribute
 
 This tool's repository is stored on [GitHub](https://github.com/TeachBooks/Sphinx-Metadata-Figure). If you'd like to contribute, you can create a fork and open a pull request on the [GitHub repository](https://github.com/TeachBooks/Sphinx-Metadata-Figure).
