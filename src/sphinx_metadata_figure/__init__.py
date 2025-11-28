@@ -148,9 +148,12 @@ class MetadataFigure(Figure):
         # Access environment/config for defaults and per-file metadata
         env = getattr(self.state.document.settings, 'env', None)
         config = getattr(env.app, 'config', None) if env else None
-        settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
+        user_settings = getattr(config, 'metadata_figure_settings', {}) if config else {}
 
-        settings = METADATA_FIGURE_DEFAULTS | settings # merge with global defaults, overriding defaults if provided by user config
+        # Deep merge: merge each category separately to preserve unspecified defaults
+        settings = {}
+        for key in METADATA_FIGURE_DEFAULTS:
+            settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(key, {})
 
         # Validate license
         license_value = self.options.get('license', None)
@@ -425,8 +428,13 @@ def check_all_figures_have_license(app, env):
     """
 
     # Only report if requested
-    settings = getattr(app.config, 'metadata_figure_settings', {}) if app else {}
-    settings = METADATA_FIGURE_DEFAULTS | settings # merge with global defaults, overriding defaults if provided by user config
+    user_settings = getattr(app.config, 'metadata_figure_settings', {}) if app else {}
+    
+    # Deep merge: merge each category separately to preserve unspecified defaults
+    settings = {}
+    for key in METADATA_FIGURE_DEFAULTS:
+        settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(key, {})
+    
     license_settings = settings.get('license', {})
     if not license_settings.get('summaries', True):
         return
