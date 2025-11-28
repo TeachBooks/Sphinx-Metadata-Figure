@@ -9,14 +9,10 @@
 /* placement==caption */
 .figure-metadata {
     font-size: 0.85em;  /* slightly smaller relative to parent element */
-    color: rgb(150,150,150); /* use a muted color */
     font-style: italic; /* make it slanted to differentiate from main caption */
-    margin-top: 0.5em;
-    padding-top: 0.5em;
     border-top-width: 1px;
     border-top-style: solid;
     border-top-color: rgb(150,150,150); /* subtle top border */
-    text-align: center;
 }
 
 /* placement==attribution or margin */

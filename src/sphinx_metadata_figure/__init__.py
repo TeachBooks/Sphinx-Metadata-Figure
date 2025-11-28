@@ -22,6 +22,10 @@ from pathlib import Path
 from sphinx.application import Sphinx
 from typing import Union
 
+from sphinx.writers.html import HTMLTranslator
+
+from docutils import nodes
+
 from sphinx.locale import get_translation
 MESSAGE_CATALOG_NAME = "sphinx_metadata_figure"
 translate = get_translation(MESSAGE_CATALOG_NAME)
@@ -30,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 # Global defaults for figure attribution (can be overridden per file or per directive)
 METADATA_FIGURE_DEFAULTS_STYLE = {
-    'placement': 'caption',  # caption | admonition | margin
+    'placement': 'caption',  # caption | admonition | margin | hide
     'show': 'author,license,date,copyright,source',     # which fields to display
     'admonition_title': 'Attribution',            # title for the admonition block
     'admonition_class': 'attribution', # extra CSS class on the admonition
@@ -127,7 +131,7 @@ class MetadataFigure(Figure):
         'copyright': directives.unchanged,
         'source': directives.unchanged,
         # New options for display/behavior
-        'placement': directives.unchanged,          # caption | admonition | margin
+        'placement': directives.unchanged,          # caption | admonition | margin | hide
         'show': directives.unchanged,               # comma-separated: author,license,date
         'admonition_title': directives.unchanged,              # admonition title (default: Attribution)
         'admonition_class': directives.unchanged,   # extra classes for admonition
@@ -281,7 +285,7 @@ class MetadataFigure(Figure):
         
         # Generate the base figure nodes using parent class
         figure_nodes = super().run()
-
+                    
         # Store metadata on the figure node, so builders can access it
         if figure_nodes:
             figure_node = figure_nodes[0]
@@ -325,12 +329,7 @@ class MetadataFigure(Figure):
             # Attach display according to placement
             if display_nodes:
                 if placement == 'caption':
-                    # paragraph node already targeted to append into figure
-                    for n in display_nodes:
-                        if isinstance(n, nodes.paragraph):
-                            figure_node.append(n)
-                        else:
-                            figure_nodes.append(n)
+                    figure_node['license_html'] = display_nodes
                 elif placement == 'margin':
                     # Insert margin admonition before the figure so it appears next to it
                     figure_nodes = display_nodes + figure_nodes
@@ -349,6 +348,8 @@ class MetadataFigure(Figure):
         the figure node.
         """
         parts = []
+        if placement == 'hide':
+            return []
         if 'author' in figure_node and 'author' in show:
             parts.append((f"{translate('Author')}: {figure_node['author']}", None))
         if 'license' in figure_node and 'license' in show:
@@ -376,20 +377,31 @@ class MetadataFigure(Figure):
             return []
 
         if placement == 'caption': # CSS figure-metadata class styles it appropriately
-            # Use a line block to ensure the attribution starts on a new line
-            line_block = nodes.line_block()
-            line = nodes.line()
+            license_html = "<span class=\"figure-metadata\">"
             for i, (text_part, link_info) in enumerate(parts):
                 if i > 0:
-                    line += nodes.Text(' | ')
-                line += nodes.Text(text_part)
+                    license_html += ' | '
+                license_html += text_part
                 if link_info:
                     link_text, link_url = link_info
-                    ref = nodes.reference('', link_text, refuri=link_url, internal=False)
-                    line += ref
-            line['classes'].append('figure-metadata')
-            line_block += line
-            return [line_block]
+                    license_html += f'<a href="{link_url}" target="_blank" rel="noopener">{link_text}</a>'
+            license_html += "</span>"
+            return license_html
+
+            # # Use a line block to ensure the attribution starts on a new line
+            # line_block = nodes.line_block()
+            # line = nodes.line()
+            # for i, (text_part, link_info) in enumerate(parts):
+            #     if i > 0:
+            #         line += nodes.Text(' | ')
+            #     line += nodes.Text(text_part)
+            #     if link_info:
+            #         link_text, link_url = link_info
+            #         ref = nodes.reference('', link_text, refuri=link_url, internal=False)
+            #         line += ref
+            # line['classes'].append('figure-metadata')
+            # line_block += line
+            # return [line_block]
 
         # Build an admonition-like block for other placements
         # admonition classes define the style
@@ -519,3 +531,26 @@ def copy_asset_files(app: Sphinx, exc: Union[bool, Exception]):
     if exc is None:
         for path in asset_files:
             copy_asset(path, str(Path(app.outdir).joinpath("_static").absolute()))
+
+
+original_visit = HTMLTranslator.visit_caption
+original_depart = HTMLTranslator.depart_caption
+
+
+def custom_visit_caption(self, node):
+    # Call original visit logic
+    original_visit(self, node)
+
+    # Inject extra content after original caption rendering
+    figure = node.parent
+    license_html = figure.get('license_html', [])
+    if license_html:
+        node.append(nodes.raw('', '<br>' + license_html, format='html'))
+
+def custom_depart_caption(self, node):
+    # Call original depart logic
+    original_depart(self, node)
+
+# Override methods
+HTMLTranslator.visit_caption = custom_visit_caption
+HTMLTranslator.depart_caption = custom_depart_caption
