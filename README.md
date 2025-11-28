@@ -170,7 +170,7 @@ The figure directive is extended with the following options to add metadata:
 
 ## Documentation
 
-Further documentation for this extension is available in the [TeachBooks manual](https://teachbooks.io/manual/metadata-figure/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html).
+Further documentation for this extension is available in the [TeachBooks manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html).
 
 <!-- Start contribute -->
 ## Contribute
