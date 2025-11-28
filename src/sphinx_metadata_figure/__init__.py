@@ -308,21 +308,13 @@ class MetadataFigure(Figure):
                 figure_node['source'] = source_value
 
             # Determine rendering controls
-            style_settings = settings.get('style', {})
-            placement = self.options.get('placement', None)
-            if not placement:
-                placement = style_settings.get('placement', 'hide')  # Should always exist after merge
+            style_settings = settings['style']
+            placement = self.options.get('placement') or style_settings['placement']
             placement = placement.strip().lower()
-            show_raw = self.options.get('show', None)
-            if not show_raw:
-                show_raw = style_settings.get('show', 'author,license,date,copyright,source')
+            show_raw = self.options.get('show') or style_settings['show']
             show = [s.strip().lower() for s in str(show_raw).split(',') if s.strip()]
-            title = self.options.get('admonition_title', None)
-            if not title:
-                title = style_settings.get('admonition_title', translate('Attribution'))
-            admon_class = self.options.get('admonition_class', None)
-            if not admon_class:
-                admon_class = style_settings.get('admonition_class', 'attribution')
+            title = self.options.get('admonition_title') or translate(style_settings['admonition_title'])
+            admon_class = self.options.get('admonition_class') or style_settings['admonition_class']
             
             display_nodes = _build_attribution_display(
                 figure_node=figure_node,
