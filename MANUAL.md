@@ -250,7 +250,7 @@ The logo of TeachBooks.
 :license: CC-BY
 :source: document
 :copyright: © TeachBooks 2024
-:placement: hide
+:placement: caption
 
 The logo of TeachBooks.
 ```
@@ -264,7 +264,7 @@ The logo of TeachBooks.
 :license: CC-BY
 :source: document
 :copyright: © TeachBooks 2024
-:placement: hide
+:placement: caption
 
 The logo of TeachBooks.
 ```
