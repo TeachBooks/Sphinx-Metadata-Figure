@@ -282,7 +282,16 @@ class MetadataFigure(Figure):
                     message_missing,
                     location=(self.state.document.current_source, self.lineno)
                 )
-        
+        if source_value == 'document':
+            if env:
+                doc_url = env.app.builder.get_relative_uri(
+                    fromdocname=env.docname,
+                    todocname=self.state.document.settings.env.docname
+                )
+                source_value = f'[Source code]({doc_url})'
+            else:
+                source_value = '[Source code](#)'
+                
         # Generate the base figure nodes using parent class
         figure_nodes = Figure.run(self)
                     

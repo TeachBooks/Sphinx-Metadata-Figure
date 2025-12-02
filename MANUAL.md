@@ -227,12 +227,42 @@ The logo of TeachBooks.
 ````
 
 ```{figure} /images/TeachBooks_logo.svg
-:name: tb_logo_metadata6
+:name: tb_logo_metadata7
 :width: 50%
 :author: Veronica Comin
 :date: 2024-11-13
 :license: CC-BY
 :source: [TeachBooks Logos and Visuals](https://github.com/TeachBooks/logos_and_visualisations)
+:copyright: © TeachBooks 2024
+:placement: hide
+
+The logo of TeachBooks.
+```
+
+### Example 8: Source as "document"
+
+````md
+```{figure} /images/TeachBooks_logo.svg
+:name: tb_logo_metadata8
+:width: 50%
+:author: Veronica Comin
+:date: 2024-11-13
+:license: CC-BY
+:source: document
+:copyright: © TeachBooks 2024
+:placement: hide
+
+The logo of TeachBooks.
+```
+````
+
+```{figure} /images/TeachBooks_logo.svg
+:name: tb_logo_metadata8
+:width: 50%
+:author: Veronica Comin
+:date: 2024-11-13
+:license: CC-BY
+:source: document
 :copyright: © TeachBooks 2024
 :placement: hide
 

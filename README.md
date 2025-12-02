@@ -154,6 +154,7 @@ The figure directive is extended with the following options to add metadata:
     - a URL (starting with "http" or "https")
     - a textual source description
     - a MarkDown link
+    - `document`, which will result in inserting a MarkDown link of the form [Source code](url_to_parent_document_that_contains_the_figure_directive).
 - `placement`:
   - Optionally override the global `placement` setting for this figure only.
   - Options are `caption`, `admonition`, `margin` or `hide`.
