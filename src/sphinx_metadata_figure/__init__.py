@@ -145,6 +145,9 @@ class MetadataFigure(Figure):
             list: List of docutils nodes to be inserted into the document
         """
 
+        if self.content is None or len(self.content) == 0:
+            logger.info(f'Figure without content?',location=(self.state.document.current_source, self.lineno),color='blue')
+
         # Access environment/config for defaults and per-file metadata
         env = getattr(self.state.document.settings, 'env', None)
         config = getattr(env.app, 'config', None) if env else None
@@ -283,14 +286,25 @@ class MetadataFigure(Figure):
                     location=(self.state.document.current_source, self.lineno)
                 )
         if source_value == 'document':
-            if env:
-                doc_url = env.app.builder.get_relative_uri(
-                    fromdocname=env.docname,
-                    todocname=self.state.document.settings.env.docname
-                )
-                source_value = f'[Source code]({doc_url})'
-            else:
-                source_value = '[Source code](#)'
+            # Get the source file path relative to the source directory
+            docname = env.docname if env else ''
+            source_suffix = env.config.source_suffix if env and hasattr(env.config, 'source_suffix') else {'.rst': None, '.md': None}
+            
+            # Determine the actual source file extension
+            source_file = None
+            if isinstance(source_suffix, dict):
+                for suffix in source_suffix.keys():
+                    potential_path = env.doc2path(docname, base=False) if env else docname + suffix
+                    if env and os.path.exists(os.path.join(env.srcdir, potential_path)):
+                        source_file = potential_path
+                        break
+            
+            if not source_file:
+                source_file = env.doc2path(docname, base=False) if env else docname + '.rst'
+            
+            # Create absolute link to _sources directory where Sphinx copies source files
+            source_link = f'/_sources/{source_file}'
+            source_value = f'[Source code]({source_link})'
                 
         # Generate the base figure nodes using parent class
         figure_nodes = Figure.run(self)
@@ -330,6 +344,15 @@ class MetadataFigure(Figure):
             # Attach display according to placement
             if display_nodes:
                 if placement == 'caption':
+                    # Check if figure already has a caption
+                    if (self.content is None or len(self.content) == 0):
+                        has_caption = False
+                        for node in figure_nodes:
+                            if isinstance(node, nodes.caption):
+                                has_caption = True
+                                break
+                        if not has_caption:
+                            logger.info(f"Figure at {self.state.document.current_source}:{self.lineno} has no caption to attach metadata to.", color='blue')
                     figure_node['license_html'] = display_nodes
                 elif placement == 'margin':
                     # Insert margin admonition before the figure so it appears next to it
