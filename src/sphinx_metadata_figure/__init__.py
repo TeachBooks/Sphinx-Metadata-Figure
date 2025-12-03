@@ -145,9 +145,6 @@ class MetadataFigure(Figure):
             list: List of docutils nodes to be inserted into the document
         """
 
-        if self.content is None or len(self.content) == 0:
-            logger.info(f'Figure without content?',location=(self.state.document.current_source, self.lineno),color='blue')
-
         # Access environment/config for defaults and per-file metadata
         env = getattr(self.state.document.settings, 'env', None)
         config = getattr(env.app, 'config', None) if env else None
@@ -308,6 +305,15 @@ class MetadataFigure(Figure):
                 
         # Generate the base figure nodes using parent class
         figure_nodes = Figure.run(self)
+        # pretty print the node and stop here for debugging
+        for node in figure_nodes:
+            for child in node.children:
+                has_caption = False
+                if isinstance(child, nodes.caption):
+                    has_caption = True
+            node["unnumbered_caption"] = not has_caption
+                # add a flag for adding an unnumbered caption later
+                
                     
         # Store metadata on the figure node, so builders can access it
         if figure_nodes:
@@ -344,15 +350,7 @@ class MetadataFigure(Figure):
             # Attach display according to placement
             if display_nodes:
                 if placement == 'caption':
-                    # Check if figure already has a caption
-                    if (self.content is None or len(self.content) == 0):
-                        has_caption = False
-                        for node in figure_nodes:
-                            if isinstance(node, nodes.caption):
-                                has_caption = True
-                                break
-                        if not has_caption:
-                            logger.info(f"Figure at {self.state.document.current_source}:{self.lineno} has no caption to attach metadata to.", color='blue')
+                    # Append to caption (as raw HTML) so that is inserted during html rendering
                     figure_node['license_html'] = display_nodes
                 elif placement == 'margin':
                     # Insert margin admonition before the figure so it appears next to it
@@ -410,6 +408,8 @@ def _build_attribution_display(figure_node, placement, show, title,
                 link_text, link_url = link_info
                 license_html += f'<a href="{link_url}" target="_blank" rel="noopener">{link_text}</a>'
         license_html += "</span>"
+        if not figure_node["unnumbered_caption"]:
+            license_html = '<br>' + license_html
         return license_html
 
     # Build an admonition-like block for other placements
@@ -529,6 +529,9 @@ def setup(app):
     package_dir = os.path.abspath(os.path.dirname(__file__))
     locale_dir = os.path.join(package_dir, "translations", "locales")
     app.add_message_catalog(MESSAGE_CATALOG_NAME, locale_dir)
+
+    # add captions to unnumbered figures
+    app.connect('doctree-resolved', add_unnumbered_caption)
     
     return {
         'parallel_read_safe': True,
@@ -559,7 +562,7 @@ def custom_visit_caption(self, node):
     figure = node.parent
     license_html = figure.get('license_html', [])
     if license_html:
-        node.append(nodes.raw('', '<br>' + license_html, format='html'))
+        node.append(nodes.raw('', license_html, format='html'))
 
 def custom_depart_caption(self, node):
     # Call original depart logic
@@ -568,3 +571,22 @@ def custom_depart_caption(self, node):
 # Override methods
 HTMLTranslator.visit_caption = custom_visit_caption
 HTMLTranslator.depart_caption = custom_depart_caption
+
+def add_unnumbered_caption(app, doctree, fromdocname):
+    """Add captions to unnumbered figures for metadata display."""
+    for node in doctree.traverse(nodes.figure):
+        has_caption = False
+        for child in node.children:
+            if isinstance(child, nodes.caption):
+                has_caption = True
+                break
+        if not has_caption:
+            if not node.get('ids'):
+                env = app.builder.env
+                serial = env.new_serialno('figure')
+                node['ids'] = [nodes.make_id(f'figure-{serial}')]
+
+            # add an empty caption so that metadata can be appended
+            new_caption = nodes.caption(text="")
+            node += new_caption
+        

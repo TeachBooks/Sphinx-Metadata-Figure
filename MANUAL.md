@@ -239,7 +239,7 @@ The logo of TeachBooks.
 The logo of TeachBooks.
 ```
 
-### Example 8: Source as "document"
+### Example 8: Placement in caption without a caption provided by the user
 
 ````md
 ```{figure} /images/TeachBooks_logo.svg
@@ -252,7 +252,6 @@ The logo of TeachBooks.
 :copyright: © TeachBooks 2024
 :placement: caption
 
-The logo of TeachBooks.
 ```
 ````
 
@@ -266,8 +265,38 @@ The logo of TeachBooks.
 :copyright: © TeachBooks 2024
 :placement: caption
 
+```
+
+### Example 9: Source as "document"
+
+````md
+```{figure} /images/TeachBooks_logo.svg
+:name: tb_logo_metadata9
+:width: 50%
+:author: Veronica Comin
+:date: 2024-11-13
+:license: CC-BY
+:source: document
+:copyright: © TeachBooks 2024
+:placement: caption
+
 The logo of TeachBooks.
 ```
+````
+
+```{figure} /images/TeachBooks_logo.svg
+:name: tb_logo_metadata9
+:width: 50%
+:author: Veronica Comin
+:date: 2024-11-13
+:license: CC-BY
+:source: document
+:copyright: © TeachBooks 2024
+:placement: caption
+
+The logo of TeachBooks.
+```
+
 
 ::::{include} README.md
 :start-after: "<!-- Start contribute -->"
