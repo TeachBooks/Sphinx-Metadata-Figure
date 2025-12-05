@@ -145,7 +145,10 @@ The figure directive is extended with the following options to add metadata:
 - `license`:
   - Specify the license type of the image. Must be one of the valid license types.
 - `date`:
-  - Optionally specify the creation date of the image in `YYYY-MM-DD` format.
+  - Optionally specify the creation date of the image.
+  - This value can be:
+    - a date in `YYYY-MM-DD` format
+    - `today`, which will result in using the date at which the build is performed.
 - `copyright`:
   - Optionally specify a text with copyright information for the image.
 - `source`:
