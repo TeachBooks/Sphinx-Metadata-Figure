@@ -197,11 +197,10 @@ class MetadataFigure(Figure):
         if not date_value:
              date_settings = settings['date']
              if date_settings['substitute_missing']:
-                default_date = date_settings['default_date']
-                if default_date == 'today':
-                    date_value = datetime.today().strftime('%Y-%m-%d')
-                else:
-                    date_value = default_date
+                date_value = date_settings['default_date']
+        if date_value:
+            if date_value == 'today':
+                date_value = datetime.today().strftime('%Y-%m-%d')
         if date_value:
             try:
                 datetime.strptime(date_value, '%Y-%m-%d')
@@ -576,6 +575,9 @@ def add_unnumbered_caption(app, doctree, fromdocname):
     """Add captions to unnumbered figures for metadata display."""
     for node in doctree.traverse(nodes.figure):
         has_caption = False
+        has_license_html = 'license_html' in node
+        if not has_license_html:
+            continue
         for child in node.children:
             if isinstance(child, nodes.caption):
                 has_caption = True
