@@ -2,7 +2,7 @@
 
 A Sphinx extension that provides an interface to add metadata to figures and display the metadata.
 
-This extension enhances Sphinx's figure directive with metadata support for:
+This extension enhances Sphinx's figure directive and the [MyST-NB sphinx extension's `glue:figure` directive](https://myst-nb.readthedocs.io/en/latest/render/glue.html#the-glue-figure-directive) with metadata support for:
 - **Author**: Image creator/author
 - **License**: Image license (validated)
 - **Date**: Creation date (YYYY-MM-DD format)
@@ -138,7 +138,7 @@ The `source` key contains options for how to handle source metadata.
 
 ## Usage
 
-The figure directive is extended with the following options to add metadata:
+The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive](https://myst-nb.readthedocs.io/en/latest/render/glue.html#the-glue-figure-directive) is extended with the following options to add metadata:
 
 - `author`:
   - Optionally specify the author/creator of the image.
