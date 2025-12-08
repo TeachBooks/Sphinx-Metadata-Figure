@@ -21,6 +21,7 @@ from sphinx.util.fileutil import copy_asset
 from pathlib import Path
 from sphinx.application import Sphinx
 from typing import Union
+from myst_nb.ext.glue.directives import PasteFigureDirective
 
 from sphinx.writers.html import HTMLTranslator
 
@@ -303,7 +304,14 @@ class MetadataFigure(Figure):
             source_value = f'[Source code]({source_link})'
                 
         # Generate the base figure nodes using parent class
-        figure_nodes = Figure.run(self)
+        if self.name == 'glue:figure':
+            temp = PasteFigureDirective(self.name, self.arguments, self.options,
+                                        self.content, self.lineno, self.content_offset,
+                                        self.block_text, self.state, self.state_machine)
+            # Handle the myst_nb glue figure directive
+            figure_nodes = PasteFigureDirective.run(temp)
+        else:
+            figure_nodes = Figure.run(self)
         # pretty print the node and stop here for debugging
         for node in figure_nodes:
             for child in node.children:
@@ -516,6 +524,7 @@ def setup(app):
 
     # Override the default figure directive with our custom version
     app.add_directive('figure', MetadataFigure, override=True)
+    app.add_directive_to_domain('glue', 'figure', MetadataFigure, override=True)
     
     # Add custom CSS for metadata styling
     app.add_css_file('metadata_figure.css')
