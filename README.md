@@ -138,7 +138,7 @@ The `source` key contains options for how to handle source metadata.
 
 ## Usage
 
-The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive](https://myst-nb.readthedocs.io/en/latest/render/glue.html#the-glue-figure-directive) is extended with the following options to add metadata:
+The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive](https://myst-nb.readthedocs.io/en/latest/render/glue.html#the-glue-figure-directive) are extended with the following options to add metadata:
 
 - `author`:
   - Optionally specify the author/creator of the image.
