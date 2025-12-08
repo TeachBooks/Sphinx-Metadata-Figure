@@ -13,7 +13,8 @@ authors = [
     { name = "Kwangjin Lee", email="kwangjinlee@tudelft.nl"}
 ]
 dependencies = [
-    "sphinx"
+    "sphinx",
+    "myst-nb"
 ]
 
 requires-python = ">=3.10"
