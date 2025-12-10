@@ -519,6 +519,9 @@ def setup(app):
     Returns:
         dict: Extension metadata
     """
+    # Ensure MysST NB is loaded before this extension so the glue domain is registered
+    app.setup_extension('myst_nb')
+
     # Register configuration values    
     app.add_config_value('metadata_figure_settings', {}, 'env')
 
