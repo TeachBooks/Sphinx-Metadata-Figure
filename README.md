@@ -68,6 +68,8 @@ sphinx:
         default_copyright: authoryear
       source:
         warn_missing: false
+      bib:
+        extract_metadata: true
 ```
 
 Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of key-value pairs. Each level 1 ley will be discussed next, including the options.
@@ -138,29 +140,10 @@ The `source` key contains options for how to handle source metadata.
 
 ### Bib
 
-The `bib` key contains options for BibTeX entry support. This allows you to:
-1. Generate BibTeX entries from figure metadata
-2. Extract figure metadata from existing BibTeX entries
+The `bib` key contains options for BibTeX entry support. This allows you to extract figure metadata from existing BibTeX entries.
 
 Configuration options:
-- `generate`: If `true`, BibTeX entries will be generated from figure metadata and written to a `.bib` file after the build completes. Default: `false`.
-- `output_file`: The filename for the generated BibTeX file (relative to the output directory). Default: `_figure_metadata.bib`.
-- `entry_type`: The BibTeX entry type to use for generated entries. Default: `misc`.
-- `key_prefix`: Prefix for auto-generated BibTeX keys when no explicit `:bib:` key is provided. Default: `fig:`.
 - `extract_metadata`: If `true`, metadata will be extracted from existing BibTeX entries when the `:bib:` option references a valid key. Default: `true`.
-
-Example configuration:
-```yaml
-sphinx:
-  config:
-    metadata_figure_settings:
-      bib:
-        generate: true
-        output_file: figures.bib
-        entry_type: misc
-        key_prefix: fig:
-        extract_metadata: true
-```
 
 ## Usage
 
@@ -200,49 +183,7 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
 - `bib`:
   - Optionally specify a BibTeX key for this figure.
   - When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the bib entry.
-  - When `bib.generate` is enabled in configuration, a BibTeX entry will be generated for this figure using the specified key (or an auto-generated key if not provided).
   - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
-
-### BibTeX Integration Examples
-
-**Extract metadata from existing bib entry:**
-```rst
-.. figure:: images/diagram.png
-   :bib: smith2024diagram
-
-   A diagram from Smith's paper
-```
-
-**Generate bib entries from figure metadata:**
-```yaml
-# In _config.yml
-sphinx:
-  config:
-    metadata_figure_settings:
-      bib:
-        generate: true
-```
-
-```rst
-.. figure:: images/photo.jpg
-   :author: John Doe
-   :license: CC-BY
-   :date: 2024-06-15
-   :bib: my_photo_key
-
-   A photograph by John Doe
-```
-
-This will generate a BibTeX entry like:
-```bibtex
-@misc{my_photo_key,
-  author = {John Doe},
-  title = {A photograph by John Doe},
-  year = {2024},
-  date = {2024-06-15},
-  note = {License: CC-BY}
-}
-```
 
 ## Documentation
 
