@@ -8,11 +8,13 @@
 
 /* placement==caption */
 .figure-metadata {
+    display: inline-block; /* use inline-block to prevent border from appearing on each wrapped line */
     font-size: 0.85em;  /* slightly smaller relative to parent element */
     font-style: italic; /* make it slanted to differentiate from main caption */
     border-top-width: 1px;
     border-top-style: solid;
     border-top-color: rgb(150,150,150); /* subtle top border */
+    padding-top: 2px; /* small padding between border and text */
 }
 
 /* placement==attribution or margin */
