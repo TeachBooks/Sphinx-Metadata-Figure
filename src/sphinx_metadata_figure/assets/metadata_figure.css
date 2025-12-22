@@ -8,11 +8,13 @@
 
 /* placement==caption */
 .figure-metadata {
+    display: inline-block; /* make it a block to control border positioning */
     font-size: 0.85em;  /* slightly smaller relative to parent element */
     font-style: italic; /* make it slanted to differentiate from main caption */
     border-top-width: 1px;
     border-top-style: solid;
     border-top-color: rgb(150,150,150); /* subtle top border */
+    padding-top: 2px; /* small padding above the border */
 }
 
 /* placement==attribution or margin */
