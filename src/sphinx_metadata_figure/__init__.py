@@ -404,9 +404,16 @@ class MetadataFigure(Figure):
                     message_incorrect,
                     location=(self.state.document.current_source, self.lineno)
             )
-        # Translate the license
+        # Translate the license, remove dashes in CC licenses and add version if missing for display
         if license_value:
+            # translate:
             license_value = translate(license_value)
+            # remove dashes in CC licenses for display
+            if license_value.startswith("CC-"):
+                license_value = license_value.replace("CC-", "CC ")
+            # add 4.0 to CC licenses without version
+            if license_value.startswith("CC ") and not any(char.isdigit() for char in license_value):
+                license_value += " 4.0"
         
         # Validate date format (explicit option > bib metadata > defaults)
         date_value = self.options.get('date', None) or bib_metadata.get('date', None)
