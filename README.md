@@ -70,6 +70,9 @@ sphinx:
         warn_missing: false
       bib:
         extract_metadata: true
+        generate_bib: false
+        output_file: references.bib
+        overwrite_existing: false
 ```
 
 Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of key-value pairs. Each level 1 ley will be discussed next, including the options.
@@ -140,10 +143,13 @@ The `source` key contains options for how to handle source metadata.
 
 ### Bib
 
-The `bib` key contains options for BibTeX entry support. This allows you to extract figure metadata from existing BibTeX entries.
+The `bib` key contains options for BibTeX entry support. This allows you to both extract figure metadata from existing BibTeX entries and generate new BibTeX entries from figure metadata.
 
 Configuration options:
 - `extract_metadata`: If `true`, metadata will be extracted from existing BibTeX entries when the `:bib:` option references a valid key. Default: `true`.
+- `generate_bib`: If `true`, BibTeX entries will be automatically generated from figure metadata when the `:bib:` option is specified. This allows you to create bibliography entries directly from your figure metadata. Default: `false`.
+- `output_file`: Path to the output `.bib` file where generated BibTeX entries will be written (relative to the source directory). Default: `references.bib`.
+- `overwrite_existing`: If `true`, existing BibTeX entries with the same key will be overwritten when generating new entries. If `false`, existing entries are preserved and a debug message is logged. Default: `false`.
 
 ## Usage
 
@@ -182,17 +188,55 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Only relevant if `placement` is `admonition` or `margin`.
 - `bib`:
   - Optionally specify a BibTeX key for this figure.
-  - When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
-    | Metadata Field | Primary BibTeX Source | Fallback BibTeX source | Notes |
-    |---|---|---|---|
-    | `author` | `author` field | — | Used as-is |
-    | `date` | `date` field | `year` field | If only `year` exists, converted to `YYYY-01-01` format |
-    | `source` | `url` field | `howpublished` field | If `howpublished` contains `\url{...}`, extracts the URL; otherwise uses full value if `url` not present |
-    | `license` | `note` field | — | Only extracted if formatted as `license: ...` (case-insensitive); the text after the prefix is used |
-    | `copyright` | `copyright` field | — | Used as-is |
-  - Fields that cannot be extracted are simply omitted from metadata (no defaults applied at extraction time)
-  - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
-  - The BibTeX entry is also automatically added to the document bibliography using a `cite:empty` role (when the BibTeX key exists).
+  - **Extracting metadata from BibTeX (when `extract_metadata: true`):**
+    - When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
+      | Metadata Field | Primary BibTeX Source | Fallback BibTeX source | Notes |
+      |---|---|---|---|
+      | `author` | `author` field | — | Used as-is |
+      | `date` | `date` field | `year` field | If only `year` exists, converted to `YYYY-01-01` format |
+      | `source` | `url` field | `howpublished` field | If `howpublished` contains `\url{...}`, extracts the URL; otherwise uses full value if `url` not present |
+      | `license` | `note` field | — | Only extracted if formatted as `license: ...` (case-insensitive); the text after the prefix is used |
+      | `copyright` | `copyright` field | — | Used as-is |
+    - Fields that cannot be extracted are simply omitted from metadata (no defaults applied at extraction time)
+    - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
+    - The BibTeX entry is also automatically added to the document bibliography using a `cite:empty` role (when the BibTeX key exists).
+  - **Generating BibTeX entries (when `generate_bib: true`):**
+    - When specified with explicit metadata options (`:author:`, `:license:`, `:date:`, etc.), a BibTeX entry will be automatically generated and written to the configured output file.
+    - The generated entry uses `@misc` type and includes all available metadata fields.
+    - Example configuration to enable generation:
+      ```yaml
+      sphinx:
+        config:
+          metadata_figure_settings:
+            bib:
+              generate_bib: true
+              output_file: my_figures.bib
+              overwrite_existing: false
+      ```
+    - Example usage:
+      ````markdown
+      ```{figure} /images/myimage.png
+      :bib: MyFigureKey
+      :author: John Doe
+      :license: CC-BY
+      :date: 2025-01-15
+      :source: https://example.com
+
+      My figure caption
+      ```
+      ````
+      This will generate an entry in `my_figures.bib`:
+      ```bibtex
+      @misc{MyFigureKey,
+        author = {John Doe},
+        title = {My figure caption},
+        year = {2025},
+        date = {2025-01-15},
+        url = {https://example.com},
+        howpublished = {\url{https://example.com}},
+        note = {License: CC-BY},
+      }
+      ```
 
 ## Documentation
 

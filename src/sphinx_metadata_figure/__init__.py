@@ -63,6 +63,9 @@ METADATA_FIGURE_DEFAULTS_SOURCE = {
 }
 METADATA_FIGURE_DEFAULTS_BIB = {
     'extract_metadata': True,    # Extract metadata from bib entries when :bib: is specified
+    'generate_bib': False,        # Generate BibTeX entries from figure metadata
+    'output_file': 'references.bib',  # Output file for generated BibTeX entries
+    'overwrite_existing': False,  # Whether to overwrite existing entries with the same key
 }
 METADATA_FIGURE_DEFAULTS = {
     'style': METADATA_FIGURE_DEFAULTS_STYLE,
@@ -210,6 +213,138 @@ def _load_bib_files(app):
                         logger.debug(f'Could not read bib file {bib_path}: {e}')
 
     return bib_content
+
+
+def _generate_bib_entry(key, metadata, image_path, caption=None):
+    """
+    Generate a BibTeX entry from figure metadata.
+
+    Args:
+        key: BibTeX key for the entry
+        metadata: dict containing figure metadata (author, license, date, copyright, source)
+        image_path: Path to the image file
+        caption: Optional figure caption
+
+    Returns:
+        str: Formatted BibTeX entry
+    """
+    # Start with @misc entry type (most appropriate for figures/images)
+    bib_lines = [f'@misc{{{key},']
+
+    # Add author if present
+    if metadata.get('author'):
+        bib_lines.append(f'  author = {{{metadata["author"]}}},')
+
+    # Add title (use caption or image filename)
+    if caption:
+        title = caption.strip()
+    else:
+        title = f'Figure: {image_path}'
+    bib_lines.append(f'  title = {{{title}}},')
+
+    # Add date/year
+    if metadata.get('date'):
+        date_str = metadata['date']
+        # Extract year from date if in YYYY-MM-DD format
+        try:
+            year = datetime.strptime(date_str, '%Y-%m-%d').year
+            bib_lines.append(f'  year = {{{year}}},')
+            bib_lines.append(f'  date = {{{date_str}}},')
+        except ValueError:
+            # If date is not in expected format, just use it as-is
+            bib_lines.append(f'  year = {{{date_str}}},')
+
+    # Add source as URL or howpublished
+    if metadata.get('source'):
+        source = metadata['source']
+        # Check if it's a URL
+        if source.startswith('http://') or source.startswith('https://'):
+            bib_lines.append(f'  url = {{{source}}},')
+            bib_lines.append(f'  howpublished = {{\\url{{{source}}}}},')
+        elif source.startswith('[') and '](' in source:
+            # Markdown link format: [text](url)
+            import re
+            match = re.match(r'\[([^\]]+)\]\(([^\)]+)\)', source)
+            if match:
+                url = match.group(2)
+                bib_lines.append(f'  url = {{{url}}},')
+                bib_lines.append(f'  howpublished = {{\\url{{{url}}}}},')
+        else:
+            bib_lines.append(f'  howpublished = {{{source}}},')
+
+    # Add license in note field
+    if metadata.get('license'):
+        bib_lines.append(f'  note = {{License: {metadata["license"]}}},')
+
+    # Add copyright
+    if metadata.get('copyright'):
+        bib_lines.append(f'  copyright = {{{metadata["copyright"]}}},')
+
+    # Close the entry
+    bib_lines.append('}')
+
+    return '\n'.join(bib_lines)
+
+
+def _write_bib_entry(app, bib_key, bib_entry, output_file, overwrite=False):
+    """
+    Write a BibTeX entry to a file, avoiding duplicates.
+
+    Args:
+        app: Sphinx application instance
+        bib_key: The BibTeX key
+        bib_entry: The formatted BibTeX entry string
+        output_file: Path to the output .bib file (relative to srcdir)
+        overwrite: Whether to overwrite existing entries with the same key
+    """
+    import re
+
+    # Resolve output path
+    output_path = _resolve_bib_output_path(app, output_file)
+
+    # Read existing content if file exists
+    existing_content = ''
+    if os.path.exists(output_path):
+        try:
+            with open(output_path, 'r', encoding='utf-8') as f:
+                existing_content = f.read()
+        except Exception as e:
+            logger.warning(f'Could not read existing bib file {output_path}: {e}')
+            return
+
+    # Check if entry with this key already exists
+    pattern = rf'@\w+\s*\{{\s*{re.escape(bib_key)}\s*,'
+    existing_match = re.search(pattern, existing_content, re.IGNORECASE)
+
+    if existing_match:
+        if not overwrite:
+            logger.debug(f'BibTeX entry with key "{bib_key}" already exists in {output_path}, skipping')
+            return
+        else:
+            # Remove the existing entry
+            # Pattern matches @type{key, ... }
+            full_pattern = rf'@\w+\s*\{{\s*{re.escape(bib_key)}\s*,([^@]*?)\}}\s*(?=@|\Z)'
+            existing_content = re.sub(full_pattern, '', existing_content, flags=re.DOTALL | re.IGNORECASE)
+            logger.debug(f'Overwriting existing BibTeX entry with key "{bib_key}" in {output_path}')
+
+    # Append new entry
+    if existing_content and not existing_content.endswith('\n\n'):
+        if existing_content.endswith('\n'):
+            bib_entry = '\n' + bib_entry
+        else:
+            bib_entry = '\n\n' + bib_entry
+
+    # Write to file
+    try:
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(existing_content + bib_entry + '\n')
+
+        logger.info(f'Generated BibTeX entry for "{bib_key}" in {output_path}')
+    except Exception as e:
+        logger.warning(f'Could not write BibTeX entry to {output_path}: {e}')
 
 
 class MetadataFigure(Figure):
@@ -460,6 +595,36 @@ class MetadataFigure(Figure):
                 figure_node['copyright'] = copyright_value
             if source_value:
                 figure_node['source'] = source_value
+
+            # Generate BibTeX entry if requested
+            if bib_settings['generate_bib'] and bib_key and env:
+                # Collect metadata for BibTeX generation
+                metadata_dict = {}
+                if author_value:
+                    metadata_dict['author'] = author_value
+                if license_value:
+                    metadata_dict['license'] = license_value
+                if date_value:
+                    metadata_dict['date'] = date_value
+                if copyright_value:
+                    metadata_dict['copyright'] = copyright_value
+                if source_value:
+                    metadata_dict['source'] = source_value
+
+                # Extract caption from figure node
+                caption_text = None
+                for child in figure_node.children:
+                    if isinstance(child, nodes.caption):
+                        caption_text = child.astext()
+                        break
+
+                # Generate and write BibTeX entry
+                if metadata_dict:  # Only generate if we have some metadata
+                    image_path = self.arguments[0]
+                    bib_entry = _generate_bib_entry(bib_key, metadata_dict, image_path, caption_text)
+                    output_file = bib_settings['output_file']
+                    overwrite = bib_settings['overwrite_existing']
+                    _write_bib_entry(env.app, bib_key, bib_entry, output_file, overwrite)
 
             # Determine rendering controls
             style_settings = settings['style']
