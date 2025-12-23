@@ -182,7 +182,15 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Only relevant if `placement` is `admonition` or `margin`.
 - `bib`:
   - Optionally specify a BibTeX key for this figure.
-  - When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the bib entry.
+  - When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
+    | Metadata Field | Primary BibTeX Source | Fallback BibTeX source | Notes |
+    |---|---|---|---|
+    | `author` | `author` field | — | Used as-is |
+    | `date` | `date` field | `year` field | If only `year` exists, converted to `YYYY-01-01` format |
+    | `source` | `url` field | `howpublished` field | If `howpublished` contains `\url{...}`, extracts the URL; otherwise uses full value if `url` not present |
+    | `license` | `note` field | — | Only extracted if formatted as `license: ...` (case-insensitive); the text after the prefix is used |
+    | `copyright` | `copyright` field | — | Used as-is |
+  - Fields that cannot be extracted are simply omitted from metadata (no defaults applied at extraction time)
   - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
 
 ## Documentation
