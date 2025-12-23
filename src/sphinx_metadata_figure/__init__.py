@@ -354,6 +354,15 @@ class MetadataFigure(Figure):
                     self.state.nested_parse([text], self.content_offset, para)
                     # Add the paragraph node to the document
                     self.state.document += para
+                else:
+                    message_unrecognized = (
+                        f'\n- Figure "{self.arguments[0]}" '
+                            f'has an unrecognized BibTeX key "{bib_key}".'
+                    )
+                    logger.warning(
+                        message_unrecognized,
+                        location=(self.state.document.current_source, self.lineno)
+                    )
 
         # Validate license (explicit option > bib metadata > defaults)
         license_value = self.options.get('license', None) or bib_metadata.get('license', None)
