@@ -191,6 +191,74 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
   - The BibTeX entry is also automatically added to the document bibliography using a `cite:empty` role (when the BibTeX key exists).
 
+## Setting Page-Level Defaults
+
+You can set default metadata values for all figures on a specific page using the `default-metadata-page` directive. This provides a middle layer between global configuration and per-figure settings.
+
+### Syntax
+
+```rst
+.. default-metadata-page::
+   :author: John Doe
+   :license: CC-BY
+   :placement: admonition
+```
+
+Or in MyST markdown:
+
+```markdown
+```{default-metadata-page}
+:author: John Doe
+:license: CC-BY
+:placement: admonition
+```
+```
+
+### Features
+
+- **Scope**: Applies to all figures in the current document only
+- **Priority**: Page defaults override global config but are overridden by explicit figure options
+- **All options supported**: You can set any metadata field or display option at page level
+
+### Priority Order
+
+When determining metadata values, the extension follows this priority chain (highest to lowest):
+
+1. **Explicit figure option** (`:author:` on the figure directive)
+2. **Page-level default** (from `default-metadata-page`)
+3. **BibTeX metadata** (when `:bib:` references an existing entry)
+4. **Global configuration** (from `_config.yml`)
+
+### Example
+
+```markdown
+# Chapter 1: Historical Photos
+
+```{default-metadata-page}
+:author: Historical Archive
+:license: Public Domain
+:date: 1920-01-01
+:placement: margin
+```
+
+```{figure} photo1.jpg
+This photo uses all page defaults
+```
+
+```{figure} photo2.jpg
+:author: Specific Photographer
+This photo overrides the author but keeps other page defaults
+```
+
+```{figure} photo3.jpg
+:license: CC-BY
+:placement: caption
+This photo overrides license and placement, keeps page default author and date
+```
+```
+
+This feature is especially useful when you have multiple figures in a document that share common metadata, reducing repetition while maintaining flexibility.
+
 ## Documentation
 
 Further documentation for this extension is available in the [TeachBooks manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html).
