@@ -35,6 +35,9 @@ msgstr "Pixabay-lisens"
 msgid "Proprietary"
 msgstr "Proprietær"
 
+msgid "Public Domain"
+msgstr "Offentlig eiendom"
+
 msgid "Source"
 msgstr "Kilde"
 

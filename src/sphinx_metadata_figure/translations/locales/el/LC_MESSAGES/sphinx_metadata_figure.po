@@ -35,6 +35,9 @@ msgstr "Άδεια Pixabay"
 msgid "Proprietary"
 msgstr "Ιδιόκτητο"
 
+msgid "Public Domain"
+msgstr "Δημόσιο κτήμα"
+
 msgid "Source"
 msgstr "Πηγή"
 

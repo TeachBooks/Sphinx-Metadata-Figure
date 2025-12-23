@@ -35,6 +35,9 @@ msgstr "Pixabay Lisansı"
 msgid "Proprietary"
 msgstr "Tescilli"
 
+msgid "Public Domain"
+msgstr "Kamu malı"
+
 msgid "Source"
 msgstr "Kaynak"
 

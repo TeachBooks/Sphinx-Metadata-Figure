@@ -35,6 +35,9 @@ msgstr "Licence Pixabay"
 msgid "Proprietary"
 msgstr "Proprietární"
 
+msgid "Public Domain"
+msgstr "Veřejná doména"
+
 msgid "Source"
 msgstr "Zdroj"
 

@@ -35,6 +35,9 @@ msgstr "Pixabay লাইসেন্স"
 msgid "Proprietary"
 msgstr "মালিকানাধীন"
 
+msgid "Public Domain"
+msgstr "পাবলিক ডোমেইন"
+
 msgid "Source"
 msgstr "উৎস"
 

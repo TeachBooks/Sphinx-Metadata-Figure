@@ -35,6 +35,9 @@ msgstr "Pixabay licenc"
 msgid "Proprietary"
 msgstr "Szabadalmazott"
 
+msgid "Public Domain"
+msgstr "Közkincs"
+
 msgid "Source"
 msgstr "Forrás"
 

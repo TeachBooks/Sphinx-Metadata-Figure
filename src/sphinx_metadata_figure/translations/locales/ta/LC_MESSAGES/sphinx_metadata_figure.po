@@ -35,6 +35,9 @@ msgstr "Pixabay உரிமம்"
 msgid "Proprietary"
 msgstr "தனியுரிமை"
 
+msgid "Public Domain"
+msgstr "பொதுத் தளம்"
+
 msgid "Source"
 msgstr "மூலம்"
 

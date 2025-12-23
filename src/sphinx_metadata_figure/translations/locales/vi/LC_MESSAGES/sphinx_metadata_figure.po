@@ -35,6 +35,9 @@ msgstr "Giấy phép Pixabay"
 msgid "Proprietary"
 msgstr "Độc quyền"
 
+msgid "Public Domain"
+msgstr "Miền công cộng"
+
 msgid "Source"
 msgstr "Nguồn"
 

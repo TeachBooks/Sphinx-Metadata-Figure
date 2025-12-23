@@ -35,6 +35,9 @@ msgstr "רישיון Pixabay"
 msgid "Proprietary"
 msgstr "קנייני"
 
+msgid "Public Domain"
+msgstr "נחלת הכלל"
+
 msgid "Source"
 msgstr "מקור"
 

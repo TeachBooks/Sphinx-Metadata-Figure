@@ -35,6 +35,9 @@ msgstr "ใบอนุญาต Pixabay"
 msgid "Proprietary"
 msgstr "กรรมสิทธิ์"
 
+msgid "Public Domain"
+msgstr "สาธารณสมบัติ"
+
 msgid "Source"
 msgstr "แหล่งที่มา"
 

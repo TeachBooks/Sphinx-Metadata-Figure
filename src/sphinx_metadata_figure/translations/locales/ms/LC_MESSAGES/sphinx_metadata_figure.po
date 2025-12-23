@@ -35,6 +35,9 @@ msgstr "Lesen Pixabay"
 msgid "Proprietary"
 msgstr "Proprietari"
 
+msgid "Public Domain"
+msgstr "Domain Awam"
+
 msgid "Source"
 msgstr "Sumber"
 

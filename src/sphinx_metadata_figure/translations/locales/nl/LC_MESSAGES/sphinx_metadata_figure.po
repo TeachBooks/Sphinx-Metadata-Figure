@@ -35,6 +35,9 @@ msgstr "Pixabay-licentie"
 msgid "Proprietary"
 msgstr "Eigendom"
 
+msgid "Public Domain"
+msgstr "Publiek domein"
+
 msgid "Source"
 msgstr "Bron"
 

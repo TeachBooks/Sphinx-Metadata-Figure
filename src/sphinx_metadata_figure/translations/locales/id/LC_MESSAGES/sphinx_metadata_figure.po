@@ -35,6 +35,9 @@ msgstr "Lisensi Pixabay"
 msgid "Proprietary"
 msgstr "Kepemilikan"
 
+msgid "Public Domain"
+msgstr "Domain Publik"
+
 msgid "Source"
 msgstr "Sumber"
 

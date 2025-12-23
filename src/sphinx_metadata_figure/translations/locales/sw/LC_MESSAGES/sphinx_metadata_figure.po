@@ -35,6 +35,9 @@ msgstr "Leseni ya Pixabay"
 msgid "Proprietary"
 msgstr "Miliki"
 
+msgid "Public Domain"
+msgstr "Eneo la umma"
+
 msgid "Source"
 msgstr "Chanzo"
 
