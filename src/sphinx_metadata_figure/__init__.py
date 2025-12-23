@@ -11,6 +11,7 @@ During parsing, it validates that all images have proper and recognized license 
 """
 
 import os
+import json
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -129,7 +130,7 @@ VALID_LICENSES = [
     'All Rights Reserved',
     'Pixabay License',
     'Unsplash License',
-    'Pexels License',
+    'Pexels License'
 ]
 
 # Map known license tokens to canonical URLs (used when linking licenses)
@@ -189,7 +190,7 @@ LICENSE_URLS = {
     "BSD-2-Clause": "https://opensource.org/licenses/BSD-2-Clause",
     'Pixabay License': 'https://pixabay.com/service/terms/#license',
     'Unsplash License': 'https://unsplash.com/license',
-    'Pexels License': 'https://www.pexels.com/license/',
+    'Pexels License': 'https://www.pexels.com/license/'
 }
 
 def _parse_bib_entry(bib_content, key):
@@ -400,11 +401,20 @@ class MetadataFigure(Figure):
                 if extracted:
                     bib_metadata = extracted
                     # add it to the bibliography
-                    text = f":cite:empty:`{bib_key}`"
+                    text = f"{{cite:empty}}`{bib_key}`"
                     para = nodes.paragraph()
                     self.state.nested_parse([text], self.content_offset, para)
                     # Add the paragraph node to the document
                     self.state.document += para
+                else:
+                    message_unrecognized = (
+                        f'\n- Figure "{self.arguments[0]}" '
+                            f'has an unrecognized BibTeX key "{bib_key}".'
+                    )
+                    logger.warning(
+                        message_unrecognized,
+                        location=(self.state.document.current_source, self.lineno)
+                    )
 
         # Validate license (explicit option > page defaults > bib metadata > defaults)
         license_value = self.options.get('license', None) or page_defaults.get('license', None) or bib_metadata.get('license', None)
@@ -412,6 +422,9 @@ class MetadataFigure(Figure):
         if not license_value:
             if license_settings['substitute_missing']:
                 license_value = license_settings['default_license']
+
+        if license_value:
+            license_value = untranslate_license(license_value)
         
         if license_value is None:
             # Warn or raise error if license is missing
@@ -442,9 +455,16 @@ class MetadataFigure(Figure):
                     message_incorrect,
                     location=(self.state.document.current_source, self.lineno)
             )
-        # Translate the license
+        # Translate the license, remove dashes in CC licenses and add version if missing for display
         if license_value:
+            # translate:
             license_value = translate(license_value)
+            # remove dashes in CC licenses for display
+            if license_value.startswith("CC-"):
+                license_value = license_value.replace("CC-", "CC ")
+            # add 4.0 to CC licenses without version
+            if license_value.startswith("CC ") and not any(char.isdigit() for char in license_value):
+                license_value += " 4.0"
         
         # Validate date format (explicit option > page defaults > bib metadata > defaults)
         date_value = self.options.get('date', None) or page_defaults.get('date', None) or bib_metadata.get('date', None)
@@ -868,3 +888,15 @@ def add_unnumbered_caption(app, doctree, fromdocname):
             # add an empty caption so that metadata can be appended
             new_caption = nodes.caption(text="")
             node += new_caption
+
+def untranslate_license(license_value: str) -> str:
+    """Convert translated license names back to standard English keys."""
+    """Independent of current locale."""
+
+    # load untranslate map
+    folder = os.path.abspath(os.path.dirname(__file__))
+    locale_dir = os.path.join(folder, "translations", "untranslate.json")
+    with open(locale_dir, 'r', encoding='utf-8') as f:
+        untranslate_map = json.load(f)
+
+    return untranslate_map.get(license_value, license_value)
