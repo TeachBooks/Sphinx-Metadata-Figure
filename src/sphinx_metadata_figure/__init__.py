@@ -23,6 +23,7 @@ from pathlib import Path
 from sphinx.application import Sphinx
 from typing import Union
 from myst_nb.ext.glue.directives import PasteFigureDirective
+from sphinx.util.docutils import SphinxDirective
 
 from sphinx.writers.html import HTMLTranslator
 
@@ -290,6 +291,50 @@ def _load_bib_files(app):
     return bib_content
 
 
+class DefaultMetadataPage(SphinxDirective):
+    """
+    Set default metadata values for all figures on the current page.
+
+    This directive allows you to set page-level defaults that apply to all figures
+    in the current document. These defaults have lower priority than explicit figure
+    options but higher priority than global configuration defaults.
+
+    Example usage:
+        .. default-metadata-page::
+           :author: John Doe
+           :license: CC-BY
+           :placement: admonition
+    """
+    has_content = False
+    required_arguments = 0
+    option_spec = {
+        'author': directives.unchanged,
+        'license': directives.unchanged,
+        'date': directives.unchanged,
+        'copyright': directives.unchanged,
+        'source': directives.unchanged,
+        'placement': directives.unchanged,
+        'show': directives.unchanged,
+        'admonition_title': directives.unchanged,
+        'admonition_class': directives.unchanged,
+    }
+
+    def run(self):
+        """Store the page-level defaults in the environment."""
+        env = self.state.document.settings.env
+
+        # Initialize the page defaults dict if it doesn't exist
+        if not hasattr(env, 'metadata_figure_page_defaults'):
+            env.metadata_figure_page_defaults = {}
+
+        # Store defaults for this document
+        docname = env.docname
+        env.metadata_figure_page_defaults[docname] = self.options.copy()
+
+        # Return empty list - this directive doesn't produce visible output
+        return []
+
+
 class MetadataFigure(Figure):
     """
     Enhanced figure directive with metadata support.
@@ -336,6 +381,12 @@ class MetadataFigure(Figure):
         for key in METADATA_FIGURE_DEFAULTS:
             settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(key, {})
 
+        # Retrieve page-level defaults if they exist
+        page_defaults = {}
+        if env and hasattr(env, 'metadata_figure_page_defaults'):
+            docname = env.docname
+            page_defaults = env.metadata_figure_page_defaults.get(docname, {})
+
         # Handle bib entry extraction - extract metadata from bib entry if :bib: is specified
         bib_key = self.options.get('bib', None)
         bib_settings = settings['bib']
@@ -365,8 +416,8 @@ class MetadataFigure(Figure):
                         location=(self.state.document.current_source, self.lineno)
                     )
 
-        # Validate license (explicit option > bib metadata > defaults)
-        license_value = self.options.get('license', None) or bib_metadata.get('license', None)
+        # Validate license (explicit option > page defaults > bib metadata > defaults)
+        license_value = self.options.get('license', None) or page_defaults.get('license', None) or bib_metadata.get('license', None)
         license_settings = settings['license']
         if not license_value:
             if license_settings['substitute_missing']:
@@ -415,8 +466,8 @@ class MetadataFigure(Figure):
             if license_value.startswith("CC ") and not any(char.isdigit() for char in license_value):
                 license_value += " 4.0"
         
-        # Validate date format (explicit option > bib metadata > defaults)
-        date_value = self.options.get('date', None) or bib_metadata.get('date', None)
+        # Validate date format (explicit option > page defaults > bib metadata > defaults)
+        date_value = self.options.get('date', None) or page_defaults.get('date', None) or bib_metadata.get('date', None)
         if not date_value:
              date_settings = settings['date']
              if date_settings['substitute_missing']:
@@ -436,8 +487,8 @@ class MetadataFigure(Figure):
                     location=(self.state.document.current_source, self.lineno)
                 )
 
-        # Author value (explicit option > bib metadata > defaults)
-        author_value = self.options.get('author', None) or bib_metadata.get('author', None)
+        # Author value (explicit option > page defaults > bib metadata > defaults)
+        author_value = self.options.get('author', None) or page_defaults.get('author', None) or bib_metadata.get('author', None)
         if not author_value:
             author_settings = settings['author']
             if author_settings['substitute_missing']:
@@ -447,8 +498,8 @@ class MetadataFigure(Figure):
                 else:
                     author_value = default_author
 
-        # Copyright value (explicit option > bib metadata > defaults)
-        copyright_value = self.options.get('copyright', None) or bib_metadata.get('copyright', None)
+        # Copyright value (explicit option > page defaults > bib metadata > defaults)
+        copyright_value = self.options.get('copyright', None) or page_defaults.get('copyright', None) or bib_metadata.get('copyright', None)
         if not copyright_value:
             copyright_settings = settings['copyright']
             if copyright_settings['substitute_missing']:
@@ -491,8 +542,8 @@ class MetadataFigure(Figure):
                 else:
                     copyright_value = default_copyright
         
-        # Source value (explicit option > bib metadata)
-        source_value = self.options.get('source', None) or bib_metadata.get('source', None)
+        # Source value (explicit option > page defaults > bib metadata)
+        source_value = self.options.get('source', None) or page_defaults.get('source', None) or bib_metadata.get('source', None)
         source_settings = settings['source']
         if source_value is None:
             if source_settings['warn_missing']:
@@ -561,14 +612,14 @@ class MetadataFigure(Figure):
             if source_value:
                 figure_node['source'] = source_value
 
-            # Determine rendering controls
+            # Determine rendering controls (explicit option > page defaults > global config)
             style_settings = settings['style']
-            placement = self.options.get('placement') or style_settings['placement']
+            placement = self.options.get('placement') or page_defaults.get('placement') or style_settings['placement']
             placement = placement.strip().lower()
-            show_raw = self.options.get('show') or style_settings['show']
+            show_raw = self.options.get('show') or page_defaults.get('show') or style_settings['show']
             show = [s.strip().lower() for s in str(show_raw).split(',') if s.strip()]
-            title = self.options.get('admonition_title') or translate(style_settings['admonition_title'])
-            admon_class = self.options.get('admonition_class') or style_settings['admonition_class']
+            title = self.options.get('admonition_title') or page_defaults.get('admonition_title') or translate(style_settings['admonition_title'])
+            admon_class = self.options.get('admonition_class') or page_defaults.get('admonition_class') or style_settings['admonition_class']
             
             display_nodes = _build_attribution_display(
                 figure_node=figure_node,
@@ -759,7 +810,10 @@ def setup(app):
     # Override the default figure directive with our custom version
     app.add_directive('figure', MetadataFigure, override=True)
     app.add_directive_to_domain('glue', 'figure', MetadataFigure, override=True)
-    
+
+    # Register the page-level default metadata directive
+    app.add_directive('default-metadata-page', DefaultMetadataPage)
+
     # Add custom CSS for metadata styling
     app.add_css_file('metadata_figure.css')
     app.connect("build-finished", copy_asset_files)
