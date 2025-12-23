@@ -350,7 +350,7 @@ class MetadataFigure(Figure):
                 if extracted:
                     bib_metadata = extracted
                     # add it to the bibliography
-                    text = f":cite:empty:`{bib_key}`"
+                    text = f"{{cite:empty}}`{bib_key}`"
                     para = nodes.paragraph()
                     self.state.nested_parse([text], self.content_offset, para)
                     # Add the paragraph node to the document
