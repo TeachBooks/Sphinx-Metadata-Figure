@@ -146,11 +146,8 @@ def _parse_bib_entry(bib_content, key):
         field_value = field_match.group(2) or field_match.group(3)
         if field_value:
             field_value = field_value.strip()
-
         if field_name == 'author':
             metadata['author'] = field_value
-        elif field_name == 'title':
-            metadata['title'] = field_value
         elif field_name == 'year':
             # Convert year to date format
             if 'date' not in metadata:
@@ -274,6 +271,12 @@ class MetadataFigure(Figure):
                 extracted = _parse_bib_entry(bib_content, bib_key)
                 if extracted:
                     bib_metadata = extracted
+                    # add it to the bibliography
+                    text = f":cite:empty:`{bib_key}`"
+                    para = nodes.paragraph()
+                    self.state.nested_parse([text], self.content_offset, para)
+                    # Add the paragraph node to the document
+                    self.state.document += para
 
         # Validate license (explicit option > bib metadata > defaults)
         license_value = self.options.get('license', None) or bib_metadata.get('license', None)

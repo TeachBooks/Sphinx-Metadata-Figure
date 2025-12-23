@@ -192,6 +192,7 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
     | `copyright` | `copyright` field | — | Used as-is |
   - Fields that cannot be extracted are simply omitted from metadata (no defaults applied at extraction time)
   - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
+  - The BibTeX entry is also automatically added to the document bibliography using a `cite:empty` role (when the BibTeX key exists).
 
 ## Documentation
 
