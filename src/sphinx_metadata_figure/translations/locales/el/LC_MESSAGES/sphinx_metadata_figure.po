@@ -8,6 +8,9 @@ msgstr ""
 "Language: el\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "Με επιφύλαξη παντός δικαιώματος"
+
 msgid "Attribution"
 msgstr "Απόδοση"
 
@@ -23,5 +26,17 @@ msgstr "Ημερομηνία"
 msgid "License"
 msgstr "Άδεια"
 
+msgid "Pexels License"
+msgstr "Άδεια Pexels"
+
+msgid "Pixabay License"
+msgstr "Άδεια Pixabay"
+
+msgid "Proprietary"
+msgstr "Ιδιόκτητο"
+
 msgid "Source"
 msgstr "Πηγή"
+
+msgid "Unsplash License"
+msgstr "Άδεια Unsplash"

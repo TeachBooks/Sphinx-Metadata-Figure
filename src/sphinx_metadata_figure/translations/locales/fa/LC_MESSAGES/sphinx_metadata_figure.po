@@ -8,6 +8,9 @@ msgstr ""
 "Language: fa\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "تمامی حقوق محفوظ است"
+
 msgid "Attribution"
 msgstr "انتساب"
 
@@ -23,5 +26,17 @@ msgstr "تاریخ"
 msgid "License"
 msgstr "مجوز"
 
+msgid "Pexels License"
+msgstr "مجوز Pexels"
+
+msgid "Pixabay License"
+msgstr "مجوز Pixabay"
+
+msgid "Proprietary"
+msgstr "اختصاصی"
+
 msgid "Source"
 msgstr "منبع"
+
+msgid "Unsplash License"
+msgstr "مجوز Unsplash"

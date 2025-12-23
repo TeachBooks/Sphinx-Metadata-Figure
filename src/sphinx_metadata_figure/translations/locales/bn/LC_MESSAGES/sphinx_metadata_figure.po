@@ -8,6 +8,9 @@ msgstr ""
 "Language: bn\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "সমস্ত অধিকার সংরক্ষিত"
+
 msgid "Attribution"
 msgstr "অ্যাট্রিবিউশন"
 
@@ -23,5 +26,17 @@ msgstr "তারিখ"
 msgid "License"
 msgstr "লাইসেন্স"
 
+msgid "Pexels License"
+msgstr "Pexels লাইসেন্স"
+
+msgid "Pixabay License"
+msgstr "Pixabay লাইসেন্স"
+
+msgid "Proprietary"
+msgstr "মালিকানাধীন"
+
 msgid "Source"
 msgstr "উৎস"
+
+msgid "Unsplash License"
+msgstr "Unsplash লাইসেন্স"

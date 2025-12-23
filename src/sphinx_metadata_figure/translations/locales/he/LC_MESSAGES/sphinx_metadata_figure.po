@@ -8,6 +8,9 @@ msgstr ""
 "Language: he\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "כל הזכויות שמורות"
+
 msgid "Attribution"
 msgstr "ייחוס"
 
@@ -23,5 +26,17 @@ msgstr "תאריך"
 msgid "License"
 msgstr "רישיון"
 
+msgid "Pexels License"
+msgstr "רישיון Pexels"
+
+msgid "Pixabay License"
+msgstr "רישיון Pixabay"
+
+msgid "Proprietary"
+msgstr "קנייני"
+
 msgid "Source"
 msgstr "מקור"
+
+msgid "Unsplash License"
+msgstr "רישיון Unsplash"

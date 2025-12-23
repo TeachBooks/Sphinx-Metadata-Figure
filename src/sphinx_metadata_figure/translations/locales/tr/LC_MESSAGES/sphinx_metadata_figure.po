@@ -8,6 +8,9 @@ msgstr ""
 "Language: tr\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "Tüm hakları saklıdır"
+
 msgid "Attribution"
 msgstr "Atıf"
 
@@ -23,5 +26,17 @@ msgstr "Tarih"
 msgid "License"
 msgstr "Lisans"
 
+msgid "Pexels License"
+msgstr "Pexels Lisansı"
+
+msgid "Pixabay License"
+msgstr "Pixabay Lisansı"
+
+msgid "Proprietary"
+msgstr "Tescilli"
+
 msgid "Source"
 msgstr "Kaynak"
+
+msgid "Unsplash License"
+msgstr "Unsplash Lisansı"

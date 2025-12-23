@@ -8,6 +8,9 @@ msgstr ""
 "Language: ja\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "全著作権所有"
+
 msgid "Attribution"
 msgstr "帰属"
 
@@ -23,5 +26,17 @@ msgstr "日付"
 msgid "License"
 msgstr "ライセンス"
 
+msgid "Pexels License"
+msgstr "Pexelsライセンス"
+
+msgid "Pixabay License"
+msgstr "Pixabayライセンス"
+
+msgid "Proprietary"
+msgstr "専有"
+
 msgid "Source"
 msgstr "出典"
+
+msgid "Unsplash License"
+msgstr "Unsplashライセンス"

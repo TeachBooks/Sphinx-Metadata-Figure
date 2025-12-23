@@ -8,6 +8,9 @@ msgstr ""
 "Language: sw\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "Haki zote zimehifadhiwa"
+
 msgid "Attribution"
 msgstr "Utambuzi"
 
@@ -23,5 +26,17 @@ msgstr "Tarehe"
 msgid "License"
 msgstr "Leseni"
 
+msgid "Pexels License"
+msgstr "Leseni ya Pexels"
+
+msgid "Pixabay License"
+msgstr "Leseni ya Pixabay"
+
+msgid "Proprietary"
+msgstr "Miliki"
+
 msgid "Source"
 msgstr "Chanzo"
+
+msgid "Unsplash License"
+msgstr "Leseni ya Unsplash"

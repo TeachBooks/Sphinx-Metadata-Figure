@@ -192,6 +192,9 @@ class MetadataFigure(Figure):
                     message_incorrect,
                     location=(self.state.document.current_source, self.lineno)
             )
+        # Translate the license
+        if license_value:
+            license_value = translate(license_value)
         
         # Validate date format (optional)
         date_value = self.options.get('date',None)
