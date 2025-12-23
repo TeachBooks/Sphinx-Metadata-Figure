@@ -8,6 +8,9 @@ msgstr ""
 "Language: ta\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை"
+
 msgid "Attribution"
 msgstr "பண்புக்கூறல்"
 
@@ -23,5 +26,20 @@ msgstr "தேதி"
 msgid "License"
 msgstr "உரிமம்"
 
+msgid "Pexels License"
+msgstr "Pexels உரிமம்"
+
+msgid "Pixabay License"
+msgstr "Pixabay உரிமம்"
+
+msgid "Proprietary"
+msgstr "தனியுரிமை"
+
+msgid "Public Domain"
+msgstr "பொதுத் தளம்"
+
 msgid "Source"
 msgstr "மூலம்"
+
+msgid "Unsplash License"
+msgstr "Unsplash உரிமம்"

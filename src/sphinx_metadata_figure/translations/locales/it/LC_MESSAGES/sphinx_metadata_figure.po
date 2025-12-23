@@ -8,6 +8,9 @@ msgstr ""
 "Language: it\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "Tutti i diritti riservati"
+
 msgid "Attribution"
 msgstr "Attribuzione"
 
@@ -23,5 +26,20 @@ msgstr "Data"
 msgid "License"
 msgstr "Licenza"
 
+msgid "Pexels License"
+msgstr "Licenza Pexels"
+
+msgid "Pixabay License"
+msgstr "Licenza Pixabay"
+
+msgid "Proprietary"
+msgstr "Proprietario"
+
+msgid "Public Domain"
+msgstr "Dominio pubblico"
+
 msgid "Source"
 msgstr "Fonte"
+
+msgid "Unsplash License"
+msgstr "Licenza Unsplash"

@@ -4,7 +4,8 @@ A Sphinx extension that provides an interface to add metadata to figures and dis
 
 This extension enhances Sphinx's figure directive and the [MyST-NB sphinx extension's `glue:figure` directive](https://myst-nb.readthedocs.io/en/latest/render/glue.html#the-glue-figure-directive) with metadata support for:
 - **Author**: Image creator/author
-- **License**: Image license (validated)
+- **License**: Image license (validated):
+  - a full list of the valid license types is available in the [TeachBooks manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html#recognized-licenses).
 - **Date**: Creation date (YYYY-MM-DD format)
 - **Copyright**: Copyright holder
 - **Source**: Image source
@@ -56,7 +57,7 @@ sphinx:
         summaries: false
         individual: false
         substitute_missing: false
-        default_license: CC-BY
+        default_license: CC BY
       author:
         substitute_missing: false
         default_author: config
@@ -102,11 +103,7 @@ The `license` key contains options for how to handle license metadata.
 - `individual`: If `true`, each figure with missing or invalid license information will generate a separate warning. Value is irrelevant if `strict_check` is `true`.
 - `substitute_missing`: If `true`, figures without license information will use the `default_license` value. No warning will be generated if this is set to `true`.
 - `default_license`: The default license to use if `substitute_missing` is `true`.
-
-All licenses are validated against the following predefined list of valid license types:
-- Creative Commons: CC0, CC-BY, CC-BY-SA, CC-BY-NC, CC-BY-NC-SA, CC-BY-ND, CC-BY-NC-ND
-- Open Source: MIT, Apache-2.0, GPL-3.0, BSD-3-Clause
-- Other: Public Domain, Proprietary, All Rights Reserved
+- a full list of the valid license types is available in the [TeachBooks manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html#recognized-licenses).
 
 ### Author
 The `author` key contains options for how to handle author metadata.

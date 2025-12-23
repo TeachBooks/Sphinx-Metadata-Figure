@@ -8,6 +8,9 @@ msgstr ""
 "Language: ms\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "Hak cipta terpelihara"
+
 msgid "Attribution"
 msgstr "Atribusi"
 
@@ -23,5 +26,20 @@ msgstr "Tarikh"
 msgid "License"
 msgstr "Lesen"
 
+msgid "Pexels License"
+msgstr "Lesen Pexels"
+
+msgid "Pixabay License"
+msgstr "Lesen Pixabay"
+
+msgid "Proprietary"
+msgstr "Proprietari"
+
+msgid "Public Domain"
+msgstr "Domain Awam"
+
 msgid "Source"
 msgstr "Sumber"
+
+msgid "Unsplash License"
+msgstr "Lesen Unsplash"

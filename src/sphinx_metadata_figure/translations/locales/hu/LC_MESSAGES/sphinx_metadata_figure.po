@@ -8,6 +8,9 @@ msgstr ""
 "Language: hu\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "Minden jog fenntartva"
+
 msgid "Attribution"
 msgstr "Tulajdonítás"
 
@@ -23,5 +26,20 @@ msgstr "Dátum"
 msgid "License"
 msgstr "Licenc"
 
+msgid "Pexels License"
+msgstr "Pexels licenc"
+
+msgid "Pixabay License"
+msgstr "Pixabay licenc"
+
+msgid "Proprietary"
+msgstr "Szabadalmazott"
+
+msgid "Public Domain"
+msgstr "Közkincs"
+
 msgid "Source"
 msgstr "Forrás"
+
+msgid "Unsplash License"
+msgstr "Unsplash licenc"

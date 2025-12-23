@@ -8,6 +8,9 @@ msgstr ""
 "Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "सर्वाधिकार सुरक्षित"
+
 msgid "Attribution"
 msgstr "श्रेय"
 
@@ -23,5 +26,20 @@ msgstr "तारीख"
 msgid "License"
 msgstr "लाइसेंस"
 
+msgid "Pexels License"
+msgstr "Pexels लाइसेंस"
+
+msgid "Pixabay License"
+msgstr "Pixabay लाइसेंस"
+
+msgid "Proprietary"
+msgstr "स्वामित्व"
+
+msgid "Public Domain"
+msgstr "सार्वजनिक डोमेन"
+
 msgid "Source"
 msgstr "स्रोत"
+
+msgid "Unsplash License"
+msgstr "Unsplash लाइसेंस"
