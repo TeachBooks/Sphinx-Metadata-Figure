@@ -25,8 +25,6 @@ from myst_nb.ext.glue.directives import PasteFigureDirective
 
 from sphinx.writers.html import HTMLTranslator
 
-from docutils import nodes
-
 from sphinx.locale import get_translation
 MESSAGE_CATALOG_NAME = "sphinx_metadata_figure"
 translate = get_translation(MESSAGE_CATALOG_NAME)
@@ -63,13 +61,17 @@ METADATA_FIGURE_DEFAULTS_COPYRIGHT = {
 METADATA_FIGURE_DEFAULTS_SOURCE = {
     'warn_missing' : False
 }
+METADATA_FIGURE_DEFAULTS_BIB = {
+    'extract_metadata': True,    # Extract metadata from bib entries when :bib: is specified
+}
 METADATA_FIGURE_DEFAULTS = {
     'style': METADATA_FIGURE_DEFAULTS_STYLE,
     'license': METADATA_FIGURE_DEFAULTS_LICENSE,
     'author': METADATA_FIGURE_DEFAULTS_AUTHOR,
     'date': METADATA_FIGURE_DEFAULTS_DATE,
     'copyright': METADATA_FIGURE_DEFAULTS_COPYRIGHT,
-    'source': METADATA_FIGURE_DEFAULTS_SOURCE
+    'source': METADATA_FIGURE_DEFAULTS_SOURCE,
+    'bib': METADATA_FIGURE_DEFAULTS_BIB,
 }
 
 # List of valid licenses
@@ -112,6 +114,104 @@ LICENSE_URLS = {
     'Pexels License': 'https://www.pexels.com/license/',
 }
 
+def _parse_bib_entry(bib_content, key):
+    """
+    Parse a BibTeX entry and extract metadata fields.
+
+    Args:
+        bib_content: The full content of a .bib file
+        key: The BibTeX key to look up
+
+    Returns:
+        dict: Extracted metadata or None if not found
+    """
+    import re
+
+    # Find the entry with the given key
+    # Pattern matches @type{key, ... }
+    pattern = rf'@\w+\s*\{{\s*{re.escape(key)}\s*,([^@]*?)\}}\s*(?=@|\Z)'
+    match = re.search(pattern, bib_content, re.DOTALL | re.IGNORECASE)
+
+    if not match:
+        return None
+
+    entry_content = match.group(1)
+    metadata = {}
+
+    # Extract fields - pattern matches field = {value} or field = "value"
+    field_pattern = r'(\w+)\s*=\s*(?:\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}|"([^"]*)")'
+
+    for field_match in re.finditer(field_pattern, entry_content, re.DOTALL):
+        field_name = field_match.group(1).lower()
+        field_value = field_match.group(2) or field_match.group(3)
+        if field_value:
+            field_value = field_value.strip()
+        if field_name == 'author':
+            metadata['author'] = field_value
+        elif field_name == 'year':
+            # Convert year to date format
+            if 'date' not in metadata:
+                metadata['date'] = f'{field_value}-01-01'
+        elif field_name == 'date':
+            metadata['date'] = field_value
+        elif field_name == 'url':
+            metadata['source'] = field_value
+        elif field_name == 'howpublished':
+            # Extract URL from \url{...} if present
+            url_match = re.search(r'\\url\{([^}]+)\}', field_value)
+            if url_match:
+                metadata['source'] = url_match.group(1)
+            elif 'source' not in metadata:
+                metadata['source'] = field_value
+        elif field_name == 'note':
+            # Try to extract license from note field
+            license_match = re.search(r'License:\s*(.+)', field_value, re.IGNORECASE)
+            if license_match:
+                metadata['license'] = license_match.group(1).strip()
+        elif field_name == 'copyright':
+            metadata['copyright'] = field_value
+
+    return metadata if metadata else None
+
+
+def _load_bib_files(app):
+    """
+    Load all .bib files configured in sphinxcontrib-bibtex or in source directory.
+
+    Returns:
+        str: Combined content of all bib files
+    """
+    bib_content = ''
+
+    # Try to get bib files from sphinxcontrib-bibtex configuration
+    bibtex_files = getattr(app.config, 'bibtex_bibfiles', [])
+
+    # Also search for .bib files in the source directory
+    srcdir = app.srcdir
+    for bib_file in bibtex_files:
+        bib_path = os.path.join(srcdir, bib_file)
+        if os.path.exists(bib_path):
+            try:
+                with open(bib_path, 'r', encoding='utf-8') as f:
+                    bib_content += f.read() + '\n'
+            except Exception as e:
+                logger.debug(f'Could not read bib file {bib_path}: {e}')
+
+    # Search for any .bib files in source directory if none configured
+    if not bib_content:
+        for root, dirs, files in os.walk(srcdir):
+            for file in files:
+                if file.endswith('.bib'):
+                    bib_path = os.path.join(root, file)
+                    try:
+                        with open(bib_path, 'r', encoding='utf-8') as f:
+                            bib_content += f.read() + '\n'
+                    except Exception as e:
+                        logger.debug(f'Could not read bib file {bib_path}: {e}')
+
+    return bib_content
+
+
 class MetadataFigure(Figure):
     """
     Enhanced figure directive with metadata support.
@@ -136,6 +236,8 @@ class MetadataFigure(Figure):
         'show': directives.unchanged,               # comma-separated: author,license,date
         'admonition_title': directives.unchanged,              # admonition title (default: Attribution)
         'admonition_class': directives.unchanged,   # extra classes for admonition
+        # Bib entry support
+        'bib': directives.unchanged,                # BibTeX key to use/generate for this figure
     })
 
     def run(self):
@@ -156,8 +258,28 @@ class MetadataFigure(Figure):
         for key in METADATA_FIGURE_DEFAULTS:
             settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(key, {})
 
-        # Validate license
-        license_value = self.options.get('license', None)
+        # Handle bib entry extraction - extract metadata from bib entry if :bib: is specified
+        bib_key = self.options.get('bib', None)
+        bib_settings = settings['bib']
+        bib_metadata = {}
+
+        # Check if an existing bibtex key is given
+        if bib_key and bib_settings['extract_metadata'] and env:
+            # Load bib files and try to extract metadata
+            bib_content = _load_bib_files(env.app)
+            if bib_content:
+                extracted = _parse_bib_entry(bib_content, bib_key)
+                if extracted:
+                    bib_metadata = extracted
+                    # add it to the bibliography
+                    text = f":cite:empty:`{bib_key}`"
+                    para = nodes.paragraph()
+                    self.state.nested_parse([text], self.content_offset, para)
+                    # Add the paragraph node to the document
+                    self.state.document += para
+
+        # Validate license (explicit option > bib metadata > defaults)
+        license_value = self.options.get('license', None) or bib_metadata.get('license', None)
         license_settings = settings['license']
         if not license_value:
             if license_settings['substitute_missing']:
@@ -193,8 +315,8 @@ class MetadataFigure(Figure):
                     location=(self.state.document.current_source, self.lineno)
             )
         
-        # Validate date format (optional)
-        date_value = self.options.get('date',None)
+        # Validate date format (explicit option > bib metadata > defaults)
+        date_value = self.options.get('date', None) or bib_metadata.get('date', None)
         if not date_value:
              date_settings = settings['date']
              if date_settings['substitute_missing']:
@@ -214,7 +336,8 @@ class MetadataFigure(Figure):
                     location=(self.state.document.current_source, self.lineno)
                 )
 
-        author_value = self.options.get('author',None)
+        # Author value (explicit option > bib metadata > defaults)
+        author_value = self.options.get('author', None) or bib_metadata.get('author', None)
         if not author_value:
             author_settings = settings['author']
             if author_settings['substitute_missing']:
@@ -224,7 +347,8 @@ class MetadataFigure(Figure):
                 else:
                     author_value = default_author
 
-        copyright_value = self.options.get('copyright', None)
+        # Copyright value (explicit option > bib metadata > defaults)
+        copyright_value = self.options.get('copyright', None) or bib_metadata.get('copyright', None)
         if not copyright_value:
             copyright_settings = settings['copyright']
             if copyright_settings['substitute_missing']:
@@ -267,7 +391,8 @@ class MetadataFigure(Figure):
                 else:
                     copyright_value = default_copyright
         
-        source_value = self.options.get('source', None)
+        # Source value (explicit option > bib metadata)
+        source_value = self.options.get('source', None) or bib_metadata.get('source', None)
         source_settings = settings['source']
         if source_value is None:
             if source_settings['warn_missing']:
@@ -506,6 +631,11 @@ def check_all_figures_have_license(app, env):
         for docname, image_uri in unrecognized_licenses:
             logger.warning(f'  - {docname}: {image_uri}')
 
+def _resolve_bib_output_path(app, output_file: str) -> str:
+    """Resolve bib output path consistently against the source directory."""
+    if os.path.isabs(output_file):
+        return output_file
+    return os.path.join(app.srcdir, output_file)
 
 def setup(app):
     """
@@ -519,6 +649,7 @@ def setup(app):
     Returns:
         dict: Extension metadata
     """
+    
     # Ensure MysST NB is loaded before this extension so the glue domain is registered
     app.setup_extension('myst_nb')
 
@@ -532,7 +663,7 @@ def setup(app):
     # Add custom CSS for metadata styling
     app.add_css_file('metadata_figure.css')
     app.connect("build-finished", copy_asset_files)
-    
+
     # Register event handler to check all figures after build
     app.connect('env-updated', check_all_figures_have_license)
 
@@ -603,4 +734,3 @@ def add_unnumbered_caption(app, doctree, fromdocname):
             # add an empty caption so that metadata can be appended
             new_caption = nodes.caption(text="")
             node += new_caption
-        
