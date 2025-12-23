@@ -217,7 +217,7 @@ Or in MyST markdown:
 ### Features
 
 - **Scope**: Applies to all figures in the current document only
-- **Priority**: Page defaults override global config but are overridden by explicit figure options
+- **Priority**: Page defaults override global config and BibTeX metadata, but are overridden by explicit figure options
 - **All options supported**: You can set any metadata field or display option at page level
 
 ### Priority Order
@@ -229,35 +229,7 @@ When determining metadata values, the extension follows this priority chain (hig
 3. **BibTeX metadata** (when `:bib:` references an existing entry)
 4. **Global configuration** (from `_config.yml`)
 
-### Example
-
-```markdown
-# Chapter 1: Historical Photos
-
-```{default-metadata-page}
-:author: Historical Archive
-:license: Public Domain
-:date: 1920-01-01
-:placement: margin
-```
-
-```{figure} photo1.jpg
-This photo uses all page defaults
-```
-
-```{figure} photo2.jpg
-:author: Specific Photographer
-This photo overrides the author but keeps other page defaults
-```
-
-```{figure} photo3.jpg
-:license: CC-BY
-:placement: caption
-This photo overrides license and placement, keeps page default author and date
-```
-```
-
-This feature is especially useful when you have multiple figures in a document that share common metadata, reducing repetition while maintaining flexibility.
+For detailed examples and usage, see the [Page-Level Defaults section in the manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html#page-level-defaults).
 
 ## Documentation
 
