@@ -22,6 +22,7 @@ from pathlib import Path
 from sphinx.application import Sphinx
 from typing import Union
 from myst_nb.ext.glue.directives import PasteFigureDirective
+from sphinx.util.docutils import SphinxDirective
 
 from sphinx.writers.html import HTMLTranslator
 
@@ -289,7 +290,7 @@ def _load_bib_files(app):
     return bib_content
 
 
-class DefaultMetadataPage(directives.Directive):
+class DefaultMetadataPage(SphinxDirective):
     """
     Set default metadata values for all figures on the current page.
 
