@@ -206,13 +206,13 @@ You can set default metadata values for all figures on a specific page using the
 
 Or in MyST markdown:
 
-```markdown
+````markdown
 ```{default-metadata-page}
 :author: John Doe
 :license: CC-BY
 :placement: admonition
 ```
-```
+````
 
 ### Features
 
