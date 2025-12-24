@@ -193,6 +193,45 @@ LICENSE_URLS = {
     'Pexels License': 'https://www.pexels.com/license/'
 }
 
+def _strip_surrounding_braces(s: str) -> str:
+    """
+    Remove all braces from a BibTeX field value for display.
+    
+    BibTeX uses braces for two purposes:
+    1. Delimiting field values: author = {value}
+    2. Protecting text from case changes: {van} in names
+    
+    When displaying values, both types of braces should be removed.
+    This function strips all braces while preserving the text content.
+    
+    Examples:
+        "{{Some Author}}" -> "Some Author"
+        "{Some Author}" -> "Some Author"  
+        "John {van} Doe" -> "John van Doe" (inner braces removed too)
+        "{John {van} Doe}" -> "John van Doe" (all braces removed)
+    
+    Manual test: Add a .bib entry with author = {John {van} Doe} and reference
+    it with :bib: in a figure; the caption should render "John van Doe" (no braces).
+    
+    Args:
+        s: The BibTeX field value to process
+        
+    Returns:
+        The value with all braces removed
+    """
+    if not s:
+        return s
+    
+    # Remove all braces (both { and })
+    result = s.replace('{', '').replace('}', '')
+    
+    # Clean up any extra whitespace that might result from brace removal
+    # Replace multiple spaces with single space and strip
+    result = ' '.join(result.split())
+    
+    return result
+
+
 def _parse_bib_entry(bib_content, key):
     """
     Parse a BibTeX entry and extract metadata fields.
@@ -226,7 +265,7 @@ def _parse_bib_entry(bib_content, key):
         if field_value:
             field_value = field_value.strip()
         if field_name == 'author':
-            metadata['author'] = field_value
+            metadata['author'] = _strip_surrounding_braces(field_value)
         elif field_name == 'year':
             # Convert year to date format
             if 'date' not in metadata:
