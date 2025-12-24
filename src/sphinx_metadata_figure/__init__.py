@@ -195,58 +195,41 @@ LICENSE_URLS = {
 
 def _strip_surrounding_braces(s: str) -> str:
     """
-    Remove outer layers of braces from a BibTeX field value.
+    Remove all braces from a BibTeX field value for display.
     
-    Repeatedly removes one outer layer of braces if and only if those braces
-    form a matching pair that spans the entire string. This preserves inner
-    braces that are part of legitimate BibTeX grouping (e.g., "John {van} Doe").
+    BibTeX uses braces for two purposes:
+    1. Delimiting field values: author = {value}
+    2. Protecting text from case changes: {van} in names
     
-    Safe because:
-    - Only removes braces that wrap the ENTIRE value as a pair
-    - Preserves inner braces used for BibTeX name parts or special characters
-    - Stops when no outer pair is found
+    When displaying values, both types of braces should be removed.
+    This function strips all braces while preserving the text content.
     
     Examples:
         "{{Some Author}}" -> "Some Author"
         "{Some Author}" -> "Some Author"  
-        "John {van} Doe" -> "John {van} Doe" (inner braces preserved)
+        "John {van} Doe" -> "John van Doe" (inner braces removed too)
+        "{John {van} Doe}" -> "John van Doe" (all braces removed)
     
-    Manual test: Add a .bib entry with author = {{Some Author}} and reference
-    it with :bib: in a figure; the caption should render "Some Author" (no braces).
+    Manual test: Add a .bib entry with author = {John {van} Doe} and reference
+    it with :bib: in a figure; the caption should render "John van Doe" (no braces).
     
     Args:
         s: The BibTeX field value to process
         
     Returns:
-        The value with surrounding brace layers stripped
+        The value with all braces removed
     """
     if not s:
         return s
     
-    s = s.strip()
-    # Repeatedly remove outer braces if they form a complete pair wrapping the entire string
-    while len(s) >= 2 and s[0] == '{' and s[-1] == '}':
-        # Check if this is actually an outer pair by ensuring the opening brace
-        # is not closed before the end
-        depth = 0
-        is_outer_pair = True
-        for i, char in enumerate(s):
-            if char == '{':
-                depth += 1
-            elif char == '}':
-                depth -= 1
-                # If depth reaches 0 before the last character, the first brace
-                # doesn't pair with the last one
-                if depth == 0 and i < len(s) - 1:
-                    is_outer_pair = False
-                    break
-        
-        if is_outer_pair:
-            s = s[1:-1].strip()
-        else:
-            break
+    # Remove all braces (both { and })
+    result = s.replace('{', '').replace('}', '')
     
-    return s
+    # Clean up any extra whitespace that might result from brace removal
+    # Replace multiple spaces with single space and strip
+    result = ' '.join(result.split())
+    
+    return result
 
 
 def _parse_bib_entry(bib_content, key):
