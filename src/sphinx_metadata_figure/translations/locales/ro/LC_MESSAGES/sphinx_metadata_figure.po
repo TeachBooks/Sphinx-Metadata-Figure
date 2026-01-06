@@ -8,6 +8,9 @@ msgstr ""
 "Language: ro\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "Toate drepturile rezervate"
+
 msgid "Attribution"
 msgstr "Atribuire"
 
@@ -23,5 +26,20 @@ msgstr "Dată"
 msgid "License"
 msgstr "Licență"
 
+msgid "Pexels License"
+msgstr "Licență Pexels"
+
+msgid "Pixabay License"
+msgstr "Licență Pixabay"
+
+msgid "Proprietary"
+msgstr "Proprietar"
+
+msgid "Public Domain"
+msgstr "Domeniu public"
+
 msgid "Source"
 msgstr "Sursa"
+
+msgid "Unsplash License"
+msgstr "Licență Unsplash"

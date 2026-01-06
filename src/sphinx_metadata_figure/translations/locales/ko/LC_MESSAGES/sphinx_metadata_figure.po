@@ -8,6 +8,9 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "모든 권리 보유"
+
 msgid "Attribution"
 msgstr "귀속"
 
@@ -23,5 +26,20 @@ msgstr "날짜"
 msgid "License"
 msgstr "라이선스"
 
+msgid "Pexels License"
+msgstr "Pexels 라이선스"
+
+msgid "Pixabay License"
+msgstr "Pixabay 라이선스"
+
+msgid "Proprietary"
+msgstr "독점"
+
+msgid "Public Domain"
+msgstr "퍼블릭 도메인"
+
 msgid "Source"
 msgstr "출처"
+
+msgid "Unsplash License"
+msgstr "Unsplash 라이선스"

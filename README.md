@@ -4,7 +4,8 @@ A Sphinx extension that provides an interface to add metadata to figures and dis
 
 This extension enhances Sphinx's figure directive and the [MyST-NB sphinx extension's `glue:figure` directive](https://myst-nb.readthedocs.io/en/latest/render/glue.html#the-glue-figure-directive) with metadata support for:
 - **Author**: Image creator/author
-- **License**: Image license (validated)
+- **License**: Image license (validated):
+  - a full list of the valid license types is available in the [TeachBooks manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html#recognized-licenses).
 - **Date**: Creation date (YYYY-MM-DD format)
 - **Copyright**: Copyright holder
 - **Source**: Image source
@@ -56,7 +57,7 @@ sphinx:
         summaries: false
         individual: false
         substitute_missing: false
-        default_license: CC-BY
+        default_license: CC BY
       author:
         substitute_missing: false
         default_author: config
@@ -105,11 +106,7 @@ The `license` key contains options for how to handle license metadata.
 - `individual`: If `true`, each figure with missing or invalid license information will generate a separate warning. Value is irrelevant if `strict_check` is `true`.
 - `substitute_missing`: If `true`, figures without license information will use the `default_license` value. No warning will be generated if this is set to `true`.
 - `default_license`: The default license to use if `substitute_missing` is `true`.
-
-All licenses are validated against the following predefined list of valid license types:
-- Creative Commons: CC0, CC-BY, CC-BY-SA, CC-BY-NC, CC-BY-NC-SA, CC-BY-ND, CC-BY-NC-ND
-- Open Source: MIT, Apache-2.0, GPL-3.0, BSD-3-Clause
-- Other: Public Domain, Proprietary, All Rights Reserved
+- a full list of the valid license types is available in the [TeachBooks manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html#recognized-licenses).
 
 ### Author
 The `author` key contains options for how to handle author metadata.
@@ -143,13 +140,60 @@ The `source` key contains options for how to handle source metadata.
 
 ### Bib
 
-The `bib` key contains options for BibTeX entry support. This allows you to both extract figure metadata from existing BibTeX entries and generate new BibTeX entries from figure metadata.
+The `bib` key contains options for BibTeX entry support. This allows you to extract figure metadata from existing BibTeX entries, or generate new BibTeX entries from figure metadata.
 
 Configuration options:
 - `extract_metadata`: If `true`, metadata will be extracted from existing BibTeX entries when the `:bib:` option references a valid key. Default: `true`.
-- `generate_bib`: If `true`, BibTeX entries will be automatically generated from figure metadata when the `:bib:` option is specified. This allows you to create bibliography entries directly from your figure metadata. Default: `false`.
-- `output_file`: Path to the output `.bib` file where generated BibTeX entries will be written (relative to the source directory). Default: `references.bib`.
-- `overwrite_existing`: If `true`, existing BibTeX entries with the same key will be overwritten when generating new entries. If `false`, existing entries are preserved and a debug message is logged. Default: `false`.
+- `generate_bib`: If `true`, BibTeX entries will be generated from figure metadata when the `:bib:` option specifies a key that doesn't exist. Default: `false`.
+- `output_file`: The output file path for generated BibTeX entries (relative to source directory). Default: `references.bib`.
+- `overwrite_existing`: If `true`, existing entries with the same key will be overwritten. Default: `false`.
+
+#### BibTeX Generation
+
+When `generate_bib` is enabled and you specify a `:bib:` key that doesn't exist in your `.bib` files, the extension will:
+
+1. Generate a `@misc` BibTeX entry from the figure's metadata
+2. Inject the entry into sphinxcontrib-bibtex's cache (for same-build citation support)
+3. Write the entry to the configured output file (for persistence)
+
+This enables single-build citation support - the generated entry can be cited immediately without requiring a rebuild.
+
+Example configuration:
+```yaml
+sphinx:
+  config:
+    metadata_figure_settings:
+      bib:
+        extract_metadata: true
+        generate_bib: true
+        output_file: generated_figures.bib
+        overwrite_existing: false
+```
+
+Example figure with generation:
+```rst
+.. figure:: my_image.png
+   :bib: my_figure_key
+   :author: John Doe
+   :license: CC BY 4.0
+   :date: 2025-01-15
+   :source: https://example.com/image
+
+   My figure caption
+```
+
+This generates the following BibTeX entry:
+```bibtex
+@misc{my_figure_key,
+  author = {John Doe},
+  title = {My figure caption},
+  year = {2025},
+  date = {2025-01-15},
+  url = {https://example.com/image},
+  howpublished = {\url{https://example.com/image}},
+  note = {License: CC BY 4.0},
+}
+```
 
 ## Usage
 
@@ -188,55 +232,58 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Only relevant if `placement` is `admonition` or `margin`.
 - `bib`:
   - Optionally specify a BibTeX key for this figure.
-  - **Extracting metadata from BibTeX (when `extract_metadata: true`):**
-    - When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
-      | Metadata Field | Primary BibTeX Source | Fallback BibTeX source | Notes |
-      |---|---|---|---|
-      | `author` | `author` field | — | Used as-is |
-      | `date` | `date` field | `year` field | If only `year` exists, converted to `YYYY-01-01` format |
-      | `source` | `url` field | `howpublished` field | If `howpublished` contains `\url{...}`, extracts the URL; otherwise uses full value if `url` not present |
-      | `license` | `note` field | — | Only extracted if formatted as `license: ...` (case-insensitive); the text after the prefix is used |
-      | `copyright` | `copyright` field | — | Used as-is |
-    - Fields that cannot be extracted are simply omitted from metadata (no defaults applied at extraction time)
-    - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
-    - The BibTeX entry is also automatically added to the document bibliography using a `cite:empty` role (when the BibTeX key exists).
-  - **Generating BibTeX entries (when `generate_bib: true`):**
-    - When specified with explicit metadata options (`:author:`, `:license:`, `:date:`, etc.), a BibTeX entry will be automatically generated and written to the configured output file.
-    - The generated entry uses `@misc` type and includes all available metadata fields.
-    - Example configuration to enable generation:
-      ```yaml
-      sphinx:
-        config:
-          metadata_figure_settings:
-            bib:
-              generate_bib: true
-              output_file: my_figures.bib
-              overwrite_existing: false
-      ```
-    - Example usage:
-      ````markdown
-      ```{figure} /images/myimage.png
-      :bib: MyFigureKey
-      :author: John Doe
-      :license: CC-BY
-      :date: 2025-01-15
-      :source: https://example.com
+  - **Extraction mode** (default): When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
+    | Metadata Field | Primary BibTeX Source | Fallback BibTeX source | Notes |
+    |---|---|---|---|
+    | `author` | `author` field | — | Used as-is |
+    | `date` | `date` field | `year` field | If only `year` exists, converted to `YYYY-01-01` format |
+    | `source` | `url` field | `howpublished` field | If `howpublished` contains `\url{...}`, extracts the URL; otherwise uses full value if `url` not present |
+    | `license` | `note` field | — | Only extracted if formatted as `license: ...` (case-insensitive); the text after the prefix is used |
+    | `copyright` | `copyright` field | — | Used as-is |
+  - Fields that cannot be extracted are simply omitted from metadata (no defaults applied at extraction time)
+  - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
+  - The BibTeX entry is also automatically added to the document bibliography using a `cite:empty` role (when the BibTeX key exists).
+  - **Generation mode**: When `generate_bib: true` is configured and the specified key doesn't exist, a new BibTeX entry will be generated from the figure's metadata and injected into the bibliography cache for same-build citation support. See the [Bib configuration section](#bib) for details.
 
-      My figure caption
-      ```
-      ````
-      This will generate an entry in `my_figures.bib`:
-      ```bibtex
-      @misc{MyFigureKey,
-        author = {John Doe},
-        title = {My figure caption},
-        year = {2025},
-        date = {2025-01-15},
-        url = {https://example.com},
-        howpublished = {\url{https://example.com}},
-        note = {License: CC-BY},
-      }
-      ```
+## Setting Page-Level Defaults
+
+You can set default metadata values for all figures on a specific page using the `default-metadata-page` directive. This provides a middle layer between global configuration and per-figure settings.
+
+### Syntax
+
+```rst
+.. default-metadata-page::
+   :author: John Doe
+   :license: CC-BY
+   :placement: admonition
+```
+
+Or in MyST markdown:
+
+````markdown
+```{default-metadata-page}
+:author: John Doe
+:license: CC-BY
+:placement: admonition
+```
+````
+
+### Features
+
+- **Scope**: Applies to all figures in the current document only
+- **Priority**: Page defaults override global config and BibTeX metadata, but are overridden by explicit figure options
+- **All options supported**: You can set any metadata field or display option at page level
+
+### Priority Order
+
+When determining metadata values, the extension follows this priority chain (highest to lowest):
+
+1. **Explicit figure option** (`:author:` on the figure directive)
+2. **Page-level default** (from `default-metadata-page`)
+3. **BibTeX metadata** (when `:bib:` references an existing entry)
+4. **Global configuration** (from `_config.yml`)
+
+For detailed examples and usage, see the [Page-Level Defaults section in the manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html#page-level-defaults).
 
 ## Documentation
 

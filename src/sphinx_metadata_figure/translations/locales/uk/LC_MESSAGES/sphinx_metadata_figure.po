@@ -8,6 +8,9 @@ msgstr ""
 "Language: uk\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "Всі права захищені"
+
 msgid "Attribution"
 msgstr "Атрибуція"
 
@@ -23,5 +26,20 @@ msgstr "Дата"
 msgid "License"
 msgstr "Ліцензія"
 
+msgid "Pexels License"
+msgstr "Ліцензія Pexels"
+
+msgid "Pixabay License"
+msgstr "Ліцензія Pixabay"
+
+msgid "Proprietary"
+msgstr "Власницький"
+
+msgid "Public Domain"
+msgstr "Громадське надбання"
+
 msgid "Source"
 msgstr "Джерело"
+
+msgid "Unsplash License"
+msgstr "Ліцензія Unsplash"

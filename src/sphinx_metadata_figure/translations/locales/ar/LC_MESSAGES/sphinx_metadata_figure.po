@@ -8,6 +8,9 @@ msgstr ""
 "Language: ar\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "جميع الحقوق محفوظة"
+
 msgid "Attribution"
 msgstr "الإسناد"
 
@@ -23,5 +26,20 @@ msgstr "تاريخ"
 msgid "License"
 msgstr "رخصة"
 
+msgid "Pexels License"
+msgstr "رخصة Pexels"
+
+msgid "Pixabay License"
+msgstr "رخصة Pixabay"
+
+msgid "Proprietary"
+msgstr "خاص"
+
+msgid "Public Domain"
+msgstr "الملك العام"
+
 msgid "Source"
 msgstr "المصدر"
+
+msgid "Unsplash License"
+msgstr "رخصة Unsplash"

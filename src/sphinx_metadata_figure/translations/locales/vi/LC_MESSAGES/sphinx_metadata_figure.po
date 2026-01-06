@@ -8,6 +8,9 @@ msgstr ""
 "Language: vi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "Bảo lưu mọi quyền"
+
 msgid "Attribution"
 msgstr "Ghi công"
 
@@ -23,5 +26,20 @@ msgstr "Ngày"
 msgid "License"
 msgstr "Giấy phép"
 
+msgid "Pexels License"
+msgstr "Giấy phép Pexels"
+
+msgid "Pixabay License"
+msgstr "Giấy phép Pixabay"
+
+msgid "Proprietary"
+msgstr "Độc quyền"
+
+msgid "Public Domain"
+msgstr "Miền công cộng"
+
 msgid "Source"
 msgstr "Nguồn"
+
+msgid "Unsplash License"
+msgstr "Giấy phép Unsplash"

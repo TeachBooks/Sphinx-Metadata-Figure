@@ -11,6 +11,7 @@ During parsing, it validates that all images have proper and recognized license 
 """
 
 import os
+import json
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -22,6 +23,7 @@ from pathlib import Path
 from sphinx.application import Sphinx
 from typing import Union
 from myst_nb.ext.glue.directives import PasteFigureDirective
+from sphinx.util.docutils import SphinxDirective
 
 from sphinx.writers.html import HTMLTranslator
 
@@ -44,7 +46,7 @@ METADATA_FIGURE_DEFAULTS_LICENSE = {
     'summaries'          : False,
     'individual'         : False,
     'substitute_missing' : False,
-    'default_license'    : 'CC-BY'
+    'default_license'    : 'CC BY'
 }
 METADATA_FIGURE_DEFAULTS_AUTHOR = {
     'substitute_missing' : False,
@@ -63,9 +65,9 @@ METADATA_FIGURE_DEFAULTS_SOURCE = {
 }
 METADATA_FIGURE_DEFAULTS_BIB = {
     'extract_metadata': True,    # Extract metadata from bib entries when :bib: is specified
-    'generate_bib': False,        # Generate BibTeX entries from figure metadata
+    'generate_bib': False,       # Generate BibTeX entries from figure metadata
     'output_file': 'references.bib',  # Output file for generated BibTeX entries
-    'overwrite_existing': False,  # Whether to overwrite existing entries with the same key
+    'overwrite_existing': False, # Whether to overwrite existing entries with the same key
 }
 METADATA_FIGURE_DEFAULTS = {
     'style': METADATA_FIGURE_DEFAULTS_STYLE,
@@ -86,6 +88,42 @@ VALID_LICENSES = [
     'CC-BY-NC-SA',
     'CC-BY-ND',
     'CC-BY-NC-ND',
+    'CC BY',
+    'CC BY-SA',
+    'CC BY-NC',
+    'CC BY-NC-SA',
+    'CC BY-ND',
+    'CC BY-NC-ND',
+    'CC BY 4.0',
+    'CC BY-SA 4.0',
+    'CC BY-NC 4.0',
+    'CC BY-NC-SA 4.0',
+    'CC BY-ND 4.0',
+    'CC BY-NC-ND 4.0',
+    'CC BY 3.0',
+    'CC BY-SA 3.0',
+    'CC BY-NC 3.0',
+    'CC BY-NC-SA 3.0',
+    'CC BY-ND 3.0',
+    'CC BY-NC-ND 3.0',
+    "CC BY 2.5",
+    "CC BY-SA 2.5",
+    "CC BY-NC 2.5",
+    "CC BY-NC-SA 2.5",
+    "CC BY-ND 2.5",
+    "CC BY-NC-ND 2.5",
+    'CC BY 2.0',
+    'CC BY-SA 2.0',
+    'CC BY-NC 2.0',
+    'CC BY-NC-SA 2.0',
+    'CC BY-ND 2.0',
+    'CC BY-NC-ND 2.0',
+    'CC BY 1.0',
+    'CC BY-SA 1.0',
+    'CC BY-NC 1.0',
+    'CC BY-NC-SA 1.0',
+    'CC BY-ND 1.0',
+    'CC BY-NC-ND 1.0',
     'Public Domain',
     'MIT',
     'Apache-2.0',
@@ -95,7 +133,7 @@ VALID_LICENSES = [
     'All Rights Reserved',
     'Pixabay License',
     'Unsplash License',
-    'Pexels License',
+    'Pexels License'
 ]
 
 # Map known license tokens to canonical URLs (used when linking licenses)
@@ -107,15 +145,95 @@ LICENSE_URLS = {
     'CC-BY-NC-SA': 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
     'CC-BY-ND': 'https://creativecommons.org/licenses/by-nd/4.0/',
     'CC-BY-NC-ND': 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
+    'CC BY': 'https://creativecommons.org/licenses/by/4.0/',
+    'CC BY-SA': 'https://creativecommons.org/licenses/by-sa/4.0/',
+    'CC BY-NC': 'https://creativecommons.org/licenses/by-nc/4.0/',
+    'CC BY-NC-SA': 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+    'CC BY-ND': 'https://creativecommons.org/licenses/by-nd/4.0/',
+    'CC BY-NC-ND': 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
+    'CC BY 4.0': 'https://creativecommons.org/licenses/by/4.0/',
+    'CC BY-SA 4.0': 'https://creativecommons.org/licenses/by-sa/4.0/',
+    'CC BY-NC 4.0': 'https://creativecommons.org/licenses/by-nc/4.0/',
+    'CC BY-NC-SA 4.0': 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+    'CC BY-ND 4.0': 'https://creativecommons.org/licenses/by-nd/4.0/',
+    'CC BY-NC-ND 4.0': 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
+    'CC BY 3.0': 'https://creativecommons.org/licenses/by/3.0/',
+    'CC BY-SA 3.0': 'https://creativecommons.org/licenses/by-sa/3.0/',
+    'CC BY-NC 3.0': 'https://creativecommons.org/licenses/by-nc/3.0/',
+    'CC BY-NC-SA 3.0': 'https://creativecommons.org/licenses/by-nc-sa/3.0/',
+    'CC BY-ND 3.0': 'https://creativecommons.org/licenses/by-nd/3.0/',
+    'CC BY-NC-ND 3.0': 'https://creativecommons.org/licenses/by-nc-nd/3.0/',
+    "CC BY 2.5": "https://creativecommons.org/licenses/by/2.5/",
+    "CC BY-SA 2.5": "https://creativecommons.org/licenses/by-sa/2.5/",
+    "CC BY-NC 2.5": "https://creativecommons.org/licenses/by-nc/2.5/",
+    "CC BY-NC-SA 2.5": "https://creativecommons.org/licenses/by-nc-sa/2.5/",
+    "CC BY-ND 2.5": "https://creativecommons.org/licenses/by-nd/2.5/",
+    "CC BY-NC-ND 2.5": "https://creativecommons.org/licenses/by-nc-nd/2.5/",
+    'CC BY 2.0': 'https://creativecommons.org/licenses/by/2.0/',
+    'CC BY-SA 2.0': 'https://creativecommons.org/licenses/by-sa/2.0/',
+    'CC BY-NC 2.0': 'https://creativecommons.org/licenses/by-nc/2.0/',
+    'CC BY-NC-SA 2.0': 'https://creativecommons.org/licenses/by-nc-sa/2.0/',
+    'CC BY-ND 2.0': 'https://creativecommons.org/licenses/by-nd/2.0/',
+    'CC BY-NC-ND 2.0': 'https://creativecommons.org/licenses/by-nc-nd/2.0/',
+    'CC BY 1.0': 'https://creativecommons.org/licenses/by/1.0/',
+    'CC BY-SA 1.0': 'https://creativecommons.org/licenses/by-sa/1.0/',
+    'CC BY-NC 1.0': 'https://creativecommons.org/licenses/by-nc/1.0/',
+    'CC BY-NC-SA 1.0': 'https://creativecommons.org/licenses/by-nc-sa/1.0/',
+    'CC BY-ND 1.0': 'https://creativecommons.org/licenses/by-nd/1.0/',
+    'CC BY-NC-ND 1.0': 'https://creativecommons.org/licenses/by-nc-nd/1.0/',
     'Public Domain': 'https://creativecommons.org/publicdomain/mark/1.0/',
     'MIT': 'https://opensource.org/licenses/MIT',
     'Apache-2.0': 'https://www.apache.org/licenses/LICENSE-2.0',
     'GPL-3.0': 'https://www.gnu.org/licenses/gpl-3.0.en.html',
+    "GPL-2.0": "https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html",
+    "LGPL-2.1": "https://www.gnu.org/licenses/lgpl-2.1.en.html",
+    "LGPL-3.0": "https://www.gnu.org/licenses/lgpl-3.0.en.html",
+    "AGPL-3.0": "https://www.gnu.org/licenses/agpl-3.0.en.html",
     'BSD-3-Clause': 'https://opensource.org/licenses/BSD-3-Clause',
+    "BSD-2-Clause": "https://opensource.org/licenses/BSD-2-Clause",
     'Pixabay License': 'https://pixabay.com/service/terms/#license',
     'Unsplash License': 'https://unsplash.com/license',
-    'Pexels License': 'https://www.pexels.com/license/',
+    'Pexels License': 'https://www.pexels.com/license/'
 }
+
+def _strip_surrounding_braces(s: str) -> str:
+    """
+    Remove all braces from a BibTeX field value for display.
+    
+    BibTeX uses braces for two purposes:
+    1. Delimiting field values: author = {value}
+    2. Protecting text from case changes: {van} in names
+    
+    When displaying values, both types of braces should be removed.
+    This function strips all braces while preserving the text content.
+    
+    Examples:
+        "{{Some Author}}" -> "Some Author"
+        "{Some Author}" -> "Some Author"  
+        "John {van} Doe" -> "John van Doe" (inner braces removed too)
+        "{John {van} Doe}" -> "John van Doe" (all braces removed)
+    
+    Manual test: Add a .bib entry with author = {John {van} Doe} and reference
+    it with :bib: in a figure; the caption should render "John van Doe" (no braces).
+    
+    Args:
+        s: The BibTeX field value to process
+        
+    Returns:
+        The value with all braces removed
+    """
+    if not s:
+        return s
+    
+    # Remove all braces (both { and })
+    result = s.replace('{', '').replace('}', '')
+    
+    # Clean up any extra whitespace that might result from brace removal
+    # Replace multiple spaces with single space and strip
+    result = ' '.join(result.split())
+    
+    return result
+
 
 def _parse_bib_entry(bib_content, key):
     """
@@ -150,7 +268,7 @@ def _parse_bib_entry(bib_content, key):
         if field_value:
             field_value = field_value.strip()
         if field_name == 'author':
-            metadata['author'] = field_value
+            metadata['author'] = _strip_surrounding_braces(field_value)
         elif field_name == 'year':
             # Convert year to date format
             if 'date' not in metadata:
@@ -228,6 +346,8 @@ def _generate_bib_entry(key, metadata, image_path, caption=None):
     Returns:
         str: Formatted BibTeX entry
     """
+    import re
+
     # Start with @misc entry type (most appropriate for figures/images)
     bib_lines = [f'@misc{{{key},']
 
@@ -263,7 +383,6 @@ def _generate_bib_entry(key, metadata, image_path, caption=None):
             bib_lines.append(f'  howpublished = {{\\url{{{source}}}}},')
         elif source.startswith('[') and '](' in source:
             # Markdown link format: [text](url)
-            import re
             match = re.match(r'\[([^\]]+)\]\(([^\)]+)\)', source)
             if match:
                 url = match.group(2)
@@ -286,6 +405,116 @@ def _generate_bib_entry(key, metadata, image_path, caption=None):
     return '\n'.join(bib_lines)
 
 
+def _inject_into_bibtex_cache(app, bib_key, metadata, image_path, caption=None):
+    """
+    Inject a generated BibTeX entry directly into sphinxcontrib-bibtex's cache.
+
+    This allows the entry to be cited in the same build without requiring a rebuild.
+
+    Args:
+        app: Sphinx application instance
+        bib_key: The BibTeX key for the entry
+        metadata: dict containing figure metadata
+        image_path: Path to the image file
+        caption: Optional figure caption
+
+    Returns:
+        bool: True if injection succeeded, False otherwise
+    """
+    try:
+        # Import pybtex for creating Entry objects
+        from pybtex.database import Entry, Person
+
+        # Access sphinxcontrib-bibtex's cache
+        env = app.env
+        if not hasattr(env, 'bibtex_bibfiles'):
+            logger.debug('sphinxcontrib-bibtex cache not found (bibtex_bibfiles)')
+            return False
+
+        bibfiles = env.bibtex_bibfiles
+        if not bibfiles:
+            logger.debug('No bibfiles in sphinxcontrib-bibtex cache')
+            return False
+
+        # Build entry fields
+        fields = {}
+
+        # Title
+        if caption:
+            fields['title'] = caption.strip()
+        else:
+            fields['title'] = f'Figure: {image_path}'
+
+        # Date/Year
+        if metadata.get('date'):
+            date_str = metadata['date']
+            try:
+                year = datetime.strptime(date_str, '%Y-%m-%d').year
+                fields['year'] = str(year)
+                fields['date'] = date_str
+            except ValueError:
+                fields['year'] = date_str
+
+        # Source
+        if metadata.get('source'):
+            source = metadata['source']
+            if source.startswith('http://') or source.startswith('https://'):
+                fields['url'] = source
+                fields['howpublished'] = f'\\url{{{source}}}'
+            elif source.startswith('[') and '](' in source:
+                import re
+                match = re.match(r'\[([^\]]+)\]\(([^\)]+)\)', source)
+                if match:
+                    url = match.group(2)
+                    fields['url'] = url
+                    fields['howpublished'] = f'\\url{{{url}}}'
+            else:
+                fields['howpublished'] = source
+
+        # License in note
+        if metadata.get('license'):
+            fields['note'] = f'License: {metadata["license"]}'
+
+        # Copyright
+        if metadata.get('copyright'):
+            fields['copyright'] = metadata['copyright']
+
+        # Create pybtex Entry
+        entry = Entry('misc', fields=fields)
+
+        # Handle author separately (pybtex uses Person objects)
+        if metadata.get('author'):
+            author_str = metadata['author']
+            # Simple parsing - split by 'and' for multiple authors
+            author_parts = [a.strip() for a in author_str.split(' and ')]
+            persons = []
+            for author in author_parts:
+                persons.append(Person(author))
+            entry.persons['author'] = persons
+
+        # Inject into the first available bibfile's data
+        for bibfile_key, bibfile_data in bibfiles.items():
+            if hasattr(bibfile_data, 'data') and hasattr(bibfile_data.data, 'entries'):
+                # Check if key already exists
+                if bib_key in bibfile_data.data.entries:
+                    logger.debug(f'BibTeX key "{bib_key}" already exists in cache')
+                    return True  # Already exists, consider it success
+
+                bibfile_data.data.entries[bib_key] = entry
+                logger.debug(f'Injected BibTeX entry "{bib_key}" into sphinxcontrib-bibtex cache')
+                return True
+
+        logger.debug('Could not find suitable bibfile data structure for injection')
+        return False
+
+    except ImportError:
+        logger.debug('pybtex not available for cache injection')
+        return False
+    except Exception as e:
+        logger.debug(f'Failed to inject into bibtex cache: {e}')
+        return False
+
+
 def _write_bib_entry(app, bib_key, bib_entry, output_file, overwrite=False):
     """
     Write a BibTeX entry to a file, avoiding duplicates.
@@ -296,6 +525,9 @@ def _write_bib_entry(app, bib_key, bib_entry, output_file, overwrite=False):
         bib_entry: The formatted BibTeX entry string
         output_file: Path to the output .bib file (relative to srcdir)
         overwrite: Whether to overwrite existing entries with the same key
+
+    Returns:
+        bool: True if write succeeded, False otherwise
     """
     import re
 
@@ -310,7 +542,7 @@ def _write_bib_entry(app, bib_key, bib_entry, output_file, overwrite=False):
                 existing_content = f.read()
         except Exception as e:
             logger.warning(f'Could not read existing bib file {output_path}: {e}')
-            return
+            return False
 
     # Check if entry with this key already exists
     pattern = rf'@\w+\s*\{{\s*{re.escape(bib_key)}\s*,'
@@ -319,10 +551,9 @@ def _write_bib_entry(app, bib_key, bib_entry, output_file, overwrite=False):
     if existing_match:
         if not overwrite:
             logger.debug(f'BibTeX entry with key "{bib_key}" already exists in {output_path}, skipping')
-            return
+            return True  # Not an error, just skipping
         else:
             # Remove the existing entry
-            # Pattern matches @type{key, ... }
             full_pattern = rf'@\w+\s*\{{\s*{re.escape(bib_key)}\s*,([^@]*?)\}}\s*(?=@|\Z)'
             existing_content = re.sub(full_pattern, '', existing_content, flags=re.DOTALL | re.IGNORECASE)
             logger.debug(f'Overwriting existing BibTeX entry with key "{bib_key}" in {output_path}')
@@ -337,14 +568,60 @@ def _write_bib_entry(app, bib_key, bib_entry, output_file, overwrite=False):
     # Write to file
     try:
         # Ensure directory exists
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else '.', exist_ok=True)
 
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(existing_content + bib_entry + '\n')
 
         logger.info(f'Generated BibTeX entry for "{bib_key}" in {output_path}')
+        return True
     except Exception as e:
         logger.warning(f'Could not write BibTeX entry to {output_path}: {e}')
+        return False
+
+
+class DefaultMetadataPage(SphinxDirective):
+    """
+    Set default metadata values for all figures on the current page.
+
+    This directive allows you to set page-level defaults that apply to all figures
+    in the current document. These defaults have lower priority than explicit figure
+    options but higher priority than global configuration defaults.
+
+    Example usage:
+        .. default-metadata-page::
+           :author: John Doe
+           :license: CC-BY
+           :placement: admonition
+    """
+    has_content = False
+    required_arguments = 0
+    option_spec = {
+        'author': directives.unchanged,
+        'license': directives.unchanged,
+        'date': directives.unchanged,
+        'copyright': directives.unchanged,
+        'source': directives.unchanged,
+        'placement': directives.unchanged,
+        'show': directives.unchanged,
+        'admonition_title': directives.unchanged,
+        'admonition_class': directives.unchanged,
+    }
+
+    def run(self):
+        """Store the page-level defaults in the environment."""
+        env = self.state.document.settings.env
+
+        # Initialize the page defaults dict if it doesn't exist
+        if not hasattr(env, 'metadata_figure_page_defaults'):
+            env.metadata_figure_page_defaults = {}
+
+        # Store defaults for this document
+        docname = env.docname
+        env.metadata_figure_page_defaults[docname] = self.options.copy()
+
+        # Return empty list - this directive doesn't produce visible output
+        return []
 
 
 class MetadataFigure(Figure):
@@ -393,6 +670,12 @@ class MetadataFigure(Figure):
         for key in METADATA_FIGURE_DEFAULTS:
             settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(key, {})
 
+        # Retrieve page-level defaults if they exist
+        page_defaults = {}
+        if env and hasattr(env, 'metadata_figure_page_defaults'):
+            docname = env.docname
+            page_defaults = env.metadata_figure_page_defaults.get(docname, {})
+
         # Handle bib entry extraction - extract metadata from bib entry if :bib: is specified
         bib_key = self.options.get('bib', None)
         bib_settings = settings['bib']
@@ -412,13 +695,25 @@ class MetadataFigure(Figure):
                     self.state.nested_parse([text], self.content_offset, para)
                     # Add the paragraph node to the document
                     self.state.document += para
+                else:
+                    message_unrecognized = (
+                        f'\n- Figure "{self.arguments[0]}" '
+                            f'has an unrecognized BibTeX key "{bib_key}".'
+                    )
+                    logger.warning(
+                        message_unrecognized,
+                        location=(self.state.document.current_source, self.lineno)
+                    )
 
-        # Validate license (explicit option > bib metadata > defaults)
-        license_value = self.options.get('license', None) or bib_metadata.get('license', None)
+        # Validate license (explicit option > page defaults > bib metadata > defaults)
+        license_value = self.options.get('license', None) or page_defaults.get('license', None) or bib_metadata.get('license', None)
         license_settings = settings['license']
         if not license_value:
             if license_settings['substitute_missing']:
                 license_value = license_settings['default_license']
+
+        if license_value:
+            license_value = untranslate_license(license_value)
         
         if license_value is None:
             # Warn or raise error if license is missing
@@ -449,9 +744,19 @@ class MetadataFigure(Figure):
                     message_incorrect,
                     location=(self.state.document.current_source, self.lineno)
             )
+        # Translate the license, remove dashes in CC licenses and add version if missing for display
+        if license_value:
+            # translate:
+            license_value = translate(license_value)
+            # remove dashes in CC licenses for display
+            if license_value.startswith("CC-"):
+                license_value = license_value.replace("CC-", "CC ")
+            # add 4.0 to CC licenses without version
+            if license_value.startswith("CC ") and not any(char.isdigit() for char in license_value):
+                license_value += " 4.0"
         
-        # Validate date format (explicit option > bib metadata > defaults)
-        date_value = self.options.get('date', None) or bib_metadata.get('date', None)
+        # Validate date format (explicit option > page defaults > bib metadata > defaults)
+        date_value = self.options.get('date', None) or page_defaults.get('date', None) or bib_metadata.get('date', None)
         if not date_value:
              date_settings = settings['date']
              if date_settings['substitute_missing']:
@@ -471,8 +776,8 @@ class MetadataFigure(Figure):
                     location=(self.state.document.current_source, self.lineno)
                 )
 
-        # Author value (explicit option > bib metadata > defaults)
-        author_value = self.options.get('author', None) or bib_metadata.get('author', None)
+        # Author value (explicit option > page defaults > bib metadata > defaults)
+        author_value = self.options.get('author', None) or page_defaults.get('author', None) or bib_metadata.get('author', None)
         if not author_value:
             author_settings = settings['author']
             if author_settings['substitute_missing']:
@@ -482,8 +787,8 @@ class MetadataFigure(Figure):
                 else:
                     author_value = default_author
 
-        # Copyright value (explicit option > bib metadata > defaults)
-        copyright_value = self.options.get('copyright', None) or bib_metadata.get('copyright', None)
+        # Copyright value (explicit option > page defaults > bib metadata > defaults)
+        copyright_value = self.options.get('copyright', None) or page_defaults.get('copyright', None) or bib_metadata.get('copyright', None)
         if not copyright_value:
             copyright_settings = settings['copyright']
             if copyright_settings['substitute_missing']:
@@ -526,8 +831,8 @@ class MetadataFigure(Figure):
                 else:
                     copyright_value = default_copyright
         
-        # Source value (explicit option > bib metadata)
-        source_value = self.options.get('source', None) or bib_metadata.get('source', None)
+        # Source value (explicit option > page defaults > bib metadata)
+        source_value = self.options.get('source', None) or page_defaults.get('source', None) or bib_metadata.get('source', None)
         source_settings = settings['source']
         if source_value is None:
             if source_settings['warn_missing']:
@@ -596,8 +901,8 @@ class MetadataFigure(Figure):
             if source_value:
                 figure_node['source'] = source_value
 
-            # Generate BibTeX entry if requested
-            if bib_settings['generate_bib'] and bib_key and env:
+            # Generate BibTeX entry if requested and key is specified but entry doesn't exist
+            if bib_settings.get('generate_bib') and bib_key and env and not bib_metadata:
                 # Collect metadata for BibTeX generation
                 metadata_dict = {}
                 if author_value:
@@ -618,22 +923,45 @@ class MetadataFigure(Figure):
                         caption_text = child.astext()
                         break
 
-                # Generate and write BibTeX entry
-                if metadata_dict:  # Only generate if we have some metadata
+                # Only generate if we have some metadata
+                if metadata_dict:
                     image_path = self.arguments[0]
-                    bib_entry = _generate_bib_entry(bib_key, metadata_dict, image_path, caption_text)
-                    output_file = bib_settings['output_file']
-                    overwrite = bib_settings['overwrite_existing']
-                    _write_bib_entry(env.app, bib_key, bib_entry, output_file, overwrite)
+                    output_file = bib_settings.get('output_file', 'references.bib')
+                    overwrite = bib_settings.get('overwrite_existing', False)
 
-            # Determine rendering controls
+                    # Generate the BibTeX entry string
+                    bib_entry = _generate_bib_entry(bib_key, metadata_dict, image_path, caption_text)
+
+                    # 1. Try to inject into sphinxcontrib-bibtex cache (for same-build citation)
+                    cache_injected = _inject_into_bibtex_cache(
+                        env.app, bib_key, metadata_dict, image_path, caption_text
+                    )
+
+                    # 2. Write to .bib file (for persistence and future builds)
+                    file_written = _write_bib_entry(env.app, bib_key, bib_entry, output_file, overwrite)
+
+                    # 3. Add citation reference if cache injection succeeded
+                    if cache_injected:
+                        text = f"{{cite:empty}}`{bib_key}`"
+                        para = nodes.paragraph()
+                        self.state.nested_parse([text], self.content_offset, para)
+                        self.state.document += para
+                    elif file_written:
+                        # Cache injection failed but file was written - warn about rebuild
+                        logger.warning(
+                            f'BibTeX entry "{bib_key}" generated but requires rebuild for citation. '
+                            f'Run the build again to enable citations.',
+                            location=(self.state.document.current_source, self.lineno)
+                        )
+
+            # Determine rendering controls (explicit option > page defaults > global config)
             style_settings = settings['style']
-            placement = self.options.get('placement') or style_settings['placement']
+            placement = self.options.get('placement') or page_defaults.get('placement') or style_settings['placement']
             placement = placement.strip().lower()
-            show_raw = self.options.get('show') or style_settings['show']
+            show_raw = self.options.get('show') or page_defaults.get('show') or style_settings['show']
             show = [s.strip().lower() for s in str(show_raw).split(',') if s.strip()]
-            title = self.options.get('admonition_title') or translate(style_settings['admonition_title'])
-            admon_class = self.options.get('admonition_class') or style_settings['admonition_class']
+            title = self.options.get('admonition_title') or page_defaults.get('admonition_title') or translate(style_settings['admonition_title'])
+            admon_class = self.options.get('admonition_class') or page_defaults.get('admonition_class') or style_settings['admonition_class']
             
             display_nodes = _build_attribution_display(
                 figure_node=figure_node,
@@ -824,7 +1152,10 @@ def setup(app):
     # Override the default figure directive with our custom version
     app.add_directive('figure', MetadataFigure, override=True)
     app.add_directive_to_domain('glue', 'figure', MetadataFigure, override=True)
-    
+
+    # Register the page-level default metadata directive
+    app.add_directive('default-metadata-page', DefaultMetadataPage)
+
     # Add custom CSS for metadata styling
     app.add_css_file('metadata_figure.css')
     app.connect("build-finished", copy_asset_files)
@@ -899,3 +1230,15 @@ def add_unnumbered_caption(app, doctree, fromdocname):
             # add an empty caption so that metadata can be appended
             new_caption = nodes.caption(text="")
             node += new_caption
+
+def untranslate_license(license_value: str) -> str:
+    """Convert translated license names back to standard English keys."""
+    """Independent of current locale."""
+
+    # load untranslate map
+    folder = os.path.abspath(os.path.dirname(__file__))
+    locale_dir = os.path.join(folder, "translations", "untranslate.json")
+    with open(locale_dir, 'r', encoding='utf-8') as f:
+        untranslate_map = json.load(f)
+
+    return untranslate_map.get(license_value, license_value)

@@ -12,11 +12,15 @@ def convert_json(folder=None):
     for path in (folder / "locales").glob(f"**/{MESSAGE_CATALOG_NAME}.po"):
         path.unlink()
 
-    # compile po
+    # compile po and create untranslate json
+    untranslate_data = {}
     for path in (folder / "jsons").glob("*.json"):
         data = json.loads(path.read_text("utf8"))
         assert data[0]["symbol"] == "en"
         english = data[0]["text"]
+        for item in data:
+            if item["text"] not in untranslate_data:
+                 untranslate_data.update({item["text"]: english})
         for item in data[1:]:
             language = item["symbol"]
             out_path = folder / "locales" / language / "LC_MESSAGES" / f"{MESSAGE_CATALOG_NAME}.po"
@@ -40,6 +44,10 @@ msgstr ""
                 f.write(f'msgid "{english}"\n')
                 text = item["text"].replace('"', '\\"')
                 f.write(f'msgstr "{text}"\n')
+
+    # write untranslate json
+    untranslate_path = folder / "untranslate.json"
+    untranslate_path.write_text(json.dumps(untranslate_data, ensure_ascii=False, indent=2), encoding="utf8")
 
     # compile mo
     for path in (folder / "locales").glob(f"**/{MESSAGE_CATALOG_NAME}.po"):

@@ -8,6 +8,9 @@ msgstr ""
 "Language: zh-cn\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "保留所有权利"
+
 msgid "Attribution"
 msgstr "归属"
 
@@ -23,5 +26,20 @@ msgstr "日期"
 msgid "License"
 msgstr "许可证"
 
+msgid "Pexels License"
+msgstr "Pexels许可证"
+
+msgid "Pixabay License"
+msgstr "Pixabay许可证"
+
+msgid "Proprietary"
+msgstr "专有"
+
+msgid "Public Domain"
+msgstr "公有领域"
+
 msgid "Source"
 msgstr "来源"
+
+msgid "Unsplash License"
+msgstr "Unsplash许可证"

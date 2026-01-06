@@ -8,6 +8,9 @@ msgstr ""
 "Language: th\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "All Rights Reserved"
+msgstr "สงวนลิขสิทธิ์"
+
 msgid "Attribution"
 msgstr "การระบุแหล่งที่มา"
 
@@ -23,5 +26,20 @@ msgstr "วันที่"
 msgid "License"
 msgstr "ใบอนุญาต"
 
+msgid "Pexels License"
+msgstr "ใบอนุญาต Pexels"
+
+msgid "Pixabay License"
+msgstr "ใบอนุญาต Pixabay"
+
+msgid "Proprietary"
+msgstr "กรรมสิทธิ์"
+
+msgid "Public Domain"
+msgstr "สาธารณสมบัติ"
+
 msgid "Source"
 msgstr "แหล่งที่มา"
+
+msgid "Unsplash License"
+msgstr "ใบอนุญาต Unsplash"
