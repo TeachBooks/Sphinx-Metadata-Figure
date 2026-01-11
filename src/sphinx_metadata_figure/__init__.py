@@ -705,8 +705,8 @@ class MetadataFigure(Figure):
                         location=(self.state.document.current_source, self.lineno)
                     )
 
-        # Validate license (explicit option > page defaults > bib metadata > defaults)
-        license_value = self.options.get('license', None) or page_defaults.get('license', None) or bib_metadata.get('license', None)
+        # Validate license (explicit option > bib metadata > page defaults > defaults)
+        license_value = self.options.get('license', None) or bib_metadata.get('license', None) or page_defaults.get('license', None)
         license_settings = settings['license']
         if not license_value:
             if license_settings['substitute_missing']:
@@ -755,8 +755,8 @@ class MetadataFigure(Figure):
             if license_value.startswith("CC ") and not any(char.isdigit() for char in license_value):
                 license_value += " 4.0"
         
-        # Validate date format (explicit option > page defaults > bib metadata > defaults)
-        date_value = self.options.get('date', None) or page_defaults.get('date', None) or bib_metadata.get('date', None)
+        # Validate date format (explicit option > bib metadata > page defaults > defaults)
+        date_value = self.options.get('date', None) or bib_metadata.get('date', None) or page_defaults.get('date', None)
         if not date_value:
              date_settings = settings['date']
              if date_settings['substitute_missing']:
@@ -776,8 +776,8 @@ class MetadataFigure(Figure):
                     location=(self.state.document.current_source, self.lineno)
                 )
 
-        # Author value (explicit option > page defaults > bib metadata > defaults)
-        author_value = self.options.get('author', None) or page_defaults.get('author', None) or bib_metadata.get('author', None)
+        # Author value (explicit option > bib metadata > page defaults > defaults)
+        author_value = self.options.get('author', None) or bib_metadata.get('author', None) or page_defaults.get('author', None)
         if not author_value:
             author_settings = settings['author']
             if author_settings['substitute_missing']:
@@ -787,8 +787,8 @@ class MetadataFigure(Figure):
                 else:
                     author_value = default_author
 
-        # Copyright value (explicit option > page defaults > bib metadata > defaults)
-        copyright_value = self.options.get('copyright', None) or page_defaults.get('copyright', None) or bib_metadata.get('copyright', None)
+        # Copyright value (explicit option > bib metadata > page defaults > defaults)
+        copyright_value = self.options.get('copyright', None) or bib_metadata.get('copyright', None) or page_defaults.get('copyright', None)
         if not copyright_value:
             copyright_settings = settings['copyright']
             if copyright_settings['substitute_missing']:
@@ -831,8 +831,8 @@ class MetadataFigure(Figure):
                 else:
                     copyright_value = default_copyright
         
-        # Source value (explicit option > page defaults > bib metadata)
-        source_value = self.options.get('source', None) or page_defaults.get('source', None) or bib_metadata.get('source', None)
+        # Source value (explicit option > bib metadata > page defaults)
+        source_value = self.options.get('source', None) or bib_metadata.get('source', None) or page_defaults.get('source', None)
         source_settings = settings['source']
         if source_value is None:
             if source_settings['warn_missing']:
