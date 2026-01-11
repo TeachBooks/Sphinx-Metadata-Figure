@@ -695,7 +695,8 @@ class MetadataFigure(Figure):
                     self.state.nested_parse([text], self.content_offset, para)
                     # Add the paragraph node to the document
                     self.state.document += para
-                else:
+                # is the next else needed? ONly if we do not want to write the bib entry
+                elif not bib_settings['generate_bib']:
                     message_unrecognized = (
                         f'\n- Figure "{self.arguments[0]}" '
                             f'has an unrecognized BibTeX key "{bib_key}".'
@@ -915,6 +916,7 @@ class MetadataFigure(Figure):
                     metadata_dict['copyright'] = copyright_value
                 if source_value:
                     metadata_dict['source'] = source_value
+            
 
                 # Extract caption from figure node
                 caption_text = None
@@ -931,7 +933,7 @@ class MetadataFigure(Figure):
 
                     # Generate the BibTeX entry string
                     bib_entry = _generate_bib_entry(bib_key, metadata_dict, image_path, caption_text)
-
+                    
                     # 1. Try to inject into sphinxcontrib-bibtex cache (for same-build citation)
                     cache_injected = _inject_into_bibtex_cache(
                         env.app, bib_key, metadata_dict, image_path, caption_text
