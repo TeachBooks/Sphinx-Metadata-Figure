@@ -225,8 +225,8 @@ Or in MyST markdown:
 When determining metadata values, the extension follows this priority chain (highest to lowest):
 
 1. **Explicit figure option** (`:author:` on the figure directive)
-2. **Page-level default** (from `default-metadata-page`)
-3. **BibTeX metadata** (when `:bib:` references an existing entry)
+2. **BibTeX metadata** (when `:bib:` references an existing entry)
+3. **Page-level default** (from `default-metadata-page`)
 4. **Global configuration** (from `_config.yml`)
 
 For detailed examples and usage, see the [Page-Level Defaults section in the manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html#page-level-defaults).
