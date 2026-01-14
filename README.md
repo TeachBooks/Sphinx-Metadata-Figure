@@ -71,6 +71,9 @@ sphinx:
         warn_missing: false
       bib:
         extract_metadata: true
+        generate_bib: false
+        output_file: references.bib
+        overwrite_existing: false
 ```
 
 Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of key-value pairs. Each level 1 ley will be discussed next, including the options.
@@ -137,10 +140,60 @@ The `source` key contains options for how to handle source metadata.
 
 ### Bib
 
-The `bib` key contains options for BibTeX entry support. This allows you to extract figure metadata from existing BibTeX entries.
+The `bib` key contains options for BibTeX entry support. This allows you to extract figure metadata from existing BibTeX entries, or generate new BibTeX entries from figure metadata.
 
 Configuration options:
 - `extract_metadata`: If `true`, metadata will be extracted from existing BibTeX entries when the `:bib:` option references a valid key. Default: `true`.
+- `generate_bib`: If `true`, BibTeX entries will be generated from figure metadata when the `:bib:` option specifies a key that doesn't exist. Default: `false`.
+- `output_file`: The output file path for generated BibTeX entries (relative to source directory). Default: `references.bib`.
+- `overwrite_existing`: If `true`, existing entries with the same key will be overwritten. Default: `false`.
+
+#### BibTeX Generation
+
+When `generate_bib` is enabled and you specify a `:bib:` key that doesn't exist in your `.bib` files, the extension will:
+
+1. Generate a `@misc` BibTeX entry from the figure's metadata
+2. Inject the entry into sphinxcontrib-bibtex's cache (for same-build citation support)
+3. Write the entry to the configured output file (for persistence)
+
+This enables single-build citation support - the generated entry can be cited immediately without requiring a rebuild.
+
+Example configuration:
+```yaml
+sphinx:
+  config:
+    metadata_figure_settings:
+      bib:
+        extract_metadata: true
+        generate_bib: true
+        output_file: generated_figures.bib
+        overwrite_existing: false
+```
+
+Example figure with generation:
+```rst
+.. figure:: my_image.png
+   :bib: my_figure_key
+   :author: John Doe
+   :license: CC BY 4.0
+   :date: 2025-01-15
+   :source: https://example.com/image
+
+   My figure caption
+```
+
+This generates the following BibTeX entry:
+```bibtex
+@misc{my_figure_key,
+  author = {John Doe},
+  title = {My figure caption},
+  year = {2025},
+  date = {2025-01-15},
+  url = {https://example.com/image},
+  howpublished = {\url{https://example.com/image}},
+  note = {License: CC BY 4.0},
+}
+```
 
 ## Usage
 
@@ -179,7 +232,7 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Only relevant if `placement` is `admonition` or `margin`.
 - `bib`:
   - Optionally specify a BibTeX key for this figure.
-  - When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
+  - **Extraction mode** (default): When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
     | Metadata Field | Primary BibTeX Source | Fallback BibTeX source | Notes |
     |---|---|---|---|
     | `author` | `author` field | — | Used as-is |
@@ -190,6 +243,7 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Fields that cannot be extracted are simply omitted from metadata (no defaults applied at extraction time)
   - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
   - The BibTeX entry is also automatically added to the document bibliography using a `cite:empty` role (when the BibTeX key exists).
+  - **Generation mode**: When `generate_bib: true` is configured and the specified key doesn't exist, a new BibTeX entry will be generated from the figure's metadata and injected into the bibliography cache for same-build citation support. See the [Bib configuration section](#bib) for details.
 
 ## Setting Page-Level Defaults
 
