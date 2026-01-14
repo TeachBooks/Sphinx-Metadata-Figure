@@ -427,14 +427,25 @@ def _inject_into_bibtex_cache(app, bib_key, metadata, image_path, caption=None):
 
         # Access sphinxcontrib-bibtex's cache
         env = app.env
-        if not hasattr(env, 'bibtex_bibfiles'):
-            logger.debug('sphinxcontrib-bibtex cache not found (bibtex_bibfiles)')
+        if not hasattr(env, 'bibtex_cache'):
+            logger.debug('sphinxcontrib-bibtex cache not found (env.bibtex_cache attribute missing). '
+                        'Ensure sphinxcontrib-bibtex extension is loaded and configured.')
             return False
 
-        bibfiles = env.bibtex_bibfiles
-        if not bibfiles:
-            logger.debug('No bibfiles in sphinxcontrib-bibtex cache')
+        cache = env.bibtex_cache
+        logger.debug(f'Found bibtex_cache: {type(cache).__name__}')
+
+        if not hasattr(cache, 'bibfiles'):
+            logger.debug('No bibfiles attribute in sphinxcontrib-bibtex cache')
             return False
+
+        bibfiles = cache.bibfiles
+        if not bibfiles:
+            logger.debug('bibfiles dict is empty in sphinxcontrib-bibtex cache. '
+                        'Ensure bibtex_bibfiles is configured in conf.py')
+            return False
+
+        logger.debug(f'Found {len(bibfiles)} bibfile(s) in cache: {list(bibfiles.keys())}')
 
         # Build entry fields
         fields = {}
@@ -501,7 +512,7 @@ def _inject_into_bibtex_cache(app, bib_key, metadata, image_path, caption=None):
                     return True  # Already exists, consider it success
 
                 bibfile_data.data.entries[bib_key] = entry
-                logger.debug(f'Injected BibTeX entry "{bib_key}" into sphinxcontrib-bibtex cache')
+                logger.info(f'Injected BibTeX entry "{bib_key}" into sphinxcontrib-bibtex cache for single-build citation')
                 return True
 
         logger.debug('Could not find suitable bibfile data structure for injection')
@@ -511,7 +522,9 @@ def _inject_into_bibtex_cache(app, bib_key, metadata, image_path, caption=None):
         logger.debug('pybtex not available for cache injection')
         return False
     except Exception as e:
-        logger.debug(f'Failed to inject into bibtex cache: {e}')
+        logger.warning(f'Failed to inject into bibtex cache: {e}')
+        import traceback
+        logger.debug(traceback.format_exc())
         return False
 
 
