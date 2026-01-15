@@ -43,3 +43,6 @@ msgstr "மூலம்"
 
 msgid "Unsplash License"
 msgstr "Unsplash உரிமம்"
+
+msgid "Vecteezy Free License"
+msgstr "Vecteezy இலவச உரிமம்"

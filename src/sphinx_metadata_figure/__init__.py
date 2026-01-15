@@ -130,7 +130,8 @@ VALID_LICENSES = [
     'All Rights Reserved',
     'Pixabay License',
     'Unsplash License',
-    'Pexels License'
+    'Pexels License',
+    'Vecteezy Free License'
 ]
 
 # Map known license tokens to canonical URLs (used when linking licenses)
@@ -190,7 +191,8 @@ LICENSE_URLS = {
     "BSD-2-Clause": "https://opensource.org/licenses/BSD-2-Clause",
     'Pixabay License': 'https://pixabay.com/service/terms/#license',
     'Unsplash License': 'https://unsplash.com/license',
-    'Pexels License': 'https://www.pexels.com/license/'
+    'Pexels License': 'https://www.pexels.com/license/',
+    'Vecteezy Free License' : 'https://www.vecteezy.com/licensing-agreement'
 }
 
 def _strip_surrounding_braces(s: str) -> str:

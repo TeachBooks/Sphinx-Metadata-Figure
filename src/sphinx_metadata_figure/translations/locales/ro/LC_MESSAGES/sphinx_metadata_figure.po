@@ -43,3 +43,6 @@ msgstr "Sursa"
 
 msgid "Unsplash License"
 msgstr "Licență Unsplash"
+
+msgid "Vecteezy Free License"
+msgstr "Licență Gratuită Vecteezy"

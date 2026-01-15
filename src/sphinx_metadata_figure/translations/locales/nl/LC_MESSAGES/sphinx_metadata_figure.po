@@ -43,3 +43,6 @@ msgstr "Bron"
 
 msgid "Unsplash License"
 msgstr "Unsplash-licentie"
+
+msgid "Vecteezy Free License"
+msgstr "Vecteezy Gratis Licentie"

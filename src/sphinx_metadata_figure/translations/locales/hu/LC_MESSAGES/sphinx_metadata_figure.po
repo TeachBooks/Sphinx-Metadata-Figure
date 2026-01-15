@@ -43,3 +43,6 @@ msgstr "Forrás"
 
 msgid "Unsplash License"
 msgstr "Unsplash licenc"
+
+msgid "Vecteezy Free License"
+msgstr "Vecteezy ingyenes licenc"

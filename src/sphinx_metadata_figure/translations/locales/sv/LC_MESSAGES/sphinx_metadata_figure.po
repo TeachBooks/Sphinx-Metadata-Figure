@@ -43,3 +43,6 @@ msgstr "Källa"
 
 msgid "Unsplash License"
 msgstr "Unsplash-licens"
+
+msgid "Vecteezy Free License"
+msgstr "Vecteezy Gratis-licens"
