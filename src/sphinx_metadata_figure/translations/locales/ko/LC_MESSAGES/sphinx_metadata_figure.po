@@ -43,3 +43,6 @@ msgstr "출처"
 
 msgid "Unsplash License"
 msgstr "Unsplash 라이선스"
+
+msgid "Vecteezy Free License"
+msgstr "Vecteezy 무료 라이선스"

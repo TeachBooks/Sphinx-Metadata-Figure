@@ -43,3 +43,6 @@ msgstr "Kilde"
 
 msgid "Unsplash License"
 msgstr "Unsplash-lisens"
+
+msgid "Vecteezy Free License"
+msgstr "Vecteezy Gratis-lisens"

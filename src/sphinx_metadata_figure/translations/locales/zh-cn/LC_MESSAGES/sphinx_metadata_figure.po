@@ -43,3 +43,6 @@ msgstr "来源"
 
 msgid "Unsplash License"
 msgstr "Unsplash许可证"
+
+msgid "Vecteezy Free License"
+msgstr "Vecteezy免费许可证"

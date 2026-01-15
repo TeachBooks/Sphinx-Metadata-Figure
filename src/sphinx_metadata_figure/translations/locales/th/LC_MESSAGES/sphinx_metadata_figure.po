@@ -43,3 +43,6 @@ msgstr "แหล่งที่มา"
 
 msgid "Unsplash License"
 msgstr "ใบอนุญาต Unsplash"
+
+msgid "Vecteezy Free License"
+msgstr "ใบอนุญาต Vecteezy ฟรี"
