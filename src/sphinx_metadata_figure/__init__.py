@@ -7,7 +7,8 @@ This extension extends the standard Sphinx figure directive to include:
 - license: Image license (validated against a predefined list)
 - date: Creation date (format: YYYY-MM-DD)
 
-During parsing, it validates that all images have proper and recognized license information.
+During parsing, it validates that all images have proper and
+recognized license information.
 """
 
 import os
@@ -34,7 +35,8 @@ translate = get_translation(MESSAGE_CATALOG_NAME)
 
 logger = logging.getLogger(__name__)
 
-# Global defaults for figure attribution (can be overridden per file or per directive)
+# Global defaults for figure attribution
+# (can be overridden per file or per directive)
 METADATA_FIGURE_DEFAULTS_STYLE = {
     "placement": "hide",  # caption | admonition | margin | hide
     "show": "author,license,date,copyright,source",  # which fields to display
@@ -51,7 +53,7 @@ METADATA_FIGURE_DEFAULTS_LICENSE = {
 }
 METADATA_FIGURE_DEFAULTS_AUTHOR = {
     "substitute_missing": False,
-    "default_author": "config",  # use 'config' to pull from Sphinx config author
+    "default_author": "config",  # use 'config' to pull from Sphinx author
 }
 METADATA_FIGURE_DEFAULTS_DATE = {
     "substitute_missing": False,
@@ -59,11 +61,11 @@ METADATA_FIGURE_DEFAULTS_DATE = {
 }
 METADATA_FIGURE_DEFAULTS_COPYRIGHT = {
     "substitute_missing": False,
-    "default_copyright": "authoryear",  # 'authoryear' | 'config' | 'authoryear-config' | 'config-authoryear' | 'anything else'
+    "default_copyright": "authoryear",  # 'authoryear' | 'config' | 'authoryear-config' | 'config-authoryear' | 'anything else' # noqa: E501
 }
 METADATA_FIGURE_DEFAULTS_SOURCE = {"warn_missing": False}
 METADATA_FIGURE_DEFAULTS_BIB = {
-    "extract_metadata": True,  # Extract metadata from bib entries when :bib: is specified
+    "extract_metadata": True,  # Extract metadata from bib entries when :bib: is specified  # noqa: E501
 }
 METADATA_FIGURE_DEFAULTS = {
     "style": METADATA_FIGURE_DEFAULTS_STYLE,
@@ -406,6 +408,7 @@ class MetadataFigure(Figure):
             "bib": directives.unchanged,  # BibTeX key to use/generate for this figure
             # New option for empty caption for numbered figures and captions for unnumbered figures
             "nonumber": directives.flag,  # indication that even though a caption is presented, the figure should not be numbered
+            "number": directives.flag,  # indication the figure should be numbered even without a provided caption
         }
     )
 
@@ -423,6 +426,29 @@ class MetadataFigure(Figure):
         user_settings = (
             getattr(config, "metadata_figure_settings", {}) if config else {}
         )
+
+        # check if the number and nonumber options are used correctly
+        if "number" in self.options and "nonumber" in self.options:
+            logger.warning(
+                f'Figure "{self.arguments[0]}" at '
+                f"{self.state.document.current_source}:{self.lineno} "
+                f"has both :number: and :nonumber: options set. "
+                f"These options are mutually exclusive; please use only one."
+                f"Defaulting to :nonumber: behavior if a caption is provided."
+                f"Defaulting to :number: behavior if no caption is provided",
+                location=(self.state.document.current_source, self.lineno),
+            )
+            if self.content:
+                del self.options["number"]
+            else:
+                del self.options["nonumber"]
+
+        # If no caption is provided, but a number is preferred, set a placeholder caption.
+        # This allows the figure to be numbered even without a visible caption.
+        if not self.content and "number" in self.options:
+            self.content = [
+                '<span class="invisible-caption-text">&nbsp;</span>'
+            ]  # placeholder caption
 
         # Deep merge: merge each category separately to preserve unspecified defaults
         settings = {}
@@ -683,6 +709,7 @@ class MetadataFigure(Figure):
                 has_caption = False
                 if isinstance(child, nodes.caption):
                     has_caption = True
+                    break
             if has_caption:
                 if "nonumber" in self.options:
                     # mark the figure as unnumbered
@@ -692,10 +719,11 @@ class MetadataFigure(Figure):
                     # remove the caption from the figure node
                     node.remove(child)
                 else:
+                    # mark the figure as numbered
                     node["unnumbered_caption"] = False
             else:
+                # mark the figure as unnumbered
                 node["unnumbered_caption"] = True
-            # add a flag for adding an unnumbered caption later
 
         # Store metadata on the figure node, so builders can access it
         if figure_nodes:
