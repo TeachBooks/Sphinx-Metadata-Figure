@@ -261,7 +261,9 @@ def _parse_bib_entry(bib_content, key):
     metadata = {}
 
     # Extract fields - pattern matches field = {value} or field = "value"
-    field_pattern = r'(\w+)\s*=\s*(?:\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}|"([^"]*)")'
+    field_pattern = (
+        r'(\w+)\s*=\s*(?:\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}|"([^"]*)")'
+    )
 
     for field_match in re.finditer(field_pattern, entry_content, re.DOTALL):
         field_name = field_match.group(1).lower()
@@ -287,7 +289,9 @@ def _parse_bib_entry(bib_content, key):
                 metadata["source"] = field_value
         elif field_name == "note":
             # Try to extract license from note field
-            license_match = re.search(r"License:\s*(.+)", field_value, re.IGNORECASE)
+            license_match = re.search(
+                r"License:\s*(.+)", field_value, re.IGNORECASE
+            )
             if license_match:
                 metadata["license"] = license_match.group(1).strip()
         elif field_name == "copyright":
@@ -329,7 +333,9 @@ def _load_bib_files(app):
                         with open(bib_path, "r", encoding="utf-8") as f:
                             bib_content += f.read() + "\n"
                     except Exception as e:
-                        logger.debug(f"Could not read bib file {bib_path}: {e}")
+                        logger.debug(
+                            f"Could not read bib file {bib_path}: {e}"
+                        )
 
     return bib_content
 
@@ -384,11 +390,28 @@ class MetadataFigure(Figure):
     Enhanced figure directive with metadata support.
 
     This directive extends the standard Sphinx figure directive by adding
-    three new options:
+    new options:
     - author: The author/creator of the image
     - license: The license under which the image is distributed
     - date: The creation date of the image (YYYY-MM-DD format)
+    - copyright: Copyright information for the image
+    - source: Source of the image (URL or textual description)
+    - placement: Where to display the attribution (caption, admonition, margin, hide)
+    - show: Which metadata fields to display (comma-separated list)
+    - admonition_title: Title for the admonition block (if placement is admonition)
+    - admonition_class: Extra CSS classes for the admonition block
+    - bib: BibTeX key to extract metadata from a bibliography entry
+    - nonumber: Flag to indicate the figure should not be numbered even with a caption
+    - number: Flag to indicate the figure should be numbered even without a caption
+
+    During processing, the directive validates the license and date format,
+    and extracts metadata from a BibTeX entry if specified.
+
     """
+
+    # make the argument optional
+    required_arguments = 0
+    optional_arguments = 1
 
     # Copy parent's option_spec and add our custom options
     option_spec = Figure.option_spec.copy()
@@ -427,6 +450,14 @@ class MetadataFigure(Figure):
             getattr(config, "metadata_figure_settings", {}) if config else {}
         )
 
+        # check if an argument (image path) is provided
+        no_image = False
+        if len(self.arguments) == 0:
+            self.arguments.append(
+                "dummy.png"
+            )  # placeholder to avoid index errors
+            no_image = True
+
         # check if the number and nonumber options are used correctly
         if "number" in self.options and "nonumber" in self.options:
             logger.warning(
@@ -453,7 +484,9 @@ class MetadataFigure(Figure):
         # Deep merge: merge each category separately to preserve unspecified defaults
         settings = {}
         for key in METADATA_FIGURE_DEFAULTS:
-            settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(key, {})
+            settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(
+                key, {}
+            )
 
         # Retrieve page-level defaults if they exist
         page_defaults = {}
@@ -622,7 +655,9 @@ class MetadataFigure(Figure):
                         copyright_value = f"© {year}"
                     else:
                         if getattr(config, "copyright", None):
-                            copyright_value = getattr(config, "copyright", None)
+                            copyright_value = getattr(
+                                config, "copyright", None
+                            )
                 elif default_copyright == "config-authoryear":
                     if getattr(config, "copyright", None):
                         copyright_value = getattr(config, "copyright", None)
@@ -671,15 +706,21 @@ class MetadataFigure(Figure):
             if isinstance(source_suffix, dict):
                 for suffix in source_suffix.keys():
                     potential_path = (
-                        env.doc2path(docname, base=False) if env else docname + suffix
+                        env.doc2path(docname, base=False)
+                        if env
+                        else docname + suffix
                     )
-                    if env and os.path.exists(os.path.join(env.srcdir, potential_path)):
+                    if env and os.path.exists(
+                        os.path.join(env.srcdir, potential_path)
+                    ):
                         source_file = potential_path
                         break
 
             if not source_file:
                 source_file = (
-                    env.doc2path(docname, base=False) if env else docname + ".rst"
+                    env.doc2path(docname, base=False)
+                    if env
+                    else docname + ".rst"
                 )
 
             # Create absolute link to _sources directory where Sphinx copies source files
@@ -703,7 +744,7 @@ class MetadataFigure(Figure):
             figure_nodes = PasteFigureDirective.run(temp)
         else:
             figure_nodes = Figure.run(self)
-        # pretty print the node and stop here for debugging
+        # handle the caption numbering based on presence of caption and options
         for node in figure_nodes:
             for child in node.children:
                 has_caption = False
@@ -724,6 +765,12 @@ class MetadataFigure(Figure):
             else:
                 # mark the figure as unnumbered
                 node["unnumbered_caption"] = True
+        # handle the case where no image path was provided
+        if no_image:
+            for child in figure_nodes[0].children:
+                if isinstance(child, nodes.image):
+                    figure_nodes[0].remove(child)
+                    break
 
         # Store metadata on the figure node, so builders can access it
         if figure_nodes:
@@ -752,7 +799,11 @@ class MetadataFigure(Figure):
                 or page_defaults.get("show")
                 or style_settings["show"]
             )
-            show = [s.strip().lower() for s in str(show_raw).split(",") if s.strip()]
+            show = [
+                s.strip().lower()
+                for s in str(show_raw).split(",")
+                if s.strip()
+            ]
             title = (
                 self.options.get("admonition_title")
                 or page_defaults.get("admonition_title")
@@ -771,7 +822,9 @@ class MetadataFigure(Figure):
                 title=title,
                 admonition_class=admon_class,
                 link_license=(
-                    license_settings.get("link_license", True) if config else True
+                    license_settings.get("link_license", True)
+                    if config
+                    else True
                 ),
             )
 
@@ -814,11 +867,15 @@ def _build_attribution_display(
                 )
             )
         else:
-            parts.append((f"{translate('License')}: {figure_node['license']}", None))
+            parts.append(
+                (f"{translate('License')}: {figure_node['license']}", None)
+            )
     if "date" in figure_node and "date" in show:
         parts.append((f"{translate('Date')}: {figure_node['date']}", None))
     if "copyright" in figure_node and "copyright" in show:
-        parts.append((f"{translate('Copyright')}: {figure_node['copyright']}", None))
+        parts.append(
+            (f"{translate('Copyright')}: {figure_node['copyright']}", None)
+        )
     if "source" in figure_node and "source" in show:
         if figure_node["source"].startswith("http"):
             parts.append(
@@ -833,12 +890,16 @@ def _build_attribution_display(
             url_part = figure_node["source"].split("](")[1].rstrip(")")
             parts.append((f"{translate('Source')}: ", (text_part, url_part)))
         else:
-            parts.append((f"{translate('Source')}: {figure_node['source']}", None))
+            parts.append(
+                (f"{translate('Source')}: {figure_node['source']}", None)
+            )
 
     if not parts:
         return []
 
-    if placement == "caption":  # CSS figure-metadata class styles it appropriately
+    if (
+        placement == "caption"
+    ):  # CSS figure-metadata class styles it appropriately
         license_html = '<span class="figure-metadata">'
         for i, (text_part, link_info) in enumerate(parts):
             if i > 0:
@@ -871,7 +932,9 @@ def _build_attribution_display(
         body_para += nodes.Text(text_part)
         if link_info:
             link_text, link_url = link_info
-            ref = nodes.reference("", link_text, refuri=link_url, internal=False)
+            ref = nodes.reference(
+                "", link_text, refuri=link_url, internal=False
+            )
             body_para += ref
     admon += body_para
 
@@ -895,12 +958,16 @@ def check_all_figures_have_license(app, env):
     """
 
     # Only report if requested
-    user_settings = getattr(app.config, "metadata_figure_settings", {}) if app else {}
+    user_settings = (
+        getattr(app.config, "metadata_figure_settings", {}) if app else {}
+    )
 
     # Deep merge: merge each category separately to preserve unspecified defaults
     settings = {}
     for key in METADATA_FIGURE_DEFAULTS:
-        settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(key, {})
+        settings[key] = METADATA_FIGURE_DEFAULTS[key] | user_settings.get(
+            key, {}
+        )
 
     license_settings = settings["license"]
     if not license_settings["summaries"]:
@@ -974,7 +1041,9 @@ def setup(app):
 
     # Override the default figure directive with our custom version
     app.add_directive("figure", MetadataFigure, override=True)
-    app.add_directive_to_domain("glue", "figure", MetadataFigure, override=True)
+    app.add_directive_to_domain(
+        "glue", "figure", MetadataFigure, override=True
+    )
 
     # Register the page-level default metadata directive
     app.add_directive("default-metadata-page", DefaultMetadataPage)
@@ -1003,13 +1072,17 @@ def setup(app):
 def copy_asset_files(app: Sphinx, exc: Union[bool, Exception]):
     """Copies required assets for formatting in HTML"""
     static_path = (
-        Path(__file__).parent.joinpath("assets", "metadata_figure.css").absolute()
+        Path(__file__)
+        .parent.joinpath("assets", "metadata_figure.css")
+        .absolute()
     )
     asset_files = [str(static_path)]
 
     if exc is None:
         for path in asset_files:
-            copy_asset(path, str(Path(app.outdir).joinpath("_static").absolute()))
+            copy_asset(
+                path, str(Path(app.outdir).joinpath("_static").absolute())
+            )
 
 
 original_visit = HTMLTranslator.visit_caption
