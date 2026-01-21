@@ -377,9 +377,13 @@ class DefaultMetadataPage(SphinxDirective):
         if not hasattr(env, "metadata_figure_page_defaults"):
             env.metadata_figure_page_defaults = {}
 
-        # Store defaults for this document
         docname = env.docname
-        env.metadata_figure_page_defaults[docname] = self.options.copy()
+        if docname not in env.metadata_figure_page_defaults:
+            # Store defaults for this document
+            env.metadata_figure_page_defaults[docname] = self.options.copy()
+        else:
+            # Update defaults for this document
+            env.metadata_figure_page_defaults[docname] |= self.options.copy() 
 
         # Return empty list - this directive doesn't produce visible output
         return []
@@ -453,6 +457,14 @@ class MetadataFigure(Figure):
         # check if an argument (image path) is provided
         no_image = False
         if len(self.arguments) == 0:
+            # check if at least a caption or the number option is provided
+            if not self.content and "number" not in self.options:
+                logger.warning(
+                    "The 'figure' directive should have at least an image path argument, "
+                    "a caption, or the :number: option to obtain a visible result.",
+                location=(self.state.document.current_source, self.lineno),
+                )
+                return []
             self.arguments.append(
                 "dummy.png"
             )  # placeholder to avoid index errors
@@ -460,18 +472,23 @@ class MetadataFigure(Figure):
 
         # check if the number and nonumber options are used correctly
         if "number" in self.options and "nonumber" in self.options:
-            logger.warning(
-                f'Figure "{self.arguments[0]}" at '
-                f"{self.state.document.current_source}:{self.lineno} "
-                f"has both :number: and :nonumber: options set. "
-                f"These options are mutually exclusive; please use only one."
-                f"Defaulting to :nonumber: behavior if a caption is provided."
-                f"Defaulting to :number: behavior if no caption is provided",
-                location=(self.state.document.current_source, self.lineno),
-            )
             if self.content:
+                logger.warning(
+                    f'Figure '
+                    f"has both :number: and :nonumber: options set. "
+                    f"These options are mutually exclusive; please use only one. "
+                    f"Defaulting to :nonumber: behavior as a caption is provided.",
+                    location=(self.state.document.current_source, self.lineno),
+                )
                 del self.options["number"]
             else:
+                logger.warning(
+                    f'Figure '
+                    f"has both :number: and :nonumber: options set. "
+                    f"These options are mutually exclusive; please use only one. "
+                    f"Defaulting to :number: behavior as no caption is provided." ,
+                    location=(self.state.document.current_source, self.lineno),
+                )
                 del self.options["nonumber"]
 
         # If no caption is provided, but a number is preferred, set a placeholder caption.
@@ -1033,6 +1050,9 @@ def setup(app):
         dict: Extension metadata
     """
 
+    # Clear page defaults before reading documents to prevent stale data
+    app.connect("env-before-read-docs", clear_page_defaults)
+
     # Ensure MysST NB is loaded before this extension so the glue domain is registered
     app.setup_extension("myst_nb")
 
@@ -1149,3 +1169,23 @@ def untranslate_license(license_value: str) -> str:
         untranslate_map = json.load(f)
 
     return untranslate_map.get(license_value, license_value)
+
+def clear_page_defaults(app, env, docnames):
+    """
+    Clear page-level defaults before reading documents.
+    
+    This ensures that old metadata from previous builds doesn't persist
+    in incremental builds.
+    
+    Args:
+        app: Sphinx application instance
+        env: Sphinx build environment
+        docnames: List of document names to be read
+    """
+    if not hasattr(env, "metadata_figure_page_defaults"):
+        env.metadata_figure_page_defaults = {}
+    
+    # Clear defaults for all documents being rebuilt
+    for docname in docnames:
+        if docname in env.metadata_figure_page_defaults:
+            del env.metadata_figure_page_defaults[docname]

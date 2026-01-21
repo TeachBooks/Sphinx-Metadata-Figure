@@ -10,6 +10,11 @@ This extension enhances Sphinx's figure directive and the [MyST-NB sphinx extens
 - **Copyright**: Copyright holder
 - **Source**: Image source
 
+Additionally, this extension also introduces options for:
+- Figures without a caption, but with a number.
+- Figures with a caption, but without a number.
+- Figures with a caption and/or number without an image (useful in combination with gated figures to include other elements within a figure).
+
 ## Installation
 To install the Sphinx-Metadata-Figure extension, follow these steps:
 
@@ -144,7 +149,7 @@ Configuration options:
 
 ## Usage
 
-The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive](https://myst-nb.readthedocs.io/en/latest/render/glue.html#the-glue-figure-directive) are extended with the following options to add metadata:
+The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive](https://myst-nb.readthedocs.io/en/latest/render/glue.html#the-glue-figure-directive) are extended with the following options to add metadata and other features:
 
 - `author`:
   - Optionally specify the author/creator of the image.
@@ -190,6 +195,38 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Fields that cannot be extracted are simply omitted from metadata (no defaults applied at extraction time)
   - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
   - The BibTeX entry is also automatically added to the document bibliography using a `cite:empty` role (when the BibTeX key exists).
+- `nonumber`:
+  - Only relevant for figures with a caption.
+  - If specified, the figure will not be numbered, but the caption will be shown.
+- `number`:
+  - Only relevant for figures without a caption.
+  - If specified, the figure will be numbered, but no caption will be shown.
+
+These last two options are mutually exclusive; you cannot use both on the same figure. If both are specified, a warning will be issued during the build. In this case, the following behavior is applied:
+- If a caption is provided, the `nonumber` behavior is applied (caption shown, no number).
+- If no caption is provided, the `number` behavior is applied (number shown, no caption).
+
+Furthermore, a figure can be created without an image by omitting the `image-uri` argument. This means that either
+- a caption should be provided, or
+- the `number` option should be used,
+
+to achieve a visible result.  Otherwise, the figure will not be rendered and a warning will be issued during the build.
+
+Minimal allowable figure directives in this case without an image are:
+
+````markdown
+```{figure}
+A caption.
+```
+````
+
+and
+
+````markdown
+```{figure}
+:number:
+```
+````
 
 ## Setting Page-Level Defaults
 
@@ -216,9 +253,8 @@ Or in MyST markdown:
 
 ### Features
 
-- **Scope**: Applies to all figures in the current document only
-- **Priority**: Page defaults override global config and BibTeX metadata, but are overridden by explicit figure options
-- **All options supported**: You can set any metadata field or display option at page level
+- **Scope**: Applies to all figures in the current document only *after this directive*. Each new instance of the directive will update the provided default page settings and applies the updated default page settings to subsequent figures within the current document.
+- **All options supported**: You can set any metadata field or display option at page level.
 
 ### Priority Order
 
