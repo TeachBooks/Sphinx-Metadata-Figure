@@ -66,6 +66,8 @@ METADATA_FIGURE_DEFAULTS_COPYRIGHT = {
 METADATA_FIGURE_DEFAULTS_SOURCE = {"warn_missing": False}
 METADATA_FIGURE_DEFAULTS_BIB = {
     "extract_metadata": True,  # Extract metadata from bib entries when :bib: is specified  # noqa: E501
+    "generate_bib": False,  # Generate BibTeX entries from figure metadata
+    "output_file": "references.bib",  # Output file for generated BibTeX entries
 }
 METADATA_FIGURE_DEFAULTS = {
     "style": METADATA_FIGURE_DEFAULTS_STYLE,
@@ -1037,6 +1039,299 @@ def _resolve_bib_output_path(app, output_file: str) -> str:
     return os.path.join(app.srcdir, output_file)
 
 
+def _generate_bib_entry(key, metadata, image_path, caption=None):
+    """
+    Generate a BibTeX entry from figure metadata.
+
+    Args:
+        key: BibTeX key for the entry
+        metadata: dict containing figure metadata (author, license, date, copyright, source)
+        image_path: Path to the image file
+        caption: Optional figure caption
+
+    Returns:
+        str: Formatted BibTeX entry
+    """
+    import re
+
+    # Start with @misc entry type (most appropriate for figures/images)
+    bib_lines = [f"@misc{{{key},"]
+
+    # Add author if present
+    if metadata.get("author"):
+        bib_lines.append(f'  author = {{{metadata["author"]}}},')
+
+    # Add title (use caption or image filename)
+    if caption:
+        title = caption.strip()
+    else:
+        title = f"Figure: {image_path}"
+    bib_lines.append(f"  title = {{{title}}},")
+
+    # Add date/year
+    if metadata.get("date"):
+        date_str = metadata["date"]
+        # Extract year from date if in YYYY-MM-DD format
+        try:
+            year = datetime.strptime(date_str, "%Y-%m-%d").year
+            bib_lines.append(f"  year = {{{year}}},")
+            bib_lines.append(f"  date = {{{date_str}}},")
+        except ValueError:
+            # If date is not in expected format, just use it as-is
+            bib_lines.append(f"  year = {{{date_str}}},")
+
+    # Add source as URL or howpublished
+    if metadata.get("source"):
+        source = metadata["source"]
+        # Check if it's a URL
+        if source.startswith("http://") or source.startswith("https://"):
+            bib_lines.append(f"  url = {{{source}}},")
+            bib_lines.append(f"  howpublished = {{\\url{{{source}}}}},")
+        elif source.startswith("[") and "](" in source:
+            # Markdown link format: [text](url)
+            match = re.match(r"\[([^\]]+)\]\(([^\)]+)\)", source)
+            if match:
+                url = match.group(2)
+                bib_lines.append(f"  url = {{{url}}},")
+                bib_lines.append(f"  howpublished = {{\\url{{{url}}}}},")
+        else:
+            bib_lines.append(f"  howpublished = {{{source}}},")
+
+    # Add license in note field
+    if metadata.get("license"):
+        bib_lines.append(f'  note = {{License: {metadata["license"]}}},')
+
+    # Add copyright
+    if metadata.get("copyright"):
+        bib_lines.append(f'  copyright = {{{metadata["copyright"]}}},')
+
+    # Close the entry
+    bib_lines.append("}")
+
+    return "\n".join(bib_lines)
+
+
+def _write_bib_entry(app, bib_key, bib_entry, output_file):
+    """
+    Write a BibTeX entry to a file, avoiding duplicates.
+
+    Args:
+        app: Sphinx application instance
+        bib_key: The BibTeX key
+        bib_entry: The formatted BibTeX entry string
+        output_file: Path to the output .bib file (relative to srcdir)
+
+    Returns:
+        bool: True if write succeeded (or entry already exists), False otherwise
+    """
+    import re
+
+    # Resolve output path
+    output_path = _resolve_bib_output_path(app, output_file)
+
+    # Read existing content if file exists
+    existing_content = ""
+    if os.path.exists(output_path):
+        try:
+            with open(output_path, "r", encoding="utf-8") as f:
+                existing_content = f.read()
+        except Exception as e:
+            logger.warning(f"Could not read existing bib file {output_path}: {e}")
+            return False
+
+    # Check if entry with this key already exists
+    pattern = rf"@\w+\s*\{{\s*{re.escape(bib_key)}\s*,"
+    existing_match = re.search(pattern, existing_content, re.IGNORECASE)
+
+    if existing_match:
+        logger.debug(
+            f'BibTeX entry with key "{bib_key}" already exists in {output_path}'
+        )
+        return True  # Not an error, just skipping
+
+    # Append new entry
+    if existing_content and not existing_content.endswith("\n\n"):
+        if existing_content.endswith("\n"):
+            bib_entry = "\n" + bib_entry
+        else:
+            bib_entry = "\n\n" + bib_entry
+
+    # Write to file
+    try:
+        # Ensure directory exists
+        dir_path = os.path.dirname(output_path)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(existing_content + bib_entry + "\n")
+
+        logger.info(f'Generated BibTeX entry for "{bib_key}" in {output_path}')
+        return True
+    except Exception as e:
+        logger.warning(f"Could not write BibTeX entry to {output_path}: {e}")
+        return False
+
+
+def _scan_source_for_bib_figures(app):
+    """
+    Scan all source files for figure directives with :bib: option that need
+    BibTeX entries generated.
+
+    This function is called early in the build process (config-inited event)
+    BEFORE sphinxcontrib-bibtex loads the .bib files, allowing generated
+    entries to be included in the same build.
+
+    Args:
+        app: Sphinx application instance
+
+    Returns:
+        list: List of tuples (bib_key, metadata, image_path, caption)
+    """
+    import re
+    import glob
+
+    figures_with_bib = []
+    srcdir = app.srcdir
+
+    # Find all .md and .rst files
+    patterns = ["**/*.md", "**/*.rst", "**/*.ipynb"]
+    source_files = []
+    for pattern in patterns:
+        source_files.extend(glob.glob(os.path.join(srcdir, pattern), recursive=True))
+
+    # Regex patterns for figure directives with :bib: option
+    # MyST Markdown: ```{figure} path\n:bib: key\n...```
+    # RST: .. figure:: path\n   :bib: key\n...
+    myst_figure_pattern = re.compile(
+        r"```\{figure\}\s*([^\n]*)\n((?::[^\n]+\n)*)",
+        re.MULTILINE,
+    )
+    rst_figure_pattern = re.compile(
+        r"\.\.\s+figure::\s*([^\n]*)\n((?:\s+:[^\n]+\n)*)",
+        re.MULTILINE,
+    )
+
+    # Pattern to extract options from directive body
+    option_pattern = re.compile(r":(\w+):\s*(.+)")
+
+    for source_file in source_files:
+        try:
+            # Handle .ipynb files specially
+            if source_file.endswith(".ipynb"):
+                with open(source_file, "r", encoding="utf-8") as f:
+                    notebook = json.load(f)
+                content = ""
+                for cell in notebook.get("cells", []):
+                    if cell.get("cell_type") == "markdown":
+                        content += "".join(cell.get("source", [])) + "\n"
+            else:
+                with open(source_file, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+            # Search for MyST figure directives
+            for match in myst_figure_pattern.finditer(content):
+                image_path = match.group(1).strip()
+                options_block = match.group(2)
+
+                options = {}
+                for opt_match in option_pattern.finditer(options_block):
+                    options[opt_match.group(1).lower()] = opt_match.group(2).strip()
+
+                if "bib" in options:
+                    bib_key = options["bib"]
+                    # Extract caption (text after options block until closing ```)
+                    end_pos = match.end()
+                    remaining = content[end_pos:]
+                    caption_match = re.match(r"\s*\n(.+?)(?=\n```|\Z)", remaining, re.DOTALL)
+                    caption = caption_match.group(1).strip() if caption_match else None
+
+                    figures_with_bib.append((bib_key, options, image_path, caption))
+
+            # Search for RST figure directives
+            for match in rst_figure_pattern.finditer(content):
+                image_path = match.group(1).strip()
+                options_block = match.group(2)
+
+                options = {}
+                for opt_match in option_pattern.finditer(options_block):
+                    options[opt_match.group(1).lower()] = opt_match.group(2).strip()
+
+                if "bib" in options:
+                    bib_key = options["bib"]
+                    figures_with_bib.append((bib_key, options, image_path, None))
+
+        except Exception as e:
+            logger.debug(f"Could not scan {source_file} for bib figures: {e}")
+
+    return figures_with_bib
+
+
+def pre_generate_bib_entries(app, config):
+    """
+    Pre-generate BibTeX entries from figure metadata before sphinxcontrib-bibtex
+    loads the .bib files.
+
+    This event handler is connected to 'config-inited', which fires before
+    'builder-inited' where sphinxcontrib-bibtex's BibtexDomain is initialized.
+
+    Args:
+        app: Sphinx application instance
+        config: Sphinx configuration
+    """
+    # Get user settings
+    user_settings = getattr(config, "metadata_figure_settings", {})
+    bib_settings = METADATA_FIGURE_DEFAULTS_BIB.copy()
+    bib_settings.update(user_settings.get("bib", {}))
+
+    if not bib_settings.get("generate_bib", False):
+        return
+
+    logger.info("Pre-scanning source files for figure BibTeX generation...")
+
+    # Scan source files for figures with :bib: option
+    figures_with_bib = _scan_source_for_bib_figures(app)
+
+    if not figures_with_bib:
+        logger.debug("No figures with :bib: option found for generation")
+        return
+
+    # Load existing bib content to check for existing keys
+    bib_content = _load_bib_files(app)
+    output_file = bib_settings.get("output_file", "references.bib")
+
+    generated_count = 0
+    for bib_key, options, image_path, caption in figures_with_bib:
+        # Check if key already exists in bib files
+        if bib_content and _parse_bib_entry(bib_content, bib_key):
+            logger.debug(f'BibTeX key "{bib_key}" already exists, skipping generation')
+            continue
+
+        # Build metadata dict from options
+        metadata = {}
+        if "author" in options:
+            metadata["author"] = options["author"]
+        if "license" in options:
+            metadata["license"] = options["license"]
+        if "date" in options:
+            metadata["date"] = options["date"]
+        if "copyright" in options:
+            metadata["copyright"] = options["copyright"]
+        if "source" in options:
+            metadata["source"] = options["source"]
+
+        # Only generate if we have some metadata
+        if metadata:
+            bib_entry = _generate_bib_entry(bib_key, metadata, image_path, caption)
+            if _write_bib_entry(app, bib_key, bib_entry, output_file):
+                generated_count += 1
+                # Update bib_content so subsequent checks see the new entry
+                bib_content += "\n" + bib_entry
+
+    if generated_count > 0:
+        logger.info(f"Pre-generated {generated_count} BibTeX entries")
+
+
 def setup(app):
     """
     Setup function for the Sphinx extension.
@@ -1049,6 +1344,11 @@ def setup(app):
     Returns:
         dict: Extension metadata
     """
+
+    # Pre-generate BibTeX entries BEFORE sphinxcontrib-bibtex loads .bib files
+    # This must be connected early (config-inited) to run before builder-inited
+    # where BibtexDomain initializes and loads bib files
+    app.connect("config-inited", pre_generate_bib_entries)
 
     # Clear page defaults before reading documents to prevent stale data
     app.connect("env-before-read-docs", clear_page_defaults)
