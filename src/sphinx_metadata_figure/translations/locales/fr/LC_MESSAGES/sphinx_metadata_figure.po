@@ -43,3 +43,6 @@ msgstr "Source"
 
 msgid "Unsplash License"
 msgstr "Licence Unsplash"
+
+msgid "Vecteezy Free License"
+msgstr "Licence Gratuite Vecteezy"

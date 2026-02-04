@@ -43,3 +43,6 @@ msgstr "Sumber"
 
 msgid "Unsplash License"
 msgstr "Lesen Unsplash"
+
+msgid "Vecteezy Free License"
+msgstr "Lesen Percuma Vecteezy"

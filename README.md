@@ -10,6 +10,11 @@ This extension enhances Sphinx's figure directive and the [MyST-NB sphinx extens
 - **Copyright**: Copyright holder
 - **Source**: Image source
 
+Additionally, this extension also introduces options for:
+- Figures without a caption, but with a number.
+- Figures with a caption, but without a number.
+- Figures with a caption and/or number without an image (useful in combination with gated figures to include other elements within a figure).
+
 ## Installation
 To install the Sphinx-Metadata-Figure extension, follow these steps:
 
@@ -71,9 +76,6 @@ sphinx:
         warn_missing: false
       bib:
         extract_metadata: true
-        generate_bib: false
-        output_file: references.bib
-        overwrite_existing: false
 ```
 
 Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of key-value pairs. Each level 1 ley will be discussed next, including the options.
@@ -140,64 +142,14 @@ The `source` key contains options for how to handle source metadata.
 
 ### Bib
 
-The `bib` key contains options for BibTeX entry support. This allows you to extract figure metadata from existing BibTeX entries, or generate new BibTeX entries from figure metadata.
+The `bib` key contains options for BibTeX entry support. This allows you to extract figure metadata from existing BibTeX entries.
 
 Configuration options:
 - `extract_metadata`: If `true`, metadata will be extracted from existing BibTeX entries when the `:bib:` option references a valid key. Default: `true`.
-- `generate_bib`: If `true`, BibTeX entries will be generated from figure metadata when the `:bib:` option specifies a key that doesn't exist. Default: `false`.
-- `output_file`: The output file path for generated BibTeX entries (relative to source directory). Default: `references.bib`.
-- `overwrite_existing`: If `true`, existing entries with the same key will be overwritten. Default: `false`.
-
-#### BibTeX Generation
-
-When `generate_bib` is enabled and you specify a `:bib:` key that doesn't exist in your `.bib` files, the extension will:
-
-1. Generate a `@misc` BibTeX entry from the figure's metadata
-2. Inject the entry into sphinxcontrib-bibtex's cache (for same-build citation support)
-3. Write the entry to the configured output file (for persistence)
-
-This enables single-build citation support - the generated entry can be cited immediately without requiring a rebuild.
-
-Example configuration:
-```yaml
-sphinx:
-  config:
-    metadata_figure_settings:
-      bib:
-        extract_metadata: true
-        generate_bib: true
-        output_file: generated_figures.bib
-        overwrite_existing: false
-```
-
-Example figure with generation:
-```rst
-.. figure:: my_image.png
-   :bib: my_figure_key
-   :author: John Doe
-   :license: CC BY 4.0
-   :date: 2025-01-15
-   :source: https://example.com/image
-
-   My figure caption
-```
-
-This generates the following BibTeX entry:
-```bibtex
-@misc{my_figure_key,
-  author = {John Doe},
-  title = {My figure caption},
-  year = {2025},
-  date = {2025-01-15},
-  url = {https://example.com/image},
-  howpublished = {\url{https://example.com/image}},
-  note = {License: CC BY 4.0},
-}
-```
 
 ## Usage
 
-The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive](https://myst-nb.readthedocs.io/en/latest/render/glue.html#the-glue-figure-directive) are extended with the following options to add metadata:
+The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive](https://myst-nb.readthedocs.io/en/latest/render/glue.html#the-glue-figure-directive) are extended with the following options to add metadata and other features:
 
 - `author`:
   - Optionally specify the author/creator of the image.
@@ -232,7 +184,7 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Only relevant if `placement` is `admonition` or `margin`.
 - `bib`:
   - Optionally specify a BibTeX key for this figure.
-  - **Extraction mode** (default): When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
+  - When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
     | Metadata Field | Primary BibTeX Source | Fallback BibTeX source | Notes |
     |---|---|---|---|
     | `author` | `author` field | — | Used as-is |
@@ -243,7 +195,38 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Fields that cannot be extracted are simply omitted from metadata (no defaults applied at extraction time)
   - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
   - The BibTeX entry is also automatically added to the document bibliography using a `cite:empty` role (when the BibTeX key exists).
-  - **Generation mode**: When `generate_bib: true` is configured and the specified key doesn't exist, a new BibTeX entry will be generated from the figure's metadata and injected into the bibliography cache for same-build citation support. See the [Bib configuration section](#bib) for details.
+- `nonumber`:
+  - Only relevant for figures with a caption.
+  - If specified, the figure will not be numbered, but the caption will be shown.
+- `number`:
+  - Only relevant for figures without a caption.
+  - If specified, the figure will be numbered, but no caption will be shown.
+
+These last two options are mutually exclusive; you cannot use both on the same figure. If both are specified, a warning will be issued during the build. In this case, the following behavior is applied:
+- If a caption is provided, the `nonumber` behavior is applied (caption shown, no number).
+- If no caption is provided, the `number` behavior is applied (number shown, no caption).
+
+Furthermore, a figure can be created without an image by omitting the `image-uri` argument. This means that either
+- a caption should be provided, or
+- the `number` option should be used,
+
+to achieve a visible result.  Otherwise, the figure will not be rendered and a warning will be issued during the build.
+
+Minimal allowable figure directives in this case without an image are:
+
+````markdown
+```{figure}
+A caption.
+```
+````
+
+and
+
+````markdown
+```{figure}
+:number:
+```
+````
 
 ## Setting Page-Level Defaults
 
@@ -270,9 +253,8 @@ Or in MyST markdown:
 
 ### Features
 
-- **Scope**: Applies to all figures in the current document only
-- **Priority**: Page defaults override global config and BibTeX metadata, but are overridden by explicit figure options
-- **All options supported**: You can set any metadata field or display option at page level
+- **Scope**: Applies to all figures in the current document only *after this directive*. Each new instance of the directive will update the provided default page settings and applies the updated default page settings to subsequent figures within the current document.
+- **All options supported**: You can set any metadata field or display option at page level.
 
 ### Priority Order
 

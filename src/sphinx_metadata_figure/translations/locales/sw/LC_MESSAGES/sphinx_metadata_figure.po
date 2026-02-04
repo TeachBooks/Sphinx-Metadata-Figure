@@ -43,3 +43,6 @@ msgstr "Chanzo"
 
 msgid "Unsplash License"
 msgstr "Leseni ya Unsplash"
+
+msgid "Vecteezy Free License"
+msgstr "Leseni Inayotumika Bure ya Vecteezy"

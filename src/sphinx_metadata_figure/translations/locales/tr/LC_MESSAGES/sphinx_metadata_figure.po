@@ -43,3 +43,6 @@ msgstr "Kaynak"
 
 msgid "Unsplash License"
 msgstr "Unsplash Lisansı"
+
+msgid "Vecteezy Free License"
+msgstr "Vecteezy Ücretsiz Lisansı"
