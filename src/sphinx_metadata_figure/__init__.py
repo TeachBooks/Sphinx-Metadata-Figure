@@ -67,7 +67,7 @@ METADATA_FIGURE_DEFAULTS_SOURCE = {"warn_missing": False}
 METADATA_FIGURE_DEFAULTS_BIB = {
     "extract_metadata": True,  # Extract metadata from bib entries when :bib: is specified  # noqa: E501
     "generate_bib": False,  # Generate BibTeX entries from figure metadata
-    "output_file": "references.bib",  # Output file for generated BibTeX entries
+    "output_file": "_generated_figures.bib",  # Output file for generated BibTeX entries
 }
 METADATA_FIGURE_DEFAULTS = {
     "style": METADATA_FIGURE_DEFAULTS_STYLE,
@@ -1173,6 +1173,74 @@ def _write_bib_entry(app, bib_key, bib_entry, output_file):
         return False
 
 
+def _parse_myst_directive_options(content, start_pos):
+    """
+    Parse MyST directive options from content starting at start_pos.
+
+    Supports both colon-style options (:key: value) and YAML-style options
+    (---\nkey: value\n---).
+
+    Args:
+        content: Full file content
+        start_pos: Position after the directive opening line
+
+    Returns:
+        tuple: (options dict, caption string or None, end_position)
+    """
+    import re
+    import yaml
+
+    options = {}
+    caption = None
+    remaining = content[start_pos:]
+
+    # Check for YAML front matter style options (--- ... ---)
+    yaml_match = re.match(r"\s*\n---\n(.*?)\n---\n(.*)$", remaining, re.DOTALL)
+    if yaml_match:
+        yaml_block = yaml_match.group(1)
+        after_yaml = yaml_match.group(2)
+        try:
+            parsed_yaml = yaml.safe_load(yaml_block)
+            if isinstance(parsed_yaml, dict):
+                options = {k.lower(): str(v) for k, v in parsed_yaml.items()}
+        except Exception:
+            pass
+        # Extract caption until closing fence
+        caption_match = re.match(r"(.+?)(?=\n```|\n:::|\Z)", after_yaml, re.DOTALL)
+        if caption_match:
+            caption = caption_match.group(1).strip()
+        return options, caption, start_pos + yaml_match.end()
+
+    # Standard colon-style options (:key: value)
+    option_pattern = re.compile(r":(\w+):\s*(.+)")
+    lines = remaining.split('\n')
+    option_lines_end = 0
+
+    for i, line in enumerate(lines):
+        if line.strip() == '':
+            continue
+        opt_match = option_pattern.match(line.strip())
+        if opt_match:
+            options[opt_match.group(1).lower()] = opt_match.group(2).strip()
+            option_lines_end = i + 1
+        elif line.strip().startswith(':'):
+            # Continuation of options
+            option_lines_end = i + 1
+        else:
+            # Non-option line found, rest is caption
+            break
+
+    # Extract caption (text after options until closing fence)
+    after_options = '\n'.join(lines[option_lines_end:])
+    caption_match = re.match(r"\s*(.+?)(?=\n```|\n:::|\Z)", after_options, re.DOTALL)
+    if caption_match:
+        caption = caption_match.group(1).strip()
+        if not caption:
+            caption = None
+
+    return options, caption, start_pos + len('\n'.join(lines[:option_lines_end]))
+
+
 def _scan_source_for_bib_figures(app):
     """
     Scan all source files for figure directives with :bib: option that need
@@ -1181,6 +1249,13 @@ def _scan_source_for_bib_figures(app):
     This function is called early in the build process (config-inited event)
     BEFORE sphinxcontrib-bibtex loads the .bib files, allowing generated
     entries to be included in the same build.
+
+    Supports multiple directive formats:
+    - Backtick fenced: ```{figure} path
+    - Colon fenced: :::{figure} path, ::::{figure} path, etc.
+    - RST style: .. figure:: path
+    - YAML options: ---\\nkey: value\\n---
+    - Colon options: :key: value
 
     Args:
         app: Sphinx application instance
@@ -1201,18 +1276,23 @@ def _scan_source_for_bib_figures(app):
         source_files.extend(glob.glob(os.path.join(srcdir, pattern), recursive=True))
 
     # Regex patterns for figure directives with :bib: option
-    # MyST Markdown: ```{figure} path\n:bib: key\n...```
-    # RST: .. figure:: path\n   :bib: key\n...
-    myst_figure_pattern = re.compile(
-        r"```\{figure\}\s*([^\n]*)\n((?::[^\n]+\n)*)",
+    # MyST Markdown backticks: ```{figure} path
+    myst_backtick_pattern = re.compile(
+        r"```\{figure\}\s*([^\n]*)\n",
         re.MULTILINE,
     )
+    # MyST Markdown colons: :::{figure} path, ::::{figure} path, etc.
+    myst_colon_pattern = re.compile(
+        r"(:{3,})\{figure\}\s*([^\n]*)\n",
+        re.MULTILINE,
+    )
+    # RST: .. figure:: path\n   :bib: key\n...
     rst_figure_pattern = re.compile(
         r"\.\.\s+figure::\s*([^\n]*)\n((?:\s+:[^\n]+\n)*)",
         re.MULTILINE,
     )
 
-    # Pattern to extract options from directive body
+    # Pattern to extract options from directive body (colon style)
     option_pattern = re.compile(r":(\w+):\s*(.+)")
 
     for source_file in source_files:
@@ -1229,23 +1309,22 @@ def _scan_source_for_bib_figures(app):
                 with open(source_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
-            # Search for MyST figure directives
-            for match in myst_figure_pattern.finditer(content):
+            # Search for MyST backtick figure directives: ```{figure}
+            for match in myst_backtick_pattern.finditer(content):
                 image_path = match.group(1).strip()
-                options_block = match.group(2)
-
-                options = {}
-                for opt_match in option_pattern.finditer(options_block):
-                    options[opt_match.group(1).lower()] = opt_match.group(2).strip()
+                options, caption, _ = _parse_myst_directive_options(content, match.end())
 
                 if "bib" in options:
                     bib_key = options["bib"]
-                    # Extract caption (text after options block until closing ```)
-                    end_pos = match.end()
-                    remaining = content[end_pos:]
-                    caption_match = re.match(r"\s*\n(.+?)(?=\n```|\Z)", remaining, re.DOTALL)
-                    caption = caption_match.group(1).strip() if caption_match else None
+                    figures_with_bib.append((bib_key, options, image_path, caption))
 
+            # Search for MyST colon figure directives: :::{figure}, ::::{figure}, etc.
+            for match in myst_colon_pattern.finditer(content):
+                image_path = match.group(2).strip()
+                options, caption, _ = _parse_myst_directive_options(content, match.end())
+
+                if "bib" in options:
+                    bib_key = options["bib"]
                     figures_with_bib.append((bib_key, options, image_path, caption))
 
             # Search for RST figure directives
@@ -1259,7 +1338,15 @@ def _scan_source_for_bib_figures(app):
 
                 if "bib" in options:
                     bib_key = options["bib"]
-                    figures_with_bib.append((bib_key, options, image_path, None))
+                    # Try to extract caption for RST (indented text after options)
+                    end_pos = match.end()
+                    remaining = content[end_pos:]
+                    # RST caption is indented text
+                    caption_match = re.match(r"(\s{3,}.+?)(?=\n\S|\n\n|\Z)", remaining, re.DOTALL)
+                    caption = None
+                    if caption_match:
+                        caption = caption_match.group(1).strip()
+                    figures_with_bib.append((bib_key, options, image_path, caption))
 
         except Exception as e:
             logger.debug(f"Could not scan {source_file} for bib figures: {e}")

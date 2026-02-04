@@ -77,7 +77,7 @@ sphinx:
       bib:
         extract_metadata: true
         generate_bib: false
-        output_file: references.bib
+        output_file: _generated_figures.bib
 ```
 
 Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of key-value pairs. Each level 1 ley will be discussed next, including the options.
@@ -151,7 +151,7 @@ The `bib` key contains options for BibTeX entry support. This extension provides
 Configuration options:
 - `extract_metadata`: If `true`, metadata will be extracted from existing BibTeX entries when the `:bib:` option references a valid key. Default: `true`.
 - `generate_bib`: If `true`, BibTeX entries will be automatically generated from figure metadata when the `:bib:` option specifies a key that doesn't exist in any `.bib` file. The entry is generated **before** sphinxcontrib-bibtex loads the files, so the citation works in a single build. Default: `false`.
-- `output_file`: The output file path for generated BibTeX entries (relative to source directory). Default: `references.bib`.
+- `output_file`: The output file path for generated BibTeX entries (relative to source directory). Default: `_generated_figures.bib`.
 
 ## Usage
 
