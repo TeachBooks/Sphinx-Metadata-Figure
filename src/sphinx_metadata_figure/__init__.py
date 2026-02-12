@@ -651,45 +651,9 @@ class MetadataFigure(Figure):
             copyright_settings = settings["copyright"]
             if copyright_settings["substitute_missing"]:
                 default_copyright = copyright_settings["default_copyright"]
-                if default_copyright == "authoryear":
-                    if author_value and date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year} {author_value}"
-                    elif author_value:
-                        copyright_value = f"© {author_value}"
-                    elif date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year}"
-                elif default_copyright == "config":
-                    if getattr(config, "copyright", None):
-                        copyright_value = getattr(config, "copyright", None)
-                elif default_copyright == "authoryear-config":
-                    if author_value and date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year} {author_value}"
-                    elif author_value:
-                        copyright_value = f"© {author_value}"
-                    elif date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year}"
-                    else:
-                        if getattr(config, "copyright", None):
-                            copyright_value = getattr(
-                                config, "copyright", None
-                            )
-                elif default_copyright == "config-authoryear":
-                    if getattr(config, "copyright", None):
-                        copyright_value = getattr(config, "copyright", None)
-                    elif author_value and date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year} {author_value}"
-                    elif author_value:
-                        copyright_value = f"© {author_value}"
-                    elif date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year}"
-                else:
-                    copyright_value = default_copyright
+                copyright_value = _resolve_copyright(
+                    default_copyright, author_value, date_value, config
+                )
 
         # Source value (explicit option > bib metadata > page defaults)
         source_value = (
@@ -860,6 +824,39 @@ class MetadataFigure(Figure):
                     figure_nodes.extend(display_nodes)
 
         return figure_nodes
+
+
+def _copyright_from_authoryear(author_value, date_value):
+    """Build a copyright string from author and date values."""
+    if author_value and date_value:
+        year = datetime.strptime(date_value, "%Y-%m-%d").year
+        return f"© {year} {author_value}"
+    elif author_value:
+        return f"© {author_value}"
+    elif date_value:
+        year = datetime.strptime(date_value, "%Y-%m-%d").year
+        return f"© {year}"
+    return None
+
+
+def _resolve_copyright(default_copyright, author_value, date_value, config):
+    """Resolve the copyright value based on the default_copyright strategy."""
+    if default_copyright == "authoryear":
+        return _copyright_from_authoryear(author_value, date_value)
+    elif default_copyright == "config":
+        return getattr(config, "copyright", None)
+    elif default_copyright == "authoryear-config":
+        return (
+            _copyright_from_authoryear(author_value, date_value)
+            or getattr(config, "copyright", None)
+        )
+    elif default_copyright == "config-authoryear":
+        return (
+            getattr(config, "copyright", None)
+            or _copyright_from_authoryear(author_value, date_value)
+        )
+    else:
+        return default_copyright
 
 
 def _build_attribution_display(
@@ -1385,7 +1382,7 @@ def pre_generate_bib_entries(app, config):
 
     # Load existing bib content to check for existing keys
     bib_content = _load_bib_files(app)
-    output_file = bib_settings.get("output_file", "references.bib")
+    output_file = bib_settings.get("output_file", "_generated_figures.bib")
 
     generated_count = 0
     for bib_key, options, image_path, caption in figures_with_bib:
@@ -1470,6 +1467,9 @@ def setup(app):
     # add captions to unnumbered figures
     app.connect("doctree-resolved", add_unnumbered_caption)
 
+    # Patch HTMLTranslator to inject license metadata into captions
+    _patch_html_translator()
+
     return {
         "parallel_read_safe": True,
         "parallel_write_safe": True,
@@ -1492,29 +1492,32 @@ def copy_asset_files(app: Sphinx, exc: Union[bool, Exception]):
             )
 
 
-original_visit = HTMLTranslator.visit_caption
-original_depart = HTMLTranslator.depart_caption
+def _patch_html_translator():
+    """Patch HTMLTranslator to inject license metadata into captions.
 
+    Called from setup() so the patch is only applied when the extension
+    is actually loaded by Sphinx, not merely imported.
+    """
+    original_visit = HTMLTranslator.visit_caption
+    original_depart = HTMLTranslator.depart_caption
 
-def custom_visit_caption(self, node):
-    # Call original visit logic
-    original_visit(self, node)
+    def custom_visit_caption(self, node):
+        # Call original visit logic
+        original_visit(self, node)
 
-    # Inject extra content after original caption rendering
-    figure = node.parent
-    license_html = figure.get("license_html", [])
-    if license_html:
-        node.append(nodes.raw("", license_html, format="html"))
+        # Inject extra content after original caption rendering
+        figure = node.parent
+        license_html = figure.get("license_html", [])
+        if license_html:
+            node.append(nodes.raw("", license_html, format="html"))
 
+    def custom_depart_caption(self, node):
+        # Call original depart logic
+        original_depart(self, node)
 
-def custom_depart_caption(self, node):
-    # Call original depart logic
-    original_depart(self, node)
-
-
-# Override methods
-HTMLTranslator.visit_caption = custom_visit_caption
-HTMLTranslator.depart_caption = custom_depart_caption
+    # Override methods
+    HTMLTranslator.visit_caption = custom_visit_caption
+    HTMLTranslator.depart_caption = custom_depart_caption
 
 
 def add_unnumbered_caption(app, doctree, fromdocname):
@@ -1545,17 +1548,27 @@ def add_unnumbered_caption(app, doctree, fromdocname):
                 node += new_caption
 
 
-def untranslate_license(license_value: str) -> str:
-    """Convert translated license names back to standard English keys."""
-    """Independent of current locale."""
-
-    # load untranslate map
+def _load_untranslate_map():
+    """Load the untranslate map from disk once and cache it."""
     folder = os.path.abspath(os.path.dirname(__file__))
-    locale_dir = os.path.join(folder, "translations", "untranslate.json")
-    with open(locale_dir, "r", encoding="utf-8") as f:
-        untranslate_map = json.load(f)
+    locale_path = os.path.join(folder, "translations", "untranslate.json")
+    with open(locale_path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-    return untranslate_map.get(license_value, license_value)
+
+_untranslate_map_cache = None
+
+
+def untranslate_license(license_value: str) -> str:
+    """Convert translated license names back to standard English keys.
+
+    Independent of current locale.
+    """
+    global _untranslate_map_cache
+    if _untranslate_map_cache is None:
+        _untranslate_map_cache = _load_untranslate_map()
+
+    return _untranslate_map_cache.get(license_value, license_value)
 
 def clear_page_defaults(app, env, docnames):
     """

@@ -78,10 +78,9 @@ sphinx:
         extract_metadata: true
         generate_bib: false
         output_file: _generated_figures.bib
-        output_file: references.bib
 ```
 
-Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of key-value pairs. Each level 1 ley will be discussed next, including the options.
+Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of key-value pairs. Each level 1 key will be discussed next, including the options.
 
 ### Style
 
@@ -111,7 +110,7 @@ The `license` key contains options for how to handle license metadata.
 - `individual`: If `true`, each figure with missing or invalid license information will generate a separate warning. Value is irrelevant if `strict_check` is `true`.
 - `substitute_missing`: If `true`, figures without license information will use the `default_license` value. No warning will be generated if this is set to `true`.
 - `default_license`: The default license to use if `substitute_missing` is `true`.
-- a full list of the valid license types is available in the [TeachBooks manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html#recognized-licenses).
+A full list of the valid license types is available in the [TeachBooks manual](https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html#recognized-licenses).
 
 ### Author
 The `author` key contains options for how to handle author metadata.
