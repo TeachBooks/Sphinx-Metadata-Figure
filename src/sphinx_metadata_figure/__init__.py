@@ -16,6 +16,7 @@ import json
 
 from docutils import nodes
 from docutils.parsers.rst import directives
+from docutils.statemachine import StringList
 from sphinx.directives.patches import Figure
 from sphinx.util import logging
 from datetime import datetime
@@ -529,7 +530,7 @@ class MetadataFigure(Figure):
                     # add it to the bibliography
                     text = f"{{cite:empty}}`{bib_key}`"
                     para = nodes.paragraph()
-                    self.state.nested_parse([text], self.content_offset, para)
+                    self.state.nested_parse(StringList([text]), self.content_offset, para)
                     # Add the paragraph node to the document
                     self.state.document += para
                 else:
@@ -1414,6 +1415,21 @@ def pre_generate_bib_entries(app, config):
 
     if generated_count > 0:
         logger.info(f"Pre-generated {generated_count} BibTeX entries")
+
+        # Add the generated file to bibtex_bibfiles so sphinxcontrib-bibtex
+        # loads it when BibtexDomain initializes during builder-inited.
+        bibtex_bibfiles = getattr(config, "bibtex_bibfiles", None)
+        if bibtex_bibfiles is not None:
+            if output_file not in bibtex_bibfiles:
+                bibtex_bibfiles.append(output_file)
+                logger.info(
+                    f'Added "{output_file}" to bibtex_bibfiles config'
+                )
+        else:
+            config.bibtex_bibfiles = [output_file]
+            logger.info(
+                f'Created bibtex_bibfiles config with "{output_file}"'
+            )
 
 
 def setup(app):
