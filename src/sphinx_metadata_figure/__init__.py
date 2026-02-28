@@ -16,6 +16,7 @@ import json
 
 from docutils import nodes
 from docutils.parsers.rst import directives
+from docutils.statemachine import StringList
 from sphinx.directives.patches import Figure
 from sphinx.util import logging
 from datetime import datetime
@@ -66,6 +67,8 @@ METADATA_FIGURE_DEFAULTS_COPYRIGHT = {
 METADATA_FIGURE_DEFAULTS_SOURCE = {"warn_missing": False}
 METADATA_FIGURE_DEFAULTS_BIB = {
     "extract_metadata": True,  # Extract metadata from bib entries when :bib: is specified  # noqa: E501
+    "generate_bib": False,  # Generate BibTeX entries from figure metadata
+    "output_file": "_generated_figures.bib",  # Output file for generated BibTeX entries
 }
 METADATA_FIGURE_DEFAULTS = {
     "style": METADATA_FIGURE_DEFAULTS_STYLE,
@@ -340,6 +343,43 @@ def _load_bib_files(app):
     return bib_content
 
 
+def _load_user_configured_bib_files(app, exclude_file=None):
+    """
+    Load only bib files explicitly registered in the config (bibtex_bibfiles),
+    optionally excluding a specific file.
+
+    Unlike _load_bib_files, this function does NOT auto-discover .bib files
+    in the source directory. This is used during pre-generation to avoid
+    loading previously generated bib files that would incorrectly suppress
+    regeneration on subsequent builds.
+
+    Args:
+        app: Sphinx application instance
+        exclude_file: Optional filename to exclude (e.g. the output file)
+
+    Returns:
+        str: Combined content of all matching bib files
+    """
+    bib_content = ""
+    bibtex_files = getattr(app.config, "bibtex_bibfiles", [])
+    srcdir = app.srcdir
+
+    for bib_file in bibtex_files:
+        if exclude_file and os.path.normpath(bib_file) == os.path.normpath(
+            exclude_file
+        ):
+            continue
+        bib_path = os.path.join(srcdir, bib_file)
+        if os.path.exists(bib_path):
+            try:
+                with open(bib_path, "r", encoding="utf-8") as f:
+                    bib_content += f.read() + "\n"
+            except Exception as e:
+                logger.debug(f"Could not read bib file {bib_path}: {e}")
+
+    return bib_content
+
+
 class DefaultMetadataPage(SphinxDirective):
     """
     Set default metadata values for all figures on the current page.
@@ -527,7 +567,7 @@ class MetadataFigure(Figure):
                     # add it to the bibliography
                     text = f"{{cite:empty}}`{bib_key}`"
                     para = nodes.paragraph()
-                    self.state.nested_parse([text], self.content_offset, para)
+                    self.state.nested_parse(StringList([text]), self.content_offset, para)
                     # Add the paragraph node to the document
                     self.state.document += para
                 else:
@@ -649,45 +689,9 @@ class MetadataFigure(Figure):
             copyright_settings = settings["copyright"]
             if copyright_settings["substitute_missing"]:
                 default_copyright = copyright_settings["default_copyright"]
-                if default_copyright == "authoryear":
-                    if author_value and date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year} {author_value}"
-                    elif author_value:
-                        copyright_value = f"© {author_value}"
-                    elif date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year}"
-                elif default_copyright == "config":
-                    if getattr(config, "copyright", None):
-                        copyright_value = getattr(config, "copyright", None)
-                elif default_copyright == "authoryear-config":
-                    if author_value and date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year} {author_value}"
-                    elif author_value:
-                        copyright_value = f"© {author_value}"
-                    elif date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year}"
-                    else:
-                        if getattr(config, "copyright", None):
-                            copyright_value = getattr(
-                                config, "copyright", None
-                            )
-                elif default_copyright == "config-authoryear":
-                    if getattr(config, "copyright", None):
-                        copyright_value = getattr(config, "copyright", None)
-                    elif author_value and date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year} {author_value}"
-                    elif author_value:
-                        copyright_value = f"© {author_value}"
-                    elif date_value:
-                        year = datetime.strptime(date_value, "%Y-%m-%d").year
-                        copyright_value = f"© {year}"
-                else:
-                    copyright_value = default_copyright
+                copyright_value = _resolve_copyright(
+                    default_copyright, author_value, date_value, config
+                )
 
         # Source value (explicit option > bib metadata > page defaults)
         source_value = (
@@ -858,6 +862,39 @@ class MetadataFigure(Figure):
                     figure_nodes.extend(display_nodes)
 
         return figure_nodes
+
+
+def _copyright_from_authoryear(author_value, date_value):
+    """Build a copyright string from author and date values."""
+    if author_value and date_value:
+        year = datetime.strptime(date_value, "%Y-%m-%d").year
+        return f"© {year} {author_value}"
+    elif author_value:
+        return f"© {author_value}"
+    elif date_value:
+        year = datetime.strptime(date_value, "%Y-%m-%d").year
+        return f"© {year}"
+    return None
+
+
+def _resolve_copyright(default_copyright, author_value, date_value, config):
+    """Resolve the copyright value based on the default_copyright strategy."""
+    if default_copyright == "authoryear":
+        return _copyright_from_authoryear(author_value, date_value)
+    elif default_copyright == "config":
+        return getattr(config, "copyright", None)
+    elif default_copyright == "authoryear-config":
+        return (
+            _copyright_from_authoryear(author_value, date_value)
+            or getattr(config, "copyright", None)
+        )
+    elif default_copyright == "config-authoryear":
+        return (
+            getattr(config, "copyright", None)
+            or _copyright_from_authoryear(author_value, date_value)
+        )
+    else:
+        return default_copyright
 
 
 def _build_attribution_display(
@@ -1037,6 +1074,415 @@ def _resolve_bib_output_path(app, output_file: str) -> str:
     return os.path.join(app.srcdir, output_file)
 
 
+def _generate_bib_entry(key, metadata, image_path, caption=None):
+    """
+    Generate a BibTeX entry from figure metadata.
+
+    Args:
+        key: BibTeX key for the entry
+        metadata: dict containing figure metadata (author, license, date, copyright, source)
+        image_path: Path to the image file
+        caption: Optional figure caption
+
+    Returns:
+        str: Formatted BibTeX entry
+    """
+    import re
+
+    # Start with @misc entry type (most appropriate for figures/images)
+    bib_lines = [f"@misc{{{key},"]
+
+    # Add author if present
+    if metadata.get("author"):
+        bib_lines.append(f'  author = {{{metadata["author"]}}},')
+
+    # Add title (use caption or image filename)
+    if caption:
+        title = caption.strip()
+    else:
+        title = f"Figure: {image_path}"
+    bib_lines.append(f"  title = {{{title}}},")
+
+    # Add date/year
+    if metadata.get("date"):
+        date_str = metadata["date"]
+        # Extract year from date if in YYYY-MM-DD format
+        try:
+            year = datetime.strptime(date_str, "%Y-%m-%d").year
+            bib_lines.append(f"  year = {{{year}}},")
+            bib_lines.append(f"  date = {{{date_str}}},")
+        except ValueError:
+            # If date is not in expected format, just use it as-is
+            bib_lines.append(f"  year = {{{date_str}}},")
+
+    # Add source as URL or howpublished
+    if metadata.get("source"):
+        source = metadata["source"]
+        # Check if it's a URL
+        if source.startswith("http://") or source.startswith("https://"):
+            bib_lines.append(f"  url = {{{source}}},")
+            bib_lines.append(f"  howpublished = {{\\url{{{source}}}}},")
+        elif source.startswith("[") and "](" in source:
+            # Markdown link format: [text](url)
+            match = re.match(r"\[([^\]]+)\]\(([^\)]+)\)", source)
+            if match:
+                url = match.group(2)
+                bib_lines.append(f"  url = {{{url}}},")
+                bib_lines.append(f"  howpublished = {{\\url{{{url}}}}},")
+        else:
+            bib_lines.append(f"  howpublished = {{{source}}},")
+
+    # Add license in note field
+    if metadata.get("license"):
+        bib_lines.append(f'  note = {{License: {metadata["license"]}}},')
+
+    # Add copyright
+    if metadata.get("copyright"):
+        bib_lines.append(f'  copyright = {{{metadata["copyright"]}}},')
+
+    # Close the entry
+    bib_lines.append("}")
+
+    return "\n".join(bib_lines)
+
+
+def _write_bib_entry(app, bib_key, bib_entry, output_file):
+    """
+    Write a BibTeX entry to a file, avoiding duplicates.
+
+    Args:
+        app: Sphinx application instance
+        bib_key: The BibTeX key
+        bib_entry: The formatted BibTeX entry string
+        output_file: Path to the output .bib file (relative to srcdir)
+
+    Returns:
+        bool: True if write succeeded (or entry already exists), False otherwise
+    """
+    import re
+
+    # Resolve output path
+    output_path = _resolve_bib_output_path(app, output_file)
+
+    # Read existing content if file exists
+    existing_content = ""
+    if os.path.exists(output_path):
+        try:
+            with open(output_path, "r", encoding="utf-8") as f:
+                existing_content = f.read()
+        except Exception as e:
+            logger.warning(f"Could not read existing bib file {output_path}: {e}")
+            return False
+
+    # Check if entry with this key already exists
+    pattern = rf"@\w+\s*\{{\s*{re.escape(bib_key)}\s*,"
+    existing_match = re.search(pattern, existing_content, re.IGNORECASE)
+
+    if existing_match:
+        logger.debug(
+            f'BibTeX entry with key "{bib_key}" already exists in {output_path}'
+        )
+        return True  # Not an error, just skipping
+
+    # Append new entry
+    if existing_content and not existing_content.endswith("\n\n"):
+        if existing_content.endswith("\n"):
+            bib_entry = "\n" + bib_entry
+        else:
+            bib_entry = "\n\n" + bib_entry
+
+    # Write to file
+    try:
+        # Ensure directory exists
+        dir_path = os.path.dirname(output_path)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(existing_content + bib_entry + "\n")
+
+        logger.info(f'Generated BibTeX entry for "{bib_key}" in {output_path}')
+        return True
+    except Exception as e:
+        logger.warning(f"Could not write BibTeX entry to {output_path}: {e}")
+        return False
+
+
+def _parse_myst_directive_options(content, start_pos):
+    """
+    Parse MyST directive options from content starting at start_pos.
+
+    Supports both colon-style options (:key: value) and YAML-style options
+    (---\nkey: value\n---).
+
+    Args:
+        content: Full file content
+        start_pos: Position after the directive opening line
+
+    Returns:
+        tuple: (options dict, caption string or None, end_position)
+    """
+    import re
+    import yaml
+
+    options = {}
+    caption = None
+    remaining = content[start_pos:]
+
+    # Check for YAML front matter style options (--- ... ---)
+    yaml_match = re.match(r"\s*\n---\n(.*?)\n---\n(.*)$", remaining, re.DOTALL)
+    if yaml_match:
+        yaml_block = yaml_match.group(1)
+        after_yaml = yaml_match.group(2)
+        try:
+            parsed_yaml = yaml.safe_load(yaml_block)
+            if isinstance(parsed_yaml, dict):
+                options = {k.lower(): str(v) for k, v in parsed_yaml.items()}
+        except Exception:
+            pass
+        # Extract caption until closing fence
+        caption_match = re.match(r"(.+?)(?=\n```|\n:::|\Z)", after_yaml, re.DOTALL)
+        if caption_match:
+            caption = caption_match.group(1).strip()
+        return options, caption, start_pos + yaml_match.end()
+
+    # Standard colon-style options (:key: value)
+    option_pattern = re.compile(r":(\w+):\s*(.+)")
+    lines = remaining.split('\n')
+    option_lines_end = 0
+
+    for i, line in enumerate(lines):
+        if line.strip() == '':
+            continue
+        opt_match = option_pattern.match(line.strip())
+        if opt_match:
+            options[opt_match.group(1).lower()] = opt_match.group(2).strip()
+            option_lines_end = i + 1
+        elif line.strip().startswith(':'):
+            # Continuation of options
+            option_lines_end = i + 1
+        else:
+            # Non-option line found, rest is caption
+            break
+
+    # Extract caption (text after options until closing fence)
+    after_options = '\n'.join(lines[option_lines_end:])
+    caption_match = re.match(r"\s*(.+?)(?=\n```|\n:::|\Z)", after_options, re.DOTALL)
+    if caption_match:
+        caption = caption_match.group(1).strip()
+        if not caption:
+            caption = None
+
+    return options, caption, start_pos + len('\n'.join(lines[:option_lines_end]))
+
+
+def _scan_source_for_bib_figures(app):
+    """
+    Scan all source files for figure directives with :bib: option that need
+    BibTeX entries generated.
+
+    This function is called early in the build process (config-inited event)
+    BEFORE sphinxcontrib-bibtex loads the .bib files, allowing generated
+    entries to be included in the same build.
+
+    Supports multiple directive formats:
+    - Backtick fenced: ```{figure} path
+    - Colon fenced: :::{figure} path, ::::{figure} path, etc.
+    - RST style: .. figure:: path
+    - YAML options: ---\\nkey: value\\n---
+    - Colon options: :key: value
+
+    Args:
+        app: Sphinx application instance
+
+    Returns:
+        list: List of tuples (bib_key, metadata, image_path, caption)
+    """
+    import re
+    import glob
+
+    figures_with_bib = []
+    srcdir = app.srcdir
+
+    # Find all .md and .rst files
+    patterns = ["**/*.md", "**/*.rst", "**/*.ipynb"]
+    source_files = []
+    for pattern in patterns:
+        source_files.extend(glob.glob(os.path.join(srcdir, pattern), recursive=True))
+
+    # Regex patterns for figure directives with :bib: option
+    # MyST Markdown backticks: ```{figure} path
+    myst_backtick_pattern = re.compile(
+        r"```\{figure\}\s*([^\n]*)\n",
+        re.MULTILINE,
+    )
+    # MyST Markdown colons: :::{figure} path, ::::{figure} path, etc.
+    myst_colon_pattern = re.compile(
+        r"(:{3,})\{figure\}\s*([^\n]*)\n",
+        re.MULTILINE,
+    )
+    # RST: .. figure:: path\n   :bib: key\n...
+    rst_figure_pattern = re.compile(
+        r"\.\.\s+figure::\s*([^\n]*)\n((?:\s+:[^\n]+\n)*)",
+        re.MULTILINE,
+    )
+
+    # Pattern to extract options from directive body (colon style)
+    option_pattern = re.compile(r":(\w+):\s*(.+)")
+
+    for source_file in source_files:
+        try:
+            # Handle .ipynb files specially
+            if source_file.endswith(".ipynb"):
+                with open(source_file, "r", encoding="utf-8") as f:
+                    notebook = json.load(f)
+                content = ""
+                for cell in notebook.get("cells", []):
+                    if cell.get("cell_type") == "markdown":
+                        content += "".join(cell.get("source", [])) + "\n"
+            else:
+                with open(source_file, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+            # Search for MyST backtick figure directives: ```{figure}
+            for match in myst_backtick_pattern.finditer(content):
+                image_path = match.group(1).strip()
+                options, caption, _ = _parse_myst_directive_options(content, match.end())
+
+                if "bib" in options:
+                    bib_key = options["bib"]
+                    figures_with_bib.append((bib_key, options, image_path, caption))
+
+            # Search for MyST colon figure directives: :::{figure}, ::::{figure}, etc.
+            for match in myst_colon_pattern.finditer(content):
+                image_path = match.group(2).strip()
+                options, caption, _ = _parse_myst_directive_options(content, match.end())
+
+                if "bib" in options:
+                    bib_key = options["bib"]
+                    figures_with_bib.append((bib_key, options, image_path, caption))
+
+            # Search for RST figure directives
+            for match in rst_figure_pattern.finditer(content):
+                image_path = match.group(1).strip()
+                options_block = match.group(2)
+
+                options = {}
+                for opt_match in option_pattern.finditer(options_block):
+                    options[opt_match.group(1).lower()] = opt_match.group(2).strip()
+
+                if "bib" in options:
+                    bib_key = options["bib"]
+                    # Try to extract caption for RST (indented text after options)
+                    end_pos = match.end()
+                    remaining = content[end_pos:]
+                    # RST caption is indented text
+                    caption_match = re.match(r"(\s{3,}.+?)(?=\n\S|\n\n|\Z)", remaining, re.DOTALL)
+                    caption = None
+                    if caption_match:
+                        caption = caption_match.group(1).strip()
+                    figures_with_bib.append((bib_key, options, image_path, caption))
+
+        except Exception as e:
+            logger.debug(f"Could not scan {source_file} for bib figures: {e}")
+
+    return figures_with_bib
+
+
+def pre_generate_bib_entries(app, config):
+    """
+    Pre-generate BibTeX entries from figure metadata before sphinxcontrib-bibtex
+    loads the .bib files.
+
+    This event handler is connected to 'config-inited', which fires before
+    'builder-inited' where sphinxcontrib-bibtex's BibtexDomain is initialized.
+
+    Args:
+        app: Sphinx application instance
+        config: Sphinx configuration
+    """
+    # Get user settings
+    user_settings = getattr(config, "metadata_figure_settings", {})
+    bib_settings = METADATA_FIGURE_DEFAULTS_BIB.copy()
+    bib_settings.update(user_settings.get("bib", {}))
+
+    if not bib_settings.get("generate_bib", False):
+        return
+
+    logger.info("Pre-scanning source files for figure BibTeX generation...")
+
+    # Scan source files for figures with :bib: option
+    figures_with_bib = _scan_source_for_bib_figures(app)
+
+    if not figures_with_bib:
+        logger.debug("No figures with :bib: option found for generation")
+        return
+
+    output_file = bib_settings.get("output_file", "_generated_figures.bib")
+
+    # Load only user-configured bib files, excluding the output file itself.
+    # This prevents entries from a previous build's generated file from
+    # suppressing regeneration on subsequent builds.
+    bib_content = _load_user_configured_bib_files(app, exclude_file=output_file)
+
+    # Always start the output file fresh so generated entries stay up-to-date.
+    output_path = _resolve_bib_output_path(app, output_file)
+    if os.path.exists(output_path):
+        try:
+            os.remove(output_path)
+        except Exception as e:
+            logger.warning(f"Could not clear generated bib file {output_path}: {e}")
+
+    generated_count = 0
+    for bib_key, options, image_path, caption in figures_with_bib:
+        # Check if key already exists in user-managed bib files
+        if bib_content and _parse_bib_entry(bib_content, bib_key):
+            logger.debug(
+                f'BibTeX key "{bib_key}" already exists in a configured bib '
+                f"file, skipping generation"
+            )
+            continue
+
+        # Build metadata dict from options
+        metadata = {}
+        if "author" in options:
+            metadata["author"] = options["author"]
+        if "license" in options:
+            metadata["license"] = options["license"]
+        if "date" in options:
+            metadata["date"] = options["date"]
+        if "copyright" in options:
+            metadata["copyright"] = options["copyright"]
+        if "source" in options:
+            metadata["source"] = options["source"]
+
+        # Only generate if we have some metadata
+        if metadata:
+            bib_entry = _generate_bib_entry(bib_key, metadata, image_path, caption)
+            if _write_bib_entry(app, bib_key, bib_entry, output_file):
+                generated_count += 1
+                # Update bib_content so subsequent checks see the new entry
+                bib_content += "\n" + bib_entry
+
+    if generated_count > 0:
+        logger.info(f"Pre-generated {generated_count} BibTeX entries")
+
+        # Add the generated file to bibtex_bibfiles so sphinxcontrib-bibtex
+        # loads it when BibtexDomain initializes during builder-inited.
+        bibtex_bibfiles = getattr(config, "bibtex_bibfiles", None)
+        if bibtex_bibfiles is not None:
+            if output_file not in bibtex_bibfiles:
+                bibtex_bibfiles.append(output_file)
+                logger.info(
+                    f'Added "{output_file}" to bibtex_bibfiles config'
+                )
+        else:
+            config.bibtex_bibfiles = [output_file]
+            logger.info(
+                f'Created bibtex_bibfiles config with "{output_file}"'
+            )
+
+
 def setup(app):
     """
     Setup function for the Sphinx extension.
@@ -1049,6 +1495,11 @@ def setup(app):
     Returns:
         dict: Extension metadata
     """
+
+    # Pre-generate BibTeX entries BEFORE sphinxcontrib-bibtex loads .bib files
+    # This must be connected early (config-inited) to run before builder-inited
+    # where BibtexDomain initializes and loads bib files
+    app.connect("config-inited", pre_generate_bib_entries)
 
     # Clear page defaults before reading documents to prevent stale data
     app.connect("env-before-read-docs", clear_page_defaults)
@@ -1083,6 +1534,9 @@ def setup(app):
     # add captions to unnumbered figures
     app.connect("doctree-resolved", add_unnumbered_caption)
 
+    # Patch HTMLTranslator to inject license metadata into captions
+    _patch_html_translator()
+
     return {
         "parallel_read_safe": True,
         "parallel_write_safe": True,
@@ -1105,29 +1559,32 @@ def copy_asset_files(app: Sphinx, exc: Union[bool, Exception]):
             )
 
 
-original_visit = HTMLTranslator.visit_caption
-original_depart = HTMLTranslator.depart_caption
+def _patch_html_translator():
+    """Patch HTMLTranslator to inject license metadata into captions.
 
+    Called from setup() so the patch is only applied when the extension
+    is actually loaded by Sphinx, not merely imported.
+    """
+    original_visit = HTMLTranslator.visit_caption
+    original_depart = HTMLTranslator.depart_caption
 
-def custom_visit_caption(self, node):
-    # Call original visit logic
-    original_visit(self, node)
+    def custom_visit_caption(self, node):
+        # Call original visit logic
+        original_visit(self, node)
 
-    # Inject extra content after original caption rendering
-    figure = node.parent
-    license_html = figure.get("license_html", [])
-    if license_html:
-        node.append(nodes.raw("", license_html, format="html"))
+        # Inject extra content after original caption rendering
+        figure = node.parent
+        license_html = figure.get("license_html", [])
+        if license_html:
+            node.append(nodes.raw("", license_html, format="html"))
 
+    def custom_depart_caption(self, node):
+        # Call original depart logic
+        original_depart(self, node)
 
-def custom_depart_caption(self, node):
-    # Call original depart logic
-    original_depart(self, node)
-
-
-# Override methods
-HTMLTranslator.visit_caption = custom_visit_caption
-HTMLTranslator.depart_caption = custom_depart_caption
+    # Override methods
+    HTMLTranslator.visit_caption = custom_visit_caption
+    HTMLTranslator.depart_caption = custom_depart_caption
 
 
 def add_unnumbered_caption(app, doctree, fromdocname):
@@ -1158,17 +1615,27 @@ def add_unnumbered_caption(app, doctree, fromdocname):
                 node += new_caption
 
 
-def untranslate_license(license_value: str) -> str:
-    """Convert translated license names back to standard English keys."""
-    """Independent of current locale."""
-
-    # load untranslate map
+def _load_untranslate_map():
+    """Load the untranslate map from disk once and cache it."""
     folder = os.path.abspath(os.path.dirname(__file__))
-    locale_dir = os.path.join(folder, "translations", "untranslate.json")
-    with open(locale_dir, "r", encoding="utf-8") as f:
-        untranslate_map = json.load(f)
+    locale_path = os.path.join(folder, "translations", "untranslate.json")
+    with open(locale_path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-    return untranslate_map.get(license_value, license_value)
+
+_untranslate_map_cache = None
+
+
+def untranslate_license(license_value: str) -> str:
+    """Convert translated license names back to standard English keys.
+
+    Independent of current locale.
+    """
+    global _untranslate_map_cache
+    if _untranslate_map_cache is None:
+        _untranslate_map_cache = _load_untranslate_map()
+
+    return _untranslate_map_cache.get(license_value, license_value)
 
 def clear_page_defaults(app, env, docnames):
     """
