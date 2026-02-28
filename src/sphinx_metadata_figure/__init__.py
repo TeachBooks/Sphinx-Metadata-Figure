@@ -343,6 +343,43 @@ def _load_bib_files(app):
     return bib_content
 
 
+def _load_user_configured_bib_files(app, exclude_file=None):
+    """
+    Load only bib files explicitly registered in the config (bibtex_bibfiles),
+    optionally excluding a specific file.
+
+    Unlike _load_bib_files, this function does NOT auto-discover .bib files
+    in the source directory. This is used during pre-generation to avoid
+    loading previously generated bib files that would incorrectly suppress
+    regeneration on subsequent builds.
+
+    Args:
+        app: Sphinx application instance
+        exclude_file: Optional filename to exclude (e.g. the output file)
+
+    Returns:
+        str: Combined content of all matching bib files
+    """
+    bib_content = ""
+    bibtex_files = getattr(app.config, "bibtex_bibfiles", [])
+    srcdir = app.srcdir
+
+    for bib_file in bibtex_files:
+        if exclude_file and os.path.normpath(bib_file) == os.path.normpath(
+            exclude_file
+        ):
+            continue
+        bib_path = os.path.join(srcdir, bib_file)
+        if os.path.exists(bib_path):
+            try:
+                with open(bib_path, "r", encoding="utf-8") as f:
+                    bib_content += f.read() + "\n"
+            except Exception as e:
+                logger.debug(f"Could not read bib file {bib_path}: {e}")
+
+    return bib_content
+
+
 class DefaultMetadataPage(SphinxDirective):
     """
     Set default metadata values for all figures on the current page.
@@ -1381,15 +1418,29 @@ def pre_generate_bib_entries(app, config):
         logger.debug("No figures with :bib: option found for generation")
         return
 
-    # Load existing bib content to check for existing keys
-    bib_content = _load_bib_files(app)
     output_file = bib_settings.get("output_file", "_generated_figures.bib")
+
+    # Load only user-configured bib files, excluding the output file itself.
+    # This prevents entries from a previous build's generated file from
+    # suppressing regeneration on subsequent builds.
+    bib_content = _load_user_configured_bib_files(app, exclude_file=output_file)
+
+    # Always start the output file fresh so generated entries stay up-to-date.
+    output_path = _resolve_bib_output_path(app, output_file)
+    if os.path.exists(output_path):
+        try:
+            os.remove(output_path)
+        except Exception as e:
+            logger.warning(f"Could not clear generated bib file {output_path}: {e}")
 
     generated_count = 0
     for bib_key, options, image_path, caption in figures_with_bib:
-        # Check if key already exists in bib files
+        # Check if key already exists in user-managed bib files
         if bib_content and _parse_bib_entry(bib_content, bib_key):
-            logger.debug(f'BibTeX key "{bib_key}" already exists, skipping generation')
+            logger.debug(
+                f'BibTeX key "{bib_key}" already exists in a configured bib '
+                f"file, skipping generation"
+            )
             continue
 
         # Build metadata dict from options
