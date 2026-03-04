@@ -68,7 +68,7 @@ METADATA_FIGURE_DEFAULTS_SOURCE = {"warn_missing": False}
 METADATA_FIGURE_DEFAULTS_BIB = {
     "extract_metadata": True,  # Extract metadata from bib entries when :bib: is specified  # noqa: E501
     "generate_bib": False,  # Generate BibTeX entries from figure metadata
-    "output_file": "_generated_figures.bib",  # Output file for generated BibTeX entries
+    "output_file": "_build/_temp/_generated_figures.bib",  # Output file for generated BibTeX entries
 }
 METADATA_FIGURE_DEFAULTS = {
     "style": METADATA_FIGURE_DEFAULTS_STYLE,
@@ -302,53 +302,12 @@ def _parse_bib_entry(bib_content, key):
 
     return metadata if metadata else None
 
-
-def _load_bib_files(app):
-    """
-    Load all .bib files configured in sphinxcontrib-bibtex or in source directory.
-
-    Returns:
-        str: Combined content of all bib files
-    """
-    bib_content = ""
-
-    # Try to get bib files from sphinxcontrib-bibtex configuration
-    bibtex_files = getattr(app.config, "bibtex_bibfiles", [])
-
-    # Also search for .bib files in the source directory
-    srcdir = app.srcdir
-    for bib_file in bibtex_files:
-        bib_path = os.path.join(srcdir, bib_file)
-        if os.path.exists(bib_path):
-            try:
-                with open(bib_path, "r", encoding="utf-8") as f:
-                    bib_content += f.read() + "\n"
-            except Exception as e:
-                logger.debug(f"Could not read bib file {bib_path}: {e}")
-
-    # Search for any .bib files in source directory if none configured
-    if not bib_content:
-        for root, dirs, files in os.walk(srcdir):
-            for file in files:
-                if file.endswith(".bib"):
-                    bib_path = os.path.join(root, file)
-                    try:
-                        with open(bib_path, "r", encoding="utf-8") as f:
-                            bib_content += f.read() + "\n"
-                    except Exception as e:
-                        logger.debug(
-                            f"Could not read bib file {bib_path}: {e}"
-                        )
-
-    return bib_content
-
-
 def _load_user_configured_bib_files(app, exclude_file=None):
     """
     Load only bib files explicitly registered in the config (bibtex_bibfiles),
     optionally excluding a specific file.
 
-    Unlike _load_bib_files, this function does NOT auto-discover .bib files
+    Unlike the previous function _load_bib_files, this function does NOT auto-discover .bib files
     in the source directory. This is used during pre-generation to avoid
     loading previously generated bib files that would incorrectly suppress
     regeneration on subsequent builds.
@@ -559,7 +518,7 @@ class MetadataFigure(Figure):
         # Check if an existing bibtex key is given
         if bib_key and bib_settings["extract_metadata"] and env:
             # Load bib files and try to extract metadata
-            bib_content = _load_bib_files(env.app)
+            bib_content = _load_user_configured_bib_files(env.app)
             if bib_content:
                 extracted = _parse_bib_entry(bib_content, bib_key)
                 if extracted:
@@ -1418,7 +1377,7 @@ def pre_generate_bib_entries(app, config):
         logger.debug("No figures with :bib: option found for generation")
         return
 
-    output_file = bib_settings.get("output_file", "_generated_figures.bib")
+    output_file = bib_settings.get("output_file", "_build/_temp/_generated_figures.bib")
 
     # Load only user-configured bib files, excluding the output file itself.
     # This prevents entries from a previous build's generated file from

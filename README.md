@@ -77,7 +77,7 @@ sphinx:
       bib:
         extract_metadata: true
         generate_bib: false
-        output_file: _generated_figures.bib
+        output_file: _build/_temp/_generated_figures.bib
 ```
 
 Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of key-value pairs. Each level 1 key will be discussed next, including the options.
@@ -145,13 +145,13 @@ The `source` key contains options for how to handle source metadata.
 ### Bib
 
 The `bib` key contains options for BibTeX entry support. This extension provides two-way integration with BibTeX:
-1. **Extract metadata**: Read metadata from existing BibTeX entries
+1. **Extract metadata**: Read metadata from existing/generated BibTeX entries
 2. **Generate entries**: Create new BibTeX entries from figure metadata
 
 Configuration options:
-- `extract_metadata`: If `true`, metadata will be extracted from existing BibTeX entries when the `:bib:` option references a valid key. Default: `true`.
-- `generate_bib`: If `true`, BibTeX entries will be automatically generated from figure metadata when the `:bib:` option specifies a key that doesn't exist in any `.bib` file. The entry is generated **before** sphinxcontrib-bibtex loads the files, so the citation works in a single build. Default: `false`.
-- `output_file`: The output file path for generated BibTeX entries (relative to source directory). Default: `_generated_figures.bib`.
+- `extract_metadata`: If `true`, metadata will be extracted from existing/generated BibTeX entries when the `:bib:` option references a valid key. Default: `true`.
+- `generate_bib`: If `true`, BibTeX entries will be automatically generated from figure metadata when the `:bib:` option specifies a key that doesn't exist in any `.bib` file. The entry is generated **before** sphinxcontrib-bibtex loads the files, so the citation works in a single build. The generated file will be deleted and recreated on each build. The generation only functions (currently) only for `figure` directives. Any other directive types that use `figure` internally will not generate BibTeX entries. Default: `false`.
+- `output_file`: The output file path for generated BibTeX entries (relative to source directory). Default: `_build/_temp/_generated_figures.bib`.
 
 ## Usage
 
@@ -190,7 +190,7 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Only relevant if `placement` is `admonition` or `margin`.
 - `bib`:
   - Optionally specify a BibTeX key for this figure.
-  - **Extracting from existing entries**: When specified with an existing key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
+  - **Extracting from existing/generated entries**: When specified with an existing/generated key in your `.bib` files, metadata (author, date, source, license) will be extracted from the BibTeX entry using the following mapping:
     | Metadata Field | Primary BibTeX Source | Fallback BibTeX source | Notes |
     |---|---|---|---|
     | `author` | `author` field | — | Used as-is |
@@ -201,7 +201,7 @@ The figure directive and the [MyST-NB sphinx extension's `glue:figure` directive
   - Fields that cannot be extracted are simply omitted from metadata (no defaults applied at extraction time)
   - Explicit metadata options (`:author:`, `:license:`, etc.) take precedence over extracted bib metadata.
   - The BibTeX entry is also automatically added to the document bibliography using a `cite:empty` role (when the BibTeX key exists).
-  - **Generating new entries**: When `generate_bib: true` is set in the configuration and the specified key doesn't exist, a new `@misc` BibTeX entry is automatically generated from the figure's metadata options (`:author:`, `:license:`, `:date:`, `:source:`) and written to the `output_file`. The entry is generated during the `config-inited` phase, before sphinxcontrib-bibtex loads the `.bib` files, ensuring the citation works in a single build.
+  - **Generating new entries**: When `generate_bib: true` is set in the configuration and the specified key doesn't exist, a new `@misc` BibTeX entry is automatically generated from the figure's metadata options (`:author:`, `:license:`, `:date:`, `:source:`) and written to the `output_file`. The entry is generated during the `config-inited` phase, before sphinxcontrib-bibtex loads the `.bib` files, ensuring the citation works in a single build. Does not work for the `glue:figure` directive or when the `figure` directive is used internally by other directives.
 - `nonumber`:
   - Only relevant for figures with a caption.
   - If specified, the figure will not be numbered, but the caption will be shown.
@@ -268,7 +268,7 @@ Or in MyST markdown:
 When determining metadata values, the extension follows this priority chain (highest to lowest):
 
 1. **Explicit figure option** (`:author:` on the figure directive)
-2. **BibTeX metadata** (when `:bib:` references an existing entry)
+2. **BibTeX metadata** (when `:bib:` references an existing/generated entry)
 3. **Page-level default** (from `default-metadata-page`)
 4. **Global configuration** (from `_config.yml`)
 
