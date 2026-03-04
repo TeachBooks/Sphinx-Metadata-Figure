@@ -1029,8 +1029,33 @@ def check_all_figures_have_license(app, env):
 def _resolve_bib_output_path(app, output_file: str) -> str:
     """Resolve bib output path consistently against the source directory."""
     if os.path.isabs(output_file):
-        return output_file
-    return os.path.join(app.srcdir, output_file)
+        return os.path.normpath(output_file)
+    resolved = os.path.normpath(os.path.join(app.srcdir, output_file))
+    srcdir_normalized = os.path.normpath(app.srcdir)
+    if not (
+        resolved.startswith(srcdir_normalized + os.sep)
+        or resolved == srcdir_normalized
+    ):
+        raise ValueError(
+            f"BibTeX output_file '{output_file}' resolves outside the source "
+            f"directory. Use an absolute path or a path within srcdir."
+        )
+    return resolved
+
+
+def _escape_bibtex_field(value: str) -> str:
+    """Escape unbalanced braces in a BibTeX field value to prevent injection."""
+    depth = 0
+    for ch in value:
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        if depth < 0:
+            return value.replace("{", r"\{").replace("}", r"\}")
+    if depth != 0:
+        return value.replace("{", r"\{").replace("}", r"\}")
+    return value
 
 
 def _generate_bib_entry(key, metadata, image_path, caption=None):
@@ -1053,13 +1078,13 @@ def _generate_bib_entry(key, metadata, image_path, caption=None):
 
     # Add author if present
     if metadata.get("author"):
-        bib_lines.append(f'  author = {{{metadata["author"]}}},')
+        bib_lines.append(f'  author = {{{_escape_bibtex_field(metadata["author"])}}},')
 
     # Add title (use caption or image filename)
     if caption:
-        title = caption.strip()
+        title = _escape_bibtex_field(caption.strip())
     else:
-        title = f"Figure: {image_path}"
+        title = _escape_bibtex_field(f"Figure: {image_path}")
     bib_lines.append(f"  title = {{{title}}},")
 
     # Add date/year
@@ -1072,7 +1097,7 @@ def _generate_bib_entry(key, metadata, image_path, caption=None):
             bib_lines.append(f"  date = {{{date_str}}},")
         except ValueError:
             # If date is not in expected format, just use it as-is
-            bib_lines.append(f"  year = {{{date_str}}},")
+            bib_lines.append(f"  year = {{{_escape_bibtex_field(date_str)}}},")
 
     # Add source as URL or howpublished
     if metadata.get("source"):
@@ -1089,15 +1114,18 @@ def _generate_bib_entry(key, metadata, image_path, caption=None):
                 bib_lines.append(f"  url = {{{url}}},")
                 bib_lines.append(f"  howpublished = {{\\url{{{url}}}}},")
         else:
-            bib_lines.append(f"  howpublished = {{{source}}},")
+            bib_lines.append(f"  howpublished = {{{_escape_bibtex_field(source)}}},")
 
     # Add license in note field
     if metadata.get("license"):
-        bib_lines.append(f'  note = {{License: {metadata["license"]}}},')
+        bib_lines.append(
+            f'  note = {{License: {_escape_bibtex_field(metadata["license"])}}},')
 
     # Add copyright
     if metadata.get("copyright"):
-        bib_lines.append(f'  copyright = {{{metadata["copyright"]}}},')
+        bib_lines.append(
+            f'  copyright = {{{_escape_bibtex_field(metadata["copyright"])}}},')
+
 
     # Close the entry
     bib_lines.append("}")
