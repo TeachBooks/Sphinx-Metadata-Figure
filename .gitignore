@@ -84,6 +84,13 @@ $RECYCLE.BIN/
 # Cache
 .cache/
 
+# Claude Code local settings
+.claude/settings.local.json
+
+# Generated BibTeX files
+_test_bib/_generated_figures.bib
+*/_generated_figures.bib
+
 # Sphinx docs
 docs/_build/
 _build/
