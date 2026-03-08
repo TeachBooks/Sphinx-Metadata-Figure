@@ -1427,7 +1427,10 @@ def pre_generate_bib_entries(app, config):
         logger.debug("No figures with :bib: option found for generation")
         return
 
-    output_file = bib_settings.get("output_file", "_build/_temp/_generated_figures.bib")
+    # Default output path is inside the Sphinx output directory so it is not
+    # committed to source control and survives clean builds correctly.
+    default_output = os.path.join(app.outdir, "_temp", "_generated_figures.bib")
+    output_file = bib_settings.get("output_file", default_output)
 
     # Load only user-configured bib files, excluding the output file itself.
     # This prevents entries from a previous build's generated file from
@@ -1440,6 +1443,8 @@ def pre_generate_bib_entries(app, config):
     new_entries = []
     for bib_key, options, image_path, caption in figures_with_bib:
         # Check if key already exists in user-managed bib files
+        if bib_key in generated_keys:
+            continue
         if bib_content and _parse_bib_entry(bib_content, bib_key):
             logger.debug(
                 f'BibTeX key "{bib_key}" already exists in a configured bib '
