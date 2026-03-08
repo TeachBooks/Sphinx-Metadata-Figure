@@ -263,42 +263,80 @@ def _parse_bib_entry(bib_content, key):
     entry_content = match.group(1)
     metadata = {}
 
-    # Extract fields - pattern matches field = {value} or field = "value"
-    field_pattern = (
-        r'(\w+)\s*=\s*(?:\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}|"([^"]*)")'
-    )
+    # Extract fields using a character-level scanner that handles arbitrary
+    # nesting of braces (e.g. {John {van {der} Berg}}).
+    field_name_re = re.compile(r'\s*(\w+)\s*=\s*', re.DOTALL)
+    pos = 0
+    while pos < len(entry_content):
+        name_match = field_name_re.match(entry_content, pos)
+        if not name_match:
+            break
+        field_name = name_match.group(1).lower()
+        pos = name_match.end()
 
-    for field_match in re.finditer(field_pattern, entry_content, re.DOTALL):
-        field_name = field_match.group(1).lower()
-        field_value = field_match.group(2) or field_match.group(3)
-        if field_value:
+        # Skip leading whitespace before value
+        while pos < len(entry_content) and entry_content[pos] in ' \t\n\r':
+            pos += 1
+        if pos >= len(entry_content):
+            break
+
+        field_value = None
+        if entry_content[pos] == '"':
+            # "quoted" value
+            end = entry_content.find('"', pos + 1)
+            if end == -1:
+                break
+            field_value = entry_content[pos + 1:end]
+            pos = end + 1
+        elif entry_content[pos] == '{':
+            # {brace-delimited} value — walk to matching closing brace
+            depth = 1
+            i = pos + 1
+            while i < len(entry_content) and depth > 0:
+                if entry_content[i] == '{':
+                    depth += 1
+                elif entry_content[i] == '}':
+                    depth -= 1
+                i += 1
+            field_value = entry_content[pos + 1:i - 1]
+            pos = i
+        else:
+            # Unquoted numeric value
+            end = entry_content.find(',', pos)
+            if end == -1:
+                end = len(entry_content)
+            field_value = entry_content[pos:end].strip()
+            pos = end
+
+        if field_value is not None:
             field_value = field_value.strip()
-        if field_name == "author":
-            metadata["author"] = _strip_surrounding_braces(field_value)
-        elif field_name == "year":
-            # Convert year to date format
-            if "date" not in metadata:
-                metadata["date"] = f"{field_value}-01-01"
-        elif field_name == "date":
-            metadata["date"] = field_value
-        elif field_name == "url":
-            metadata["source"] = field_value
-        elif field_name == "howpublished":
-            # Extract URL from \url{...} if present
-            url_match = re.search(r"\\url\{([^}]+)\}", field_value)
-            if url_match:
-                metadata["source"] = url_match.group(1)
-            elif "source" not in metadata:
+            if field_name == "author":
+                metadata["author"] = _strip_surrounding_braces(field_value)
+            elif field_name == "year":
+                if "date" not in metadata:
+                    metadata["date"] = f"{field_value}-01-01"
+            elif field_name == "date":
+                metadata["date"] = field_value
+            elif field_name == "url":
                 metadata["source"] = field_value
-        elif field_name == "note":
-            # Try to extract license from note field
-            license_match = re.search(
-                r"License:\s*(.+)", field_value, re.IGNORECASE
-            )
-            if license_match:
-                metadata["license"] = license_match.group(1).strip()
-        elif field_name == "copyright":
-            metadata["copyright"] = field_value
+            elif field_name == "howpublished":
+                url_match = re.search(r"\\url\{([^}]+)\}", field_value)
+                if url_match:
+                    metadata["source"] = url_match.group(1)
+                elif "source" not in metadata:
+                    metadata["source"] = field_value
+            elif field_name == "note":
+                license_match = re.search(
+                    r"License:\s*(.+)", field_value, re.IGNORECASE
+                )
+                if license_match:
+                    metadata["license"] = license_match.group(1).strip()
+            elif field_name == "copyright":
+                metadata["copyright"] = field_value
+
+        # Advance past optional comma separator
+        while pos < len(entry_content) and entry_content[pos] in ' \t\n\r,':
+            pos += 1
 
     return metadata if metadata else None
 
@@ -1459,6 +1497,10 @@ def pre_generate_bib_entries(app, config):
         bibtex_bibfiles = getattr(config, "bibtex_bibfiles", None)
         if bibtex_bibfiles is not None:
             if output_file not in bibtex_bibfiles:
+                # bibtex_bibfiles may be a tuple (immutable); convert to list.
+                if not isinstance(bibtex_bibfiles, list):
+                    config.bibtex_bibfiles = list(bibtex_bibfiles)
+                    bibtex_bibfiles = config.bibtex_bibfiles
                 bibtex_bibfiles.append(output_file)
                 logger.info(
                     f'Added "{output_file}" to bibtex_bibfiles config'
