@@ -1171,65 +1171,44 @@ def _generate_bib_entry(key, metadata, image_path, caption=None):
     return "\n".join(bib_lines)
 
 
-def _write_bib_entry(app, bib_key, bib_entry, output_file):
+def _write_bib_entries_atomic(app, entries, output_file):
     """
-    Write a BibTeX entry to a file, avoiding duplicates.
+    Write a list of BibTeX entries to the output file atomically.
+
+    Uses a temporary file + os.replace() so that a parallel reader never
+    sees a partially-written file (avoids the race condition that existed
+    when the previous implementation deleted the file then re-created it).
 
     Args:
         app: Sphinx application instance
-        bib_key: The BibTeX key
-        bib_entry: The formatted BibTeX entry string
-        output_file: Path to the output .bib file (relative to srcdir)
+        entries: list of (bib_key, bib_entry_str) tuples
+        output_file: path to the output .bib file (relative to srcdir)
 
     Returns:
-        bool: True if write succeeded (or entry already exists), False otherwise
+        bool: True on success, False on failure
     """
-    import re
+    import tempfile
 
-    # Resolve output path
     output_path = _resolve_bib_output_path(app, output_file)
+    dir_path = os.path.dirname(output_path)
+    if dir_path:
+        os.makedirs(dir_path, exist_ok=True)
 
-    # Read existing content if file exists
-    existing_content = ""
-    if os.path.exists(output_path):
-        try:
-            with open(output_path, "r", encoding="utf-8") as f:
-                existing_content = f.read()
-        except Exception as e:
-            logger.warning(f"Could not read existing bib file {output_path}: {e}")
-            return False
-
-    # Check if entry with this key already exists
-    pattern = rf"@\w+\s*\{{\s*{re.escape(bib_key)}\s*,"
-    existing_match = re.search(pattern, existing_content, re.IGNORECASE)
-
-    if existing_match:
-        logger.debug(
-            f'BibTeX entry with key "{bib_key}" already exists in {output_path}'
-        )
-        return True  # Not an error, just skipping
-
-    # Append new entry
-    if existing_content and not existing_content.endswith("\n\n"):
-        if existing_content.endswith("\n"):
-            bib_entry = "\n" + bib_entry
-        else:
-            bib_entry = "\n\n" + bib_entry
-
-    # Write to file
+    content = "\n\n".join(entry for _, entry in entries) + "\n"
+    tmp_path = None
     try:
-        # Ensure directory exists
-        dir_path = os.path.dirname(output_path)
-        if dir_path:
-            os.makedirs(dir_path, exist_ok=True)
-
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(existing_content + bib_entry + "\n")
-
-        logger.info(f'Generated BibTeX entry for "{bib_key}" in {output_path}')
+        fd, tmp_path = tempfile.mkstemp(dir=dir_path or ".", suffix=".bib.tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+        os.replace(tmp_path, output_path)  # atomic on POSIX
         return True
     except Exception as e:
-        logger.warning(f"Could not write BibTeX entry to {output_path}: {e}")
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+        logger.warning(f"Could not write generated bib file {output_path}: {e}")
         return False
 
 
@@ -1408,6 +1387,11 @@ def _scan_source_for_bib_figures(app):
                         caption = caption_match.group(1).strip()
                     figures_with_bib.append((bib_key, options, image_path, caption))
 
+        except json.JSONDecodeError as e:
+            logger.warning(
+                f"Could not parse notebook {source_file} (invalid JSON): {e}. "
+                f"Figures in this file will not have BibTeX entries generated."
+            )
         except Exception as e:
             logger.debug(f"Could not scan {source_file} for bib figures: {e}")
 
@@ -1450,15 +1434,10 @@ def pre_generate_bib_entries(app, config):
     # suppressing regeneration on subsequent builds.
     bib_content = _load_user_configured_bib_files(app, exclude_file=output_file)
 
-    # Always start the output file fresh so generated entries stay up-to-date.
-    output_path = _resolve_bib_output_path(app, output_file)
-    if os.path.exists(output_path):
-        try:
-            os.remove(output_path)
-        except Exception as e:
-            logger.warning(f"Could not clear generated bib file {output_path}: {e}")
-
-    generated_count = 0
+    # Collect all entries to write, then flush atomically.
+    # This avoids the race condition where a parallel reader could access
+    # the file between a delete and a partial re-write.
+    new_entries = []
     for bib_key, options, image_path, caption in figures_with_bib:
         # Check if key already exists in user-managed bib files
         if bib_content and _parse_bib_entry(bib_content, bib_key):
@@ -1469,25 +1448,23 @@ def pre_generate_bib_entries(app, config):
             continue
 
         # Build metadata dict from options
-        metadata = {}
-        if "author" in options:
-            metadata["author"] = options["author"]
-        if "license" in options:
-            metadata["license"] = options["license"]
-        if "date" in options:
-            metadata["date"] = options["date"]
-        if "copyright" in options:
-            metadata["copyright"] = options["copyright"]
-        if "source" in options:
-            metadata["source"] = options["source"]
+        metadata = {
+            k: options[k]
+            for k in ("author", "license", "date", "copyright", "source")
+            if k in options
+        }
 
         # Only generate if we have some metadata
         if metadata:
             bib_entry = _generate_bib_entry(bib_key, metadata, image_path, caption)
-            if _write_bib_entry(app, bib_key, bib_entry, output_file):
-                generated_count += 1
-                # Update bib_content so subsequent checks see the new entry
-                bib_content += "\n" + bib_entry
+            new_entries.append((bib_key, bib_entry))
+
+    generated_count = 0
+    if new_entries:
+        if _write_bib_entries_atomic(app, new_entries, output_file):
+            generated_count = len(new_entries)
+            for bib_key, _ in new_entries:
+                logger.info(f'Generated BibTeX entry for "{bib_key}"')
 
     if generated_count > 0:
         logger.info(f"Pre-generated {generated_count} BibTeX entries")
