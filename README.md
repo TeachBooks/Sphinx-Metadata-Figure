@@ -77,7 +77,7 @@ sphinx:
       bib:
         extract_metadata: true
         generate_bib: false
-        output_file: _build/_temp/_generated_figures.bib
+        output_file: <app.outdir>/_temp/_generated_figures.bib # The <app.outdir> placeholder will be replaced with the actual output directory path during the build.
 ```
 
 Each of the level 1 keys in `metadata_figure_settings` must be a dictionary of key-value pairs. Each level 1 key will be discussed next, including the options.
