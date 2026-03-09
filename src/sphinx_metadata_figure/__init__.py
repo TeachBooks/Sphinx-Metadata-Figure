@@ -13,6 +13,7 @@ recognized license information.
 
 import os
 import json
+import html as _html
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -128,7 +129,12 @@ VALID_LICENSES = [
     "Public Domain",
     "MIT",
     "Apache-2.0",
+    "GPL-2.0",
     "GPL-3.0",
+    "LGPL-2.1",
+    "LGPL-3.0",
+    "AGPL-3.0",
+    "BSD-2-Clause",
     "BSD-3-Clause",
     "Proprietary",
     "All Rights Reserved",
@@ -955,10 +961,10 @@ def _build_attribution_display(
         for i, (text_part, link_info) in enumerate(parts):
             if i > 0:
                 license_html += " | "
-            license_html += text_part
+            license_html += _html.escape(text_part)
             if link_info:
                 link_text, link_url = link_info
-                license_html += f'<a href="{link_url}" target="_blank" rel="noopener">{link_text}</a>'
+                license_html += f'<a href="{_html.escape(link_url)}" target="_blank" rel="noopener">{_html.escape(link_text)}</a>'
         license_html += "</span>"
         if not figure_node[
             "unnumbered_caption"
@@ -1039,7 +1045,10 @@ def check_all_figures_have_license(app, env):
                 if "license" not in node:
                     missing_licenses.append((docname, image_uri))
                 else:
-                    license_value = node["license"]
+                    # The license value stored on the node has already been
+                    # translated (and possibly formatted for display).
+                    # Reverse-translate it before comparing to VALID_LICENSES.
+                    license_value = untranslate_license(node["license"])
                     if license_value not in VALID_LICENSES:
                         unrecognized_licenses.append((docname, image_uri))
 
