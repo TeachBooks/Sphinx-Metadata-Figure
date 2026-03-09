@@ -1,14 +1,22 @@
 """
-Custom Figure Directive Extension for Sphinx
-==============================================
+sphinx-metadata-figure — Figure Metadata Extension for Sphinx
+==============================================================
 
-This extension extends the standard Sphinx figure directive to include:
+Extends the standard Sphinx ``figure`` directive and the MyST-NB
+``glue:figure`` directive with structured metadata support:
+
 - author: Author/creator of the image
 - license: Image license (validated against a predefined list)
 - date: Creation date (format: YYYY-MM-DD)
+- copyright: Copyright holder
+- source: Origin URL or description
 
-During parsing, it validates that all images have proper and
-recognized license information.
+Additional features:
+- Multiple display placements: caption, admonition, margin, hide
+- Page-level metadata defaults via ``default-metadata-page`` directive
+- BibTeX integration: extract metadata from or generate BibTeX entries
+- Figures without a number, without a caption, or without an image
+- Multilingual support for metadata labels and license names
 """
 
 import os
@@ -340,6 +348,7 @@ def _parse_bib_entry(bib_content, key):
 
     return metadata if metadata else None
 
+
 def _load_user_configured_bib_files(app, exclude_file=None):
     """
     Load only bib files explicitly registered in the config (bibtex_bibfiles),
@@ -499,7 +508,7 @@ class MetadataFigure(Figure):
                 logger.warning(
                     "The 'figure' directive should have at least an image path argument, "
                     "a caption, or the :number: option to obtain a visible result.",
-                location=(self.state.document.current_source, self.lineno),
+                    location=(self.state.document.current_source, self.lineno),
                 )
                 return []
             self.arguments.append(
@@ -511,19 +520,17 @@ class MetadataFigure(Figure):
         if "number" in self.options and "nonumber" in self.options:
             if self.content:
                 logger.warning(
-                    f'Figure '
-                    f"has both :number: and :nonumber: options set. "
-                    f"These options are mutually exclusive; please use only one. "
-                    f"Defaulting to :nonumber: behavior as a caption is provided.",
+                    "Figure has both :number: and :nonumber: options set. "
+                    "These options are mutually exclusive; please use only one. "
+                    "Defaulting to :nonumber: behavior as a caption is provided.",
                     location=(self.state.document.current_source, self.lineno),
                 )
                 del self.options["number"]
             else:
                 logger.warning(
-                    f'Figure '
-                    f"has both :number: and :nonumber: options set. "
-                    f"These options are mutually exclusive; please use only one. "
-                    f"Defaulting to :number: behavior as no caption is provided." ,
+                    "Figure has both :number: and :nonumber: options set. "
+                    "These options are mutually exclusive; please use only one. "
+                    "Defaulting to :number: behavior as no caption is provided.",
                     location=(self.state.document.current_source, self.lineno),
                 )
                 del self.options["nonumber"]
@@ -1515,7 +1522,7 @@ def setup(app):
     # Clear page defaults before reading documents to prevent stale data
     app.connect("env-before-read-docs", clear_page_defaults)
 
-    # Ensure MysST NB is loaded before this extension so the glue domain is registered
+    # Ensure MyST-NB is loaded before this extension so the glue domain is registered
     app.setup_extension("myst_nb")
 
     # Register configuration values
@@ -1647,6 +1654,7 @@ def untranslate_license(license_value: str) -> str:
         _untranslate_map_cache = _load_untranslate_map()
 
     return _untranslate_map_cache.get(license_value, license_value)
+
 
 def clear_page_defaults(app, env, docnames):
     """
