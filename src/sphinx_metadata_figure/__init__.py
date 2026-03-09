@@ -1575,7 +1575,14 @@ def _patch_html_translator():
 
     Called from setup() so the patch is only applied when the extension
     is actually loaded by Sphinx, not merely imported.
+
+    Guarded against double-patching so that repeated calls (e.g. during
+    test runs that invoke setup() more than once in the same process) are
+    safe.
     """
+    if getattr(HTMLTranslator, "_sphinx_metadata_figure_patched", False):
+        return
+
     original_visit = HTMLTranslator.visit_caption
     original_depart = HTMLTranslator.depart_caption
 
@@ -1596,6 +1603,7 @@ def _patch_html_translator():
     # Override methods
     HTMLTranslator.visit_caption = custom_visit_caption
     HTMLTranslator.depart_caption = custom_depart_caption
+    HTMLTranslator._sphinx_metadata_figure_patched = True
 
 
 def add_unnumbered_caption(app, doctree, fromdocname):
