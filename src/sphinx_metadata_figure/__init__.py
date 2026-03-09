@@ -1441,6 +1441,7 @@ def pre_generate_bib_entries(app, config):
     # This avoids the race condition where a parallel reader could access
     # the file between a delete and a partial re-write.
     new_entries = []
+    generated_keys = set()  # track keys already queued in this scan
     for bib_key, options, image_path, caption in figures_with_bib:
         # Check if key already exists in user-managed bib files
         if bib_key in generated_keys:
@@ -1463,6 +1464,7 @@ def pre_generate_bib_entries(app, config):
         if metadata:
             bib_entry = _generate_bib_entry(bib_key, metadata, image_path, caption)
             new_entries.append((bib_key, bib_entry))
+            generated_keys.add(bib_key)
 
     generated_count = 0
     if new_entries:
