@@ -13,11 +13,16 @@ authors = [
     { name = "Kwangjin Lee", email="kwangjinlee@tudelft.nl"}
 ]
 dependencies = [
-    "sphinx",
-    "myst-nb"
+    "sphinx>=5.0",
+    "myst-nb>=0.17"
 ]
 
 requires-python = ">=3.10"
+
+[project.urls]
+Homepage = "https://github.com/TeachBooks/Sphinx-Metadata-Figure"
+Documentation = "https://teachbooks.io/manual/_git/github.com_TeachBooks_Sphinx-Metadata-Figure/main/MANUAL.html"
+"Bug Tracker" = "https://github.com/TeachBooks/Sphinx-Metadata-Figure/issues"
 
 [tool.hatch]
 version.source = "vcs"
