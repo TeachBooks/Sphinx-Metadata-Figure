@@ -1,18 +1,27 @@
 """
-Custom Figure Directive Extension for Sphinx
-==============================================
+sphinx-metadata-figure — Figure Metadata Extension for Sphinx
+==============================================================
 
-This extension extends the standard Sphinx figure directive to include:
+Extends the standard Sphinx ``figure`` directive and the MyST-NB
+``glue:figure`` directive with structured metadata support:
+
 - author: Author/creator of the image
 - license: Image license (validated against a predefined list)
 - date: Creation date (format: YYYY-MM-DD)
+- copyright: Copyright holder
+- source: Origin URL or description
 
-During parsing, it validates that all images have proper and
-recognized license information.
+Additional features:
+- Multiple display placements: caption, admonition, margin, hide
+- Page-level metadata defaults via ``default-metadata-page`` directive
+- BibTeX integration: extract metadata from or generate BibTeX entries
+- Figures without a number, without a caption, or without an image
+- Multilingual support for metadata labels and license names
 """
 
 import os
 import json
+import html as _html
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -128,7 +137,12 @@ VALID_LICENSES = [
     "Public Domain",
     "MIT",
     "Apache-2.0",
+    "GPL-2.0",
     "GPL-3.0",
+    "LGPL-2.1",
+    "LGPL-3.0",
+    "AGPL-3.0",
+    "BSD-2-Clause",
     "BSD-3-Clause",
     "Proprietary",
     "All Rights Reserved",
@@ -340,6 +354,7 @@ def _parse_bib_entry(bib_content, key):
 
     return metadata if metadata else None
 
+
 def _load_user_configured_bib_files(app, exclude_file=None):
     """
     Load only bib files explicitly registered in the config (bibtex_bibfiles),
@@ -499,7 +514,7 @@ class MetadataFigure(Figure):
                 logger.warning(
                     "The 'figure' directive should have at least an image path argument, "
                     "a caption, or the :number: option to obtain a visible result.",
-                location=(self.state.document.current_source, self.lineno),
+                    location=(self.state.document.current_source, self.lineno),
                 )
                 return []
             self.arguments.append(
@@ -511,19 +526,17 @@ class MetadataFigure(Figure):
         if "number" in self.options and "nonumber" in self.options:
             if self.content:
                 logger.warning(
-                    f'Figure '
-                    f"has both :number: and :nonumber: options set. "
-                    f"These options are mutually exclusive; please use only one. "
-                    f"Defaulting to :nonumber: behavior as a caption is provided.",
+                    "Figure has both :number: and :nonumber: options set. "
+                    "These options are mutually exclusive; please use only one. "
+                    "Defaulting to :nonumber: behavior as a caption is provided.",
                     location=(self.state.document.current_source, self.lineno),
                 )
                 del self.options["number"]
             else:
                 logger.warning(
-                    f'Figure '
-                    f"has both :number: and :nonumber: options set. "
-                    f"These options are mutually exclusive; please use only one. "
-                    f"Defaulting to :number: behavior as no caption is provided." ,
+                    "Figure has both :number: and :nonumber: options set. "
+                    "These options are mutually exclusive; please use only one. "
+                    "Defaulting to :number: behavior as no caption is provided.",
                     location=(self.state.document.current_source, self.lineno),
                 )
                 del self.options["nonumber"]
@@ -955,10 +968,10 @@ def _build_attribution_display(
         for i, (text_part, link_info) in enumerate(parts):
             if i > 0:
                 license_html += " | "
-            license_html += text_part
+            license_html += _html.escape(text_part)
             if link_info:
                 link_text, link_url = link_info
-                license_html += f'<a href="{link_url}" target="_blank" rel="noopener">{link_text}</a>'
+                license_html += f'<a href="{_html.escape(link_url)}" target="_blank" rel="noopener">{_html.escape(link_text)}</a>'
         license_html += "</span>"
         if not figure_node[
             "unnumbered_caption"
@@ -1039,7 +1052,10 @@ def check_all_figures_have_license(app, env):
                 if "license" not in node:
                     missing_licenses.append((docname, image_uri))
                 else:
-                    license_value = node["license"]
+                    # The license value stored on the node has already been
+                    # translated (and possibly formatted for display).
+                    # Reverse-translate it before comparing to VALID_LICENSES.
+                    license_value = untranslate_license(node["license"])
                     if license_value not in VALID_LICENSES:
                         unrecognized_licenses.append((docname, image_uri))
 
@@ -1441,6 +1457,7 @@ def pre_generate_bib_entries(app, config):
     # This avoids the race condition where a parallel reader could access
     # the file between a delete and a partial re-write.
     new_entries = []
+    generated_keys = set()  # track keys already queued in this scan
     for bib_key, options, image_path, caption in figures_with_bib:
         # Check if key already exists in user-managed bib files
         if bib_key in generated_keys:
@@ -1463,6 +1480,7 @@ def pre_generate_bib_entries(app, config):
         if metadata:
             bib_entry = _generate_bib_entry(bib_key, metadata, image_path, caption)
             new_entries.append((bib_key, bib_entry))
+            generated_keys.add(bib_key)
 
     generated_count = 0
     if new_entries:
@@ -1515,7 +1533,7 @@ def setup(app):
     # Clear page defaults before reading documents to prevent stale data
     app.connect("env-before-read-docs", clear_page_defaults)
 
-    # Ensure MysST NB is loaded before this extension so the glue domain is registered
+    # Ensure MyST-NB is loaded before this extension so the glue domain is registered
     app.setup_extension("myst_nb")
 
     # Register configuration values
@@ -1575,7 +1593,14 @@ def _patch_html_translator():
 
     Called from setup() so the patch is only applied when the extension
     is actually loaded by Sphinx, not merely imported.
+
+    Guarded against double-patching so that repeated calls (e.g. during
+    test runs that invoke setup() more than once in the same process) are
+    safe.
     """
+    if getattr(HTMLTranslator, "_sphinx_metadata_figure_patched", False):
+        return
+
     original_visit = HTMLTranslator.visit_caption
     original_depart = HTMLTranslator.depart_caption
 
@@ -1596,6 +1621,7 @@ def _patch_html_translator():
     # Override methods
     HTMLTranslator.visit_caption = custom_visit_caption
     HTMLTranslator.depart_caption = custom_depart_caption
+    HTMLTranslator._sphinx_metadata_figure_patched = True
 
 
 def add_unnumbered_caption(app, doctree, fromdocname):
@@ -1647,6 +1673,7 @@ def untranslate_license(license_value: str) -> str:
         _untranslate_map_cache = _load_untranslate_map()
 
     return _untranslate_map_cache.get(license_value, license_value)
+
 
 def clear_page_defaults(app, env, docnames):
     """
