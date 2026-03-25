@@ -470,26 +470,30 @@ class MetadataFigure(Figure):
     optional_arguments = 1
 
     # Copy parent's option_spec and add our custom options
-    option_spec = Figure.option_spec.copy()
-    option_spec.update(
-        {
-            "author": directives.unchanged,
-            "license": directives.unchanged,
-            "date": directives.unchanged,
-            "copyright": directives.unchanged,
-            "source": directives.unchanged,
-            # New options for display/behavior
-            "placement": directives.unchanged,  # caption | admonition | margin | hide
-            "show": directives.unchanged,  # comma-separated: author,license,date
-            "admonition_title": directives.unchanged,  # admonition title (default: Attribution)
-            "admonition_class": directives.unchanged,  # extra classes for admonition
-            # Bib entry support
-            "bib": directives.unchanged,  # BibTeX key to use/generate for this figure
-            # New option for empty caption for numbered figures and captions for unnumbered figures
-            "nonumber": directives.flag,  # indication that even though a caption is presented, the figure should not be numbered
-            "number": directives.flag,  # indication the figure should be numbered even without a provided caption
-        }
+    _base_option_spec = getattr(Figure, "option_spec", {}) or {}
+    _copied_option_spec = (
+        _base_option_spec.copy()
+        if hasattr(_base_option_spec, "copy")
+        else dict(_base_option_spec)
     )
+    option_spec = {
+        **_copied_option_spec,
+        "author": directives.unchanged,
+        "license": directives.unchanged,
+        "date": directives.unchanged,
+        "copyright": directives.unchanged,
+        "source": directives.unchanged,
+        # New options for display/behavior
+        "placement": directives.unchanged,  # caption | admonition | margin | hide
+        "show": directives.unchanged,  # comma-separated: author,license,date
+        "admonition_title": directives.unchanged,  # admonition title (default: Attribution)
+        "admonition_class": directives.unchanged,  # extra classes for admonition
+        # Bib entry support
+        "bib": directives.unchanged,  # BibTeX key to use/generate for this figure
+        # New option for empty caption for numbered figures and captions for unnumbered figures
+        "nonumber": directives.flag,  # indication that even though a caption is presented, the figure should not be numbered
+        "number": directives.flag,  # indication the figure should be numbered even without a provided caption
+    }
 
     def run(self):
         """
@@ -774,7 +778,7 @@ class MetadataFigure(Figure):
             # Handle the myst_nb glue figure directive
             figure_nodes = PasteFigureDirective.run(temp)
         else:
-            figure_nodes = Figure.run(self)
+            figure_nodes = super().run()
         # handle the caption numbering based on presence of caption and options
         for node in figure_nodes:
             for child in node.children:
@@ -1512,6 +1516,46 @@ def pre_generate_bib_entries(app, config):
             )
 
 
+def _create_metadata_figure_class(base_figure_class: type):
+    """Create a MetadataFigure wrapper around the currently active figure class."""
+
+    if getattr(base_figure_class, "_metadata_figure_wrapped", False):
+        return base_figure_class
+
+    base_option_spec = getattr(base_figure_class, "option_spec", {})
+    if hasattr(base_option_spec, "copy"):
+        merged_option_spec = base_option_spec.copy()
+    else:
+        merged_option_spec = dict(base_option_spec)
+
+    # Preserve existing options from other extensions, then add metadata options.
+    metadata_option_spec = getattr(MetadataFigure, "option_spec", {}) or {}
+    merged_option_spec.update(dict(metadata_option_spec))
+
+    class WrappedMetadataFigure(base_figure_class):
+        required_arguments = MetadataFigure.required_arguments
+        optional_arguments = MetadataFigure.optional_arguments
+        option_spec = merged_option_spec
+        run = MetadataFigure.run
+
+    WrappedMetadataFigure.__name__ = f"{base_figure_class.__name__}Metadata"
+    WrappedMetadataFigure._metadata_figure_wrapped = True
+    return WrappedMetadataFigure
+
+
+def _patch_figure_directive(app: Sphinx, *args, **kwargs) -> None:
+    """Patch active figure/glue:figure directives with metadata support."""
+
+    directives_map = getattr(app.registry, "directives", {})
+    current_figure = directives_map.get("figure")
+    if current_figure is None:
+        return
+
+    wrapped = _create_metadata_figure_class(current_figure)
+    app.add_directive("figure", wrapped, override=True)
+    app.add_directive_to_domain("glue", "figure", wrapped, override=True)
+
+
 def setup(app):
     """
     Setup function for the Sphinx extension.
@@ -1539,11 +1583,8 @@ def setup(app):
     # Register configuration values
     app.add_config_value("metadata_figure_settings", {}, "env")
 
-    # Override the default figure directive with our custom version
-    app.add_directive("figure", MetadataFigure, override=True)
-    app.add_directive_to_domain(
-        "glue", "figure", MetadataFigure, override=True
-    )
+    # Patch once at the point directives are finalized before parsing docs.
+    app.connect("env-before-read-docs", _patch_figure_directive)
 
     # Register the page-level default metadata directive
     app.add_directive("default-metadata-page", DefaultMetadataPage)
