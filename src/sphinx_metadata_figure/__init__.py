@@ -544,9 +544,19 @@ class MetadataFigure(Figure):
         # If no caption is provided, but a number is preferred, set a placeholder caption.
         # This allows the figure to be numbered even without a visible caption.
         if not self.content and "number" in self.options:
-            self.content = [
-                '<span class="invisible-caption-text">&nbsp;</span>'
-            ]  # placeholder caption
+            # Detect the builder type to avoid emitting raw HTML in non-HTML outputs
+            # (e.g. LaTeX/PDF would render the tag literally).
+            _builder = getattr(getattr(env, "app", None), "builder", None)
+            _builder_name = getattr(_builder, "name", "html") if _builder else "html"
+            _html_builders = {"html", "dirhtml", "singlehtml", "readthedocs"}
+            if _builder_name in _html_builders:
+                _placeholder = '<span class="invisible-caption-text">&nbsp;</span>'
+            else:
+                # RST escaped-space produces no visible output in most builders.
+                _placeholder = "\\ "
+            # self.content must be a StringList, not a plain list, so that the
+            # parent Figure.run() processes it correctly.
+            self.content = StringList([_placeholder])
 
         # Deep merge: merge each category separately to preserve unspecified defaults
         settings = {}
@@ -565,6 +575,10 @@ class MetadataFigure(Figure):
         bib_key = self.options.get("bib", None)
         bib_settings = settings["bib"]
         bib_metadata = {}
+        # Nodes to prepend before the figure in the returned list (e.g. cite references).
+        # Appending directly to self.state.document inserts at the document root, which
+        # corrupts the document tree structure; returning them here places them correctly.
+        _extra_prefix_nodes = []
 
         # Check if an existing bibtex key is given
         if bib_key and bib_settings["extract_metadata"] and env:
@@ -574,12 +588,12 @@ class MetadataFigure(Figure):
                 extracted = _parse_bib_entry(bib_content, bib_key)
                 if extracted:
                     bib_metadata = extracted
-                    # add it to the bibliography
+                    # Register the key with sphinxcontrib-bibtex without visible output.
                     text = f"{{cite:empty}}`{bib_key}`"
                     para = nodes.paragraph()
                     self.state.nested_parse(StringList([text]), self.content_offset, para)
-                    # Add the paragraph node to the document
-                    self.state.document += para
+                    # Collect here; prepended to the return list at the end of run().
+                    _extra_prefix_nodes.append(para)
                 else:
                     message_unrecognized = (
                         f'\n- Figure "{self.arguments[0]}" '
@@ -883,7 +897,7 @@ class MetadataFigure(Figure):
                     # For 'admonition' placement, append after the figure
                     figure_nodes.extend(display_nodes)
 
-        return figure_nodes
+        return _extra_prefix_nodes + figure_nodes
 
 
 def _copyright_from_authoryear(author_value, date_value):
