@@ -22,6 +22,7 @@ Additional features:
 import os
 import json
 import html as _html
+import threading
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -508,6 +509,10 @@ class MetadataFigure(Figure):
 
         # check if an argument (image path) is provided
         no_image = False
+        # Keep the original identifier for use in diagnostic messages; after
+        # appending the placeholder "dummy.png" self.arguments[0] would be
+        # misleading when shown in warnings/errors for imageless figures.
+        _figure_id = self.arguments[0] if self.arguments else "<no image>"
         if len(self.arguments) == 0:
             # check if at least a caption or the number option is provided
             if not self.content and "number" not in self.options:
@@ -596,7 +601,7 @@ class MetadataFigure(Figure):
                     _extra_prefix_nodes.append(para)
                 else:
                     message_unrecognized = (
-                        f'\n- Figure "{self.arguments[0]}" '
+                        f'\n- Figure "{_figure_id}" '
                         f'has an unrecognized BibTeX key "{bib_key}".'
                     )
                     logger.warning(
@@ -629,7 +634,7 @@ class MetadataFigure(Figure):
         if license_value is None:
             # Warn or raise error if license is missing
             message_missing = (
-                f'\n- Figure "{self.arguments[0]}" '
+                f'\n- Figure "{_figure_id}" '
                 f"is missing license information.\n"
                 f"- Please add the :license: option with a recognized license.\n"
                 f"- Recognized licenses: {', '.join(VALID_LICENSES)}"
@@ -644,7 +649,7 @@ class MetadataFigure(Figure):
         elif license_value not in VALID_LICENSES:
             # Warn or raise error if license is invalid
             message_incorrect = (
-                f'\n- Figure "{self.arguments[0]}" '
+                f'\n- Figure "{_figure_id}" '
                 f'has an unrecognized license "{license_value}".\n'
                 f"- Recognized licenses: {', '.join(VALID_LICENSES)}"
             )
@@ -686,7 +691,7 @@ class MetadataFigure(Figure):
                 datetime.strptime(date_value, "%Y-%m-%d")
             except ValueError:
                 logger.warning(
-                    f'Figure "{self.arguments[0]}" at '
+                    f'Figure "{_figure_id}" at '
                     f"{self.state.document.current_source}:{self.lineno} "
                     f'has invalid date format "{date_value}". '
                     f"Expected format: YYYY-MM-DD (e.g., 2025-01-15)",
@@ -733,7 +738,7 @@ class MetadataFigure(Figure):
             if source_settings["warn_missing"]:
                 # Warn if source is missing (if requested)
                 message_missing = (
-                    f'\n- Figure "{self.arguments[0]}" '
+                    f'\n- Figure "{_figure_id}" '
                     f"is missing source information.\n"
                     f"- Please add the :source: option with a source."
                     f'- Either a URL (starting with "http" or "https"), a textual source description, or a MarkDown link.'
@@ -985,15 +990,20 @@ def _build_attribution_display(
                     (figure_node["source"], figure_node["source"]),
                 )
             )
-        elif len(figure_node["source"].split("](")) == 2:
-            # markdown link format: [text](url)
-            text_part = figure_node["source"].split("](")[0].lstrip("[")
-            url_part = figure_node["source"].split("](")[1].rstrip(")")
-            parts.append((f"{translate('Source')}: ", (text_part, url_part)))
         else:
-            parts.append(
-                (f"{translate('Source')}: {figure_node['source']}", None)
-            )
+            # Try to parse a Markdown inline-link: [text](url).
+            # The previous split("](") approach broke when the URL itself
+            # contained the "](" sequence.  A regex is unambiguous.
+            import re as _re
+            _md_link = _re.fullmatch(r"\[([^\]]+)\]\(([^)]+)\)", figure_node["source"])
+            if _md_link:
+                text_part = _md_link.group(1)
+                url_part = _md_link.group(2)
+                parts.append((f"{translate('Source')}: ", (text_part, url_part)))
+            else:
+                parts.append(
+                    (f"{translate('Source')}: {figure_node['source']}", None)
+                )
 
     if not parts:
         return []
@@ -1698,16 +1708,23 @@ def _load_untranslate_map():
 
 
 _untranslate_map_cache = None
+_untranslate_map_lock = threading.Lock()
 
 
 def untranslate_license(license_value: str) -> str:
     """Convert translated license names back to standard English keys.
 
     Independent of current locale.
+    Thread-safe: the first load is protected by a lock so that parallel
+    Sphinx read workers cannot race to initialise the cache simultaneously.
     """
     global _untranslate_map_cache
     if _untranslate_map_cache is None:
-        _untranslate_map_cache = _load_untranslate_map()
+        with _untranslate_map_lock:
+            # Double-checked locking: re-test inside the lock in case another
+            # thread already populated the cache while we were waiting.
+            if _untranslate_map_cache is None:
+                _untranslate_map_cache = _load_untranslate_map()
 
     return _untranslate_map_cache.get(license_value, license_value)
 
