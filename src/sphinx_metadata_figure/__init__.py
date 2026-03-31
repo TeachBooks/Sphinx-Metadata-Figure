@@ -607,6 +607,11 @@ class MetadataFigure(Figure):
         if license_value:
             license_value = untranslate_license(license_value)
 
+        # Preserve the English (pre-translation) key for URL lookup.
+        # figure_node["license"] will hold the translated display value, which may
+        # not match LICENSE_URLS keys in non-English locales.
+        license_key_en = license_value  # still English at this point
+
         if license_value is None:
             # Warn or raise error if license is missing
             message_missing = (
@@ -777,19 +782,23 @@ class MetadataFigure(Figure):
             figure_nodes = Figure.run(self)
         # handle the caption numbering based on presence of caption and options
         for node in figure_nodes:
+            # Initialize outside the inner loop to avoid NameError when
+            # node.children is empty and to prevent relying on loop-variable leakage.
+            has_caption = False
+            caption_child = None
             for child in node.children:
-                has_caption = False
                 if isinstance(child, nodes.caption):
                     has_caption = True
+                    caption_child = child
                     break
             if has_caption:
                 if "nonumber" in self.options:
                     # mark the figure as unnumbered
                     node["unnumbered_caption"] = True
                     # store the original caption node as property
-                    node["original_caption"] = child.deepcopy()
+                    node["original_caption"] = caption_child.deepcopy()
                     # remove the caption from the figure node
-                    node.remove(child)
+                    node.remove(caption_child)
                 else:
                     # mark the figure as numbered
                     node["unnumbered_caption"] = False
@@ -810,6 +819,9 @@ class MetadataFigure(Figure):
                 figure_node["author"] = author_value
             if license_value:
                 figure_node["license"] = license_value
+                # Store the English key separately so URL lookup in
+                # _build_attribution_display works regardless of the active locale.
+                figure_node["license_key"] = license_key_en
             if date_value:
                 figure_node["date"] = date_value
             if copyright_value:
@@ -877,13 +889,21 @@ class MetadataFigure(Figure):
 def _copyright_from_authoryear(author_value, date_value):
     """Build a copyright string from author and date values."""
     if author_value and date_value:
-        year = datetime.strptime(date_value, "%Y-%m-%d").year
-        return f"© {year} {author_value}"
+        try:
+            year = datetime.strptime(date_value, "%Y-%m-%d").year
+            return f"© {year} {author_value}"
+        except ValueError:
+            # Date is not in YYYY-MM-DD format (e.g. came from a BibTeX year
+            # field that failed validation); omit the year rather than crashing.
+            return f"© {author_value}"
     elif author_value:
         return f"© {author_value}"
     elif date_value:
-        year = datetime.strptime(date_value, "%Y-%m-%d").year
-        return f"© {year}"
+        try:
+            year = datetime.strptime(date_value, "%Y-%m-%d").year
+            return f"© {year}"
+        except ValueError:
+            return None
     return None
 
 
@@ -922,8 +942,11 @@ def _build_attribution_display(
     if "author" in figure_node and "author" in show:
         parts.append((f"{translate('Author')}: {figure_node['author']}", None))
     if "license" in figure_node and "license" in show:
-        if link_license and figure_node["license"] in LICENSE_URLS:
-            license_url = LICENSE_URLS[figure_node["license"]]
+        # Use the stored English key for URL lookup; fall back to the display value
+        # so that this also works for figures processed before this fix was applied.
+        license_lookup_key = figure_node.get("license_key", figure_node["license"])
+        if link_license and license_lookup_key in LICENSE_URLS:
+            license_url = LICENSE_URLS[license_lookup_key]
             parts.append(
                 (
                     f"{translate('License')}: ",
