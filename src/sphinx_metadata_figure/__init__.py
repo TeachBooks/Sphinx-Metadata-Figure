@@ -817,6 +817,21 @@ class MetadataFigure(Figure):
             if source_value:
                 figure_node["source"] = source_value
 
+            # Record license info in an env-level index so that
+            # check_all_figures_have_license can use it directly instead of
+            # re-reading every doctree from disk (O(docs) disk reads avoided).
+            if env is not None:
+                if not hasattr(env, "metadata_figure_license_index"):
+                    env.metadata_figure_license_index = {}
+                docname = getattr(env, "docname", None)
+                if docname is not None:
+                    env.metadata_figure_license_index.setdefault(docname, []).append(
+                        {
+                            "image_uri": self.arguments[0] if self.arguments else "unknown",
+                            "license": license_value,  # may be None
+                        }
+                    )
+
             # Determine rendering controls (explicit option > page defaults > global config)
             style_settings = settings["style"]
             placement = (
@@ -1013,8 +1028,13 @@ def check_all_figures_have_license(app, env):
     """
     Check that all figures in the documentation have license information.
 
-    This function is called after the environment is updated. It traverses
-    all documents and checks each figure node for license information.
+    This function is called after the environment is updated.  It uses the
+    in-memory index (env.metadata_figure_license_index) that MetadataFigure
+    populates during directive processing, which avoids an O(documents) round
+    of disk reads that the previous env.get_doctree() loop required.
+
+    Falls back to doctree scanning for any document that is not present in
+    the index (e.g. figures added by third-party extensions).
 
     Args:
         app: Sphinx application instance
@@ -1040,11 +1060,30 @@ def check_all_figures_have_license(app, env):
     missing_licenses = []
     unrecognized_licenses = []
 
+    # Use the index built during directive processing when available.
+    license_index = getattr(env, "metadata_figure_license_index", {})
+    indexed_docs = set(license_index.keys())
+
+    for docname, figures in license_index.items():
+        for fig_info in figures:
+            image_uri = fig_info.get("image_uri", "unknown")
+            license_value = fig_info.get("license")
+            if not license_value:
+                missing_licenses.append((docname, image_uri))
+            else:
+                # The stored value may be translated; reverse-translate before
+                # comparing against the canonical VALID_LICENSES list.
+                if untranslate_license(license_value) not in VALID_LICENSES:
+                    unrecognized_licenses.append((docname, image_uri))
+
+    # Fall back to doctree scanning only for documents not covered by the index
+    # (incremental builds may skip re-processing unchanged docs).
     for docname in env.found_docs:
+        if docname in indexed_docs:
+            continue
         try:
             doctree = env.get_doctree(docname)
             for node in doctree.traverse(nodes.figure):
-                # Find the image URI for better error messages
                 image_uri = "unknown"
                 for image_node in node.traverse(nodes.image):
                     image_uri = image_node.get("uri", "unknown")
@@ -1052,15 +1091,9 @@ def check_all_figures_have_license(app, env):
                 if "license" not in node:
                     missing_licenses.append((docname, image_uri))
                 else:
-                    # The license value stored on the node has already been
-                    # translated (and possibly formatted for display).
-                    # Reverse-translate it before comparing to VALID_LICENSES.
-                    license_value = untranslate_license(node["license"])
-                    if license_value not in VALID_LICENSES:
+                    if untranslate_license(node["license"]) not in VALID_LICENSES:
                         unrecognized_licenses.append((docname, image_uri))
-
         except Exception as e:
-            # Skip documents that can't be loaded
             logger.debug(f"Could not check figures in {docname}: {e}")
 
     # Report all missing licenses
@@ -1530,8 +1563,11 @@ def setup(app):
     # where BibtexDomain initializes and loads bib files
     app.connect("config-inited", pre_generate_bib_entries)
 
-    # Clear page defaults before reading documents to prevent stale data
+    # Clear page defaults and license index before reading documents
     app.connect("env-before-read-docs", clear_page_defaults)
+
+    # Merge per-document license index from parallel read workers into the main env
+    app.connect("env-merge-info", merge_figure_license_index)
 
     # Ensure MyST-NB is loaded before this extension so the glue domain is registered
     app.setup_extension("myst_nb")
@@ -1689,8 +1725,35 @@ def clear_page_defaults(app, env, docnames):
     """
     if not hasattr(env, "metadata_figure_page_defaults"):
         env.metadata_figure_page_defaults = {}
-    
-    # Clear defaults for all documents being rebuilt
+    if not hasattr(env, "metadata_figure_license_index"):
+        env.metadata_figure_license_index = {}
+
+    # Clear per-document data for all documents being rebuilt so that stale
+    # entries from a previous incremental build do not survive.
     for docname in docnames:
         if docname in env.metadata_figure_page_defaults:
             del env.metadata_figure_page_defaults[docname]
+        if docname in env.metadata_figure_license_index:
+            del env.metadata_figure_license_index[docname]
+
+
+def merge_figure_license_index(app, env, docnames, other):
+    """
+    Merge the license index from a parallel-read worker env into the main env.
+
+    Sphinx calls this event (env-merge-info) when parallel_read_safe=True and
+    worker sub-processes finish reading their assigned documents.  Without this
+    handler the index populated in workers would be discarded.
+
+    Args:
+        app: Sphinx application instance
+        env: Main (master) build environment
+        docnames: Document names read by the worker
+        other: Worker's environment to merge from
+    """
+    if not hasattr(env, "metadata_figure_license_index"):
+        env.metadata_figure_license_index = {}
+    other_index = getattr(other, "metadata_figure_license_index", {})
+    for docname in docnames:
+        if docname in other_index:
+            env.metadata_figure_license_index[docname] = other_index[docname]
